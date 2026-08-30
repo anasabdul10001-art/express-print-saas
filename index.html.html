@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Versandzentrale — Express Print SaaS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', sans-serif; background: #F6F4EE; }
+  .font-display { font-family: 'Space Grotesk', sans-serif; }
+  .font-mono { font-family: 'IBM Plex Mono', monospace; }
+  .stub-card { position: relative; }
+  .stub-card::before {
+    content: ""; position: absolute; top: 0; left: 20px; right: 20px; height: 1px;
+    background-image: repeating-linear-gradient(to right, #C7C1B1 0 6px, transparent 6px 12px);
+  }
+  .pulse-dot::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 9999px;
+    border: 2px solid currentColor; opacity: .35; animation: pulse 2s ease-out infinite;
+  }
+  @keyframes pulse { 0% { transform: scale(.7); opacity:.5; } 100% { transform: scale(1.8); opacity:0; } }
+  .spinner {
+    width: 14px; height: 14px; border: 2px solid rgba(0,0,0,.15); border-top-color: currentColor;
+    border-radius: 50%; animation: spin .6s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body class="text-[#14181F]">
+
+<!-- Global error/status banner -->
+<div id="global-banner" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4"></div>
+
+<!-- ================= AUTH VIEW ================= -->
+<div id="view-auth" class="min-h-screen flex items-center justify-center bg-[#14181F] p-6">
+  <div class="w-full max-w-sm bg-white rounded-xl p-8 stub-card">
+    <div class="flex items-center gap-2 font-display font-bold text-xl">
+      <span class="w-2 h-2 rounded-full bg-[#E8A33D]"></span>Versandzentrale
+    </div>
+    <div class="font-mono text-[11px] uppercase tracking-wider text-[#8891A0] mt-1">Etiketten · Bestellungen · Lager</div>
+
+    <div class="flex gap-1 mt-6 mb-5 bg-[#F6F4EE] rounded-lg p-1">
+      <button id="tab-login-btn" onclick="setAuthTab('login')" class="flex-1 py-2 rounded-md text-sm font-semibold bg-[#14181F] text-white">Anmelden</button>
+      <button id="tab-register-btn" onclick="setAuthTab('register')" class="flex-1 py-2 rounded-md text-sm font-semibold text-[#5B6472]">Registrieren</button>
+    </div>
+
+    <form id="form-login" onsubmit="handleLogin(event)">
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-[#5B6472] mb-1.5">E-Mail</label>
+        <input id="login-email" type="email" required class="w-full px-3 py-2.5 border border-[#C7C1B1] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40 focus:border-[#E8A33D]" placeholder="du@deinshop.de" />
+      </div>
+      <div class="mb-1">
+        <label class="block text-xs font-semibold text-[#5B6472] mb-1.5">Passwort</label>
+        <input id="login-password" type="password" required class="w-full px-3 py-2.5 border border-[#C7C1B1] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40 focus:border-[#E8A33D]" placeholder="••••••••" />
+      </div>
+      <button type="submit" id="login-submit-btn" class="w-full mt-4 bg-[#E8A33D] hover:bg-[#C9822A] text-[#14181F] font-semibold text-sm py-3 rounded-md flex items-center justify-center gap-2 disabled:opacity-60">
+        <span class="btn-label">Anmelden</span>
+      </button>
+    </form>
+
+    <form id="form-register" class="hidden" onsubmit="handleRegister(event)">
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-[#5B6472] mb-1.5">Firmenname</label>
+        <input id="reg-company" type="text" required class="w-full px-3 py-2.5 border border-[#C7C1B1] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40 focus:border-[#E8A33D]" placeholder="z. B. Nassar Trading" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-[#5B6472] mb-1.5">E-Mail</label>
+        <input id="reg-email" type="email" required class="w-full px-3 py-2.5 border border-[#C7C1B1] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40 focus:border-[#E8A33D]" placeholder="du@deinshop.de" />
+      </div>
+      <div class="mb-1">
+        <label class="block text-xs font-semibold text-[#5B6472] mb-1.5">Passwort</label>
+        <input id="reg-password" type="password" required minlength="8" class="w-full px-3 py-2.5 border border-[#C7C1B1] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40 focus:border-[#E8A33D]" placeholder="Mindestens 8 Zeichen" />
+      </div>
+      <button type="submit" id="register-submit-btn" class="w-full mt-4 bg-[#E8A33D] hover:bg-[#C9822A] text-[#14181F] font-semibold text-sm py-3 rounded-md flex items-center justify-center gap-2 disabled:opacity-60">
+        <span class="btn-label">Konto erstellen</span>
+      </button>
+    </form>
+
+    <div class="text-xs text-[#8891A0] mt-4 font-mono text-center break-all" id="api-base-label"></div>
+  </div>
+</div>
+
+<!-- ================= DASHBOARD VIEW ================= -->
+<div id="view-dashboard" class="hidden min-h-screen">
+  <div class="bg-[#14181F] text-white px-7 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-2 font-display font-bold text-lg">
+      <span class="w-2 h-2 rounded-full bg-[#E8A33D]"></span>Versandzentrale
+    </div>
+    <div class="flex items-center gap-4">
+      <span id="topbar-tenant-name" class="font-mono text-xs text-[#B7BEC9]"></span>
+      <button onclick="logout()" class="text-xs text-[#B7BEC9] hover:text-white border border-[#3A4353] rounded px-3 py-1.5">Abmelden</button>
+    </div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 py-8 pb-20">
+
+    <!-- Overview -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white border border-[#DEDACE] rounded-lg p-4">
+        <div class="text-[11px] uppercase tracking-wide text-[#8891A0] font-semibold mb-1">Bestellungen</div>
+        <div id="metric-orders" class="text-2xl font-display font-bold">—</div>
+      </div>
+      <div class="bg-white border border-[#DEDACE] rounded-lg p-4">
+        <div class="text-[11px] uppercase tracking-wide text-[#8891A0] font-semibold mb-1">Gedruckte Etiketten</div>
+        <div id="metric-printed" class="text-2xl font-display font-bold">—</div>
+      </div>
+      <div class="bg-white border border-[#DEDACE] rounded-lg p-4">
+        <div class="text-[11px] uppercase tracking-wide text-[#8891A0] font-semibold mb-1">Drucker verbunden</div>
+        <div id="metric-printers" class="text-2xl font-display font-bold">—</div>
+      </div>
+      <div class="bg-white border border-[#DEDACE] rounded-lg p-4">
+        <div class="text-[11px] uppercase tracking-wide text-[#8891A0] font-semibold mb-1">eBay-Status</div>
+        <div class="text-sm font-mono text-[#8891A0] mt-1.5">Nicht verbunden</div>
+        <div class="text-[10px] text-[#C7C1B1] mt-0.5">Backend-Integration fehlt noch</div>
+      </div>
+    </div>
+
+    <!-- Print mode + Printers -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+      <div class="bg-white border border-[#DEDACE] rounded-lg p-5">
+        <div class="font-semibold text-sm mb-1">Druck-Workflow</div>
+        <div class="text-xs text-[#5B6472] mb-4">Bestimmt, wie Bestellungen zu Etiketten werden</div>
+        <div class="flex gap-2 flex-wrap" id="print-mode-chips">
+          <button data-mode="INSTANT" onclick="updatePrintMode('INSTANT')" class="mode-chip px-3.5 py-2 rounded-full text-xs font-mono border border-[#C7C1B1] text-[#5B6472]">Instant</button>
+          <button data-mode="DASHBOARD_MANUAL" onclick="updatePrintMode('DASHBOARD_MANUAL')" class="mode-chip px-3.5 py-2 rounded-full text-xs font-mono border border-[#C7C1B1] text-[#5B6472]">Dashboard (manuell)</button>
+          <button data-mode="INTEGRATED" onclick="updatePrintMode('INTEGRATED')" class="mode-chip px-3.5 py-2 rounded-full text-xs font-mono border border-[#C7C1B1] text-[#5B6472]">Kombiniert</button>
+        </div>
+        <div id="print-mode-status" class="text-[11px] text-[#8891A0] mt-3 font-mono"></div>
+      </div>
+
+      <div class="bg-white border border-[#DEDACE] rounded-lg p-5">
+        <div class="font-semibold text-sm mb-1">Drucker</div>
+        <div class="text-xs text-[#5B6472] mb-4">Print Agents, die mit diesem Konto verbunden sind</div>
+        <div id="printers-list" class="space-y-2 mb-4"></div>
+        <form onsubmit="handleAddPrinter(event)" class="flex gap-2">
+          <input id="new-printer-name" type="text" required placeholder="z. B. Büro-PC" class="flex-1 px-3 py-2 border border-[#C7C1B1] rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40" />
+          <button type="submit" id="add-printer-btn" class="bg-[#14181F] text-white text-xs font-semibold px-3.5 py-2 rounded-md flex items-center gap-2 disabled:opacity-60">
+            <span class="btn-label">+ Drucker</span>
+          </button>
+        </form>
+        <div id="new-printer-key-box" class="hidden mt-3 p-3 bg-[#14181F] rounded-md"></div>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="bg-white border border-[#DEDACE] rounded-lg p-5">
+      <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
+        <div>
+          <div class="font-semibold text-sm">Bestellungen</div>
+          <div class="text-xs text-[#5B6472]">Live aus der Datenbank &mdash; echte eBay-Anbindung folgt später</div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="handleCreateTestOrder()" id="create-test-order-btn" class="text-xs font-semibold border border-[#C7C1B1] rounded-md px-3 py-2 flex items-center gap-2 disabled:opacity-60">
+            <span class="btn-label">+ Testbestellung</span>
+          </button>
+          <button onclick="handleBulkPrint()" id="bulk-print-btn" class="text-xs font-semibold bg-[#E8A33D] hover:bg-[#C9822A] text-[#14181F] rounded-md px-3 py-2 flex items-center gap-2 disabled:opacity-60" disabled>
+            <span class="btn-label">Ausgewählte drucken (<span id="selected-count">0</span>)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto mt-4">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-[10.5px] uppercase tracking-wide text-[#8891A0] border-b border-[#DEDACE]">
+              <th class="pb-2 pr-2"><input type="checkbox" id="select-all-orders" onchange="toggleSelectAll(this)" /></th>
+              <th class="pb-2 pr-2"></th>
+              <th class="pb-2 pr-2">Produkt</th>
+              <th class="pb-2 pr-2">Lagerplatz</th>
+              <th class="pb-2 pr-2">Status</th>
+              <th class="pb-2 pr-2"></th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody">
+            <tr><td colspan="6" class="text-center text-xs text-[#8891A0] py-8">Lade Bestellungen…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Account settings -->
+    <div class="bg-white border border-[#DEDACE] rounded-lg p-5 mt-8">
+      <div class="font-semibold text-sm mb-1">Konto & Einstellungen</div>
+      <div class="text-xs text-[#5B6472] mb-4">Firmenprofil bearbeiten</div>
+      <form onsubmit="handleUpdateProfile(event)" class="flex gap-2 max-w-sm">
+        <input id="account-company-name" type="text" class="flex-1 px-3 py-2 border border-[#C7C1B1] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40" />
+        <button type="submit" id="save-profile-btn" class="bg-[#14181F] text-white text-xs font-semibold px-4 py-2 rounded-md flex items-center gap-2 disabled:opacity-60">
+          <span class="btn-label">Speichern</span>
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const API_BASE = 'https://express-print-saas.onrender.com';
+
+/*
+  IMPORTANT NOTE ON TOKEN STORAGE:
+  This preview keeps the JWT in a plain JS variable (in memory only),
+  NOT localStorage. That's deliberate for THIS preview environment.
+  When you deploy this for real users, switch to localStorage (or a
+  secure httpOnly cookie set by the backend) so login survives a page
+  refresh - right now, refreshing this page logs you out.
+*/
+let authToken = null;
+let currentTenant = null;
+let allOrders = [];
+let selectedOrderIds = new Set();
+
+document.getElementById('api-base-label').textContent = API_BASE;
+
+/* ============================================================
+   API HELPER — centralizes error handling + loading state
+   ============================================================ */
+async function apiFetch(path, { method = 'GET', body = null, auth = true } = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth && authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (networkErr) {
+    throw new Error('Server nicht erreichbar. Läuft der Render-Dienst? (Free-Tier braucht bis zu 30s zum Aufwachen)');
+  }
+
+  if (res.status === 204) return null;
+
+  let data = null;
+  try { data = await res.json(); } catch (_) { /* no body */ }
+
+  if (!res.ok) {
+    const detail = data?.detail || res.statusText || `Fehler ${res.status}`;
+    throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+  }
+  return data;
+}
+
+function showBanner(message, type = 'error') {
+  const el = document.getElementById('global-banner');
+  const bg = type === 'error' ? 'bg-[#C4453B]' : 'bg-[#3F9142]';
+  el.innerHTML = `<div class="${bg} text-white text-sm px-4 py-3 rounded-md shadow-lg">${message}</div>`;
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+function setLoading(buttonId, loading, loadingText = 'Bitte warten…') {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+  btn.disabled = loading;
+  const label = btn.querySelector('.btn-label');
+  if (loading) {
+    btn.dataset.originalLabel = label.innerHTML;
+    label.innerHTML = `<span class="spinner"></span> ${loadingText}`;
+  } else if (btn.dataset.originalLabel) {
+    label.innerHTML = btn.dataset.originalLabel;
+  }
+}
+
+/* ============================================================
+   AUTH VIEW
+   ============================================================ */
+function setAuthTab(tab) {
+  document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('form-register').classList.toggle('hidden', tab !== 'register');
+  document.getElementById('tab-login-btn').className = tab === 'login'
+    ? 'flex-1 py-2 rounded-md text-sm font-semibold bg-[#14181F] text-white'
+    : 'flex-1 py-2 rounded-md text-sm font-semibold text-[#5B6472]';
+  document.getElementById('tab-register-btn').className = tab === 'register'
+    ? 'flex-1 py-2 rounded-md text-sm font-semibold bg-[#14181F] text-white'
+    : 'flex-1 py-2 rounded-md text-sm font-semibold text-[#5B6472]';
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  setLoading('login-submit-btn', true, 'Anmelden…');
+  try {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const data = await apiFetch('/auth/login', { method: 'POST', auth: false, body: { email, password } });
+    authToken = data.access_token;
+    await enterDashboard();
+  } catch (err) {
+    showBanner(err.message);
+  } finally {
+    setLoading('login-submit-btn', false);
+  }
+}
+
+async function handleRegister(event) {
+  event.preventDefault();
+  setLoading('register-submit-btn', true, 'Wird erstellt…');
+  try {
+    const company_name = document.getElementById('reg-company').value;
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    const data = await apiFetch('/auth/register', { method: 'POST', auth: false, body: { company_name, email, password } });
+    authToken = data.access_token;
+    await enterDashboard();
+  } catch (err) {
+    showBanner(err.message);
+  } finally {
+    setLoading('register-submit-btn', false);
+  }
+}
+
+function logout() {
+  authToken = null;
+  currentTenant = null;
+  document.getElementById('view-dashboard').classList.add('hidden');
+  document.getElementById('view-auth').classList.remove('hidden');
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+async function enterDashboard() {
+  document.getElementById('view-auth').classList.add('hidden');
+  document.getElementById('view-dashboard').classList.remove('hidden');
+  await Promise.all([loadTenant(), loadOrders(), loadPrinters()]);
+}
+
+async function loadTenant() {
+  try {
+    currentTenant = await apiFetch('/tenants/me');
+    document.getElementById('topbar-tenant-name').textContent = currentTenant.company_name;
+    document.getElementById('account-company-name').value = currentTenant.company_name;
+    highlightPrintMode(currentTenant.print_mode);
+  } catch (err) {
+    showBanner(err.message);
+  }
+}
+
+function highlightPrintMode(mode) {
+  document.querySelectorAll('.mode-chip').forEach(chip => {
+    const active = chip.dataset.mode === mode;
+    chip.className = active
+      ? 'mode-chip px-3.5 py-2 rounded-full text-xs font-mono border border-[#14181F] bg-[#14181F] text-white'
+      : 'mode-chip px-3.5 py-2 rounded-full text-xs font-mono border border-[#C7C1B1] text-[#5B6472]';
+  });
+  document.getElementById('print-mode-status').textContent = `Aktiv: ${mode}`;
+}
+
+async function updatePrintMode(mode) {
+  try {
+    currentTenant = await apiFetch('/tenants/me/print-mode', { method: 'PATCH', body: { print_mode: mode } });
+    highlightPrintMode(currentTenant.print_mode);
+    renderOrders(); // action column depends on mode
+    showBanner('Druck-Workflow aktualisiert.', 'success');
+  } catch (err) {
+    showBanner(err.message);
+  }
+}
+
+async function handleUpdateProfile(event) {
+  event.preventDefault();
+  setLoading('save-profile-btn', true, 'Speichert…');
+  try {
+    const company_name = document.getElementById('account-company-name').value;
+    currentTenant = await apiFetch('/tenants/me', { method: 'PATCH', body: { company_name } });
+    document.getElementById('topbar-tenant-name').textContent = currentTenant.company_name;
+    showBanner('Profil gespeichert.', 'success');
+  } catch (err) {
+    showBanner(err.message);
+  } finally {
+    setLoading('save-profile-btn', false);
+  }
+}
+
+/* ---------- Printers ---------- */
+async function loadPrinters() {
+  try {
+    const printers = await apiFetch('/print-agents');
+    renderPrinters(printers);
+    document.getElementById('metric-printers').textContent =
+      `${printers.filter(p => p.status === 'online').length} / ${printers.length}`;
+  } catch (err) {
+    showBanner(err.message);
+  }
+}
+
+function renderPrinters(printers) {
+  const list = document.getElementById('printers-list');
+  if (!printers.length) {
+    list.innerHTML = '<div class="text-xs text-[#8891A0]">Noch kein Drucker verbunden.</div>';
+    return;
+  }
+  list.innerHTML = printers.map(p => {
+    const online = p.status === 'online';
+    const dotColor = online ? 'bg-[#3F9142]' : 'bg-[#8891A0]';
+    return `
+      <div class="flex items-center justify-between text-xs border border-[#DEDACE] rounded-md px-3 py-2">
+        <div class="flex items-center gap-2">
+          <span class="relative w-2 h-2 rounded-full ${dotColor} ${online ? 'pulse-dot text-[#3F9142]' : ''}"></span>
+          <span class="font-medium">${escapeHtml(p.name)}</span>
+        </div>
+        <span class="font-mono text-[#8891A0]">${online ? 'online' : 'offline'}</span>
+      </div>`;
+  }).join('');
+}
+
+async function handleAddPrinter(event) {
+  event.preventDefault();
+  setLoading('add-printer-btn', true, 'Anlegen…');
+  try {
+    const name = document.getElementById('new-printer-name').value;
+    const created = await apiFetch('/print-agents', { method: 'POST', body: { name } });
+    document.getElementById('new-printer-name').value = '';
+
+    const box = document.getElementById('new-printer-key-box');
+    box.classList.remove('hidden');
+    box.innerHTML = `
+      <div class="text-[10px] uppercase tracking-wide text-[#8FB894] font-mono mb-1">Nur jetzt sichtbar — sofort speichern</div>
+      <div class="font-mono text-xs text-[#B7E6BA] break-all">${escapeHtml(created.api_key)}</div>
+      <div class="text-[10px] text-[#8891A0] mt-2">agent_id: ${created.id}</div>
+    `;
+    await loadPrinters();
+  } catch (err) {
+    showBanner(err.message);
+  } finally {
+    setLoading('add-printer-btn', false);
+  }
+}
+
+/* ---------- Orders ---------- */
+async function loadOrders() {
+  try {
+    allOrders = await apiFetch('/orders');
+    document.getElementById('metric-orders').textContent = allOrders.length;
+    const printedCount = allOrders.filter(o => o.status === 'printed' || o.status === 'shipped').length;
+    document.getElementById('metric-printed').textContent = printedCount;
+    renderOrders();
+  } catch (err) {
+    showBanner(err.message);
+    document.getElementById('orders-tbody').innerHTML =
+      `<tr><td colspan="6" class="text-center text-xs text-[#C4453B] py-8">Bestellungen konnten nicht geladen werden.</td></tr>`;
+  }
+}
+
+const STATUS_LABELS = {
+  new: { label: 'Ausstehend', color: 'bg-[#F6F4EE] text-[#5B6472]' },
+  ready_to_print: { label: 'Druckbereit', color: 'bg-[#FBEFDD] text-[#C9822A]' },
+  printed: { label: 'Gedruckt', color: 'bg-[#E6F2E6] text-[#3F9142]' },
+  shipped: { label: 'Versendet', color: 'bg-[#E6F2E6] text-[#3F9142]' },
+  canceled: { label: 'Storniert', color: 'bg-[#FBEAE8] text-[#C4453B]' },
+};
+
+function renderOrders() {
+  const tbody = document.getElementById('orders-tbody');
+  if (!allOrders.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-xs text-[#8891A0] py-8">
+      Noch keine Bestellungen. Erzeuge eine Testbestellung, um den Ablauf zu prüfen.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = allOrders.map(order => {
+    const firstItem = order.items[0];
+    const extra = order.items.length > 1 ? ` &middot; +${order.items.length - 1} weiterer Artikel` : '';
+    const statusInfo = STATUS_LABELS[order.status] || { label: order.status, color: 'bg-[#F6F4EE] text-[#5B6472]' };
+    const isDone = order.status === 'printed' || order.status === 'shipped';
+    const instantMode = currentTenant?.print_mode === 'INSTANT';
+
+    let actionHtml;
+    if (isDone) {
+      actionHtml = `<span class="font-mono text-[11px] px-2.5 py-1 rounded-full ${statusInfo.color}">Gedruckt</span>`;
+    } else if (instantMode) {
+      actionHtml = `<span class="font-mono text-[11px] px-2.5 py-1 rounded-full bg-[#E6F2E6] text-[#3F9142]">Automatisch</span>`;
+    } else {
+      const label = currentTenant?.print_mode === 'INTEGRATED' ? 'Kombi-Etikett drucken' : 'Etikett drucken';
+      actionHtml = `<button onclick="handlePrintOrder('${order.id}')" id="print-btn-${order.id}" class="text-xs font-semibold bg-[#E8A33D] hover:bg-[#C9822A] text-[#14181F] rounded-md px-3 py-1.5 flex items-center gap-1.5 disabled:opacity-60">
+        <span class="btn-label">${label}</span></button>`;
+    }
+
+    return `
+      <tr class="border-b border-[#DEDACE] last:border-0" data-order-id="${order.id}">
+        <td class="py-3 pr-2 align-top">
+          ${isDone ? '' : `<input type="checkbox" onchange="toggleOrderSelection('${order.id}', this)" ${selectedOrderIds.has(order.id) ? 'checked' : ''}/>`}
+        </td>
+        <td class="py-3 pr-2 align-top">
+          <img src="${firstItem?.image_url || 'https://placehold.co/60x60?text=%20'}" class="w-9 h-9 rounded-md object-cover border border-[#DEDACE]" />
+        </td>
+        <td class="py-3 pr-2 align-top">
+          <div class="font-medium">${escapeHtml(firstItem?.product_title || '—')}</div>
+          <div class="text-[11px] text-[#8891A0]">${escapeHtml(order.external_order_ref || order.id.slice(0,8))}${extra}</div>
+        </td>
+        <td class="py-3 pr-2 align-top">
+          <span class="font-mono text-[11.5px] bg-[#F6F4EE] border border-[#C7C1B1] px-2 py-1 rounded">${escapeHtml(firstItem?.shelf_location || '—')}</span>
+        </td>
+        <td class="py-3 pr-2 align-top">
+          <span class="font-mono text-[11px] px-2.5 py-1 rounded-full ${statusInfo.color}">${statusInfo.label}</span>
+        </td>
+        <td class="py-3 pr-2 align-top">${actionHtml}</td>
+      </tr>`;
+  }).join('');
+
+  updateBulkPrintButton();
+}
+
+async function handleCreateTestOrder() {
+  setLoading('create-test-order-btn', true, 'Wird erzeugt…');
+  try {
+    await apiFetch('/orders/test', { method: 'POST' });
+    await loadOrders();
+    showBanner('Testbestellung erzeugt.', 'success');
+  } catch (err) {
+    showBanner(err.message);
+  } finally {
+    setLoading('create-test-order-btn', false);
+  }
+}
+
+async function handlePrintOrder(orderId) {
+  const btnId = `print-btn-${orderId}`;
+  setLoading(btnId, true, 'Wird gedruckt…');
+  try {
+    await apiFetch(`/print-jobs/order/${orderId}`, { method: 'POST' });
+    await loadOrders();
+    showBanner('Druckauftrag gesendet.', 'success');
+  } catch (err) {
+    showBanner(err.message);
+    setLoading(btnId, false);
+  }
+}
+
+function toggleOrderSelection(orderId, checkbox) {
+  if (checkbox.checked) selectedOrderIds.add(orderId);
+  else selectedOrderIds.delete(orderId);
+  updateBulkPrintButton();
+}
+
+function toggleSelectAll(checkbox) {
+  selectedOrderIds.clear();
+  if (checkbox.checked) {
+    allOrders.forEach(o => {
+      if (o.status !== 'printed' && o.status !== 'shipped') selectedOrderIds.add(o.id);
+    });
+  }
+  renderOrders();
+}
+
+function updateBulkPrintButton() {
+  document.getElementById('selected-count').textContent = selectedOrderIds.size;
+  document.getElementById('bulk-print-btn').disabled = selectedOrderIds.size === 0;
+}
+
+async function handleBulkPrint() {
+  setLoading('bulk-print-btn', true, 'Drucke…');
+  const ids = Array.from(selectedOrderIds);
+  let successCount = 0;
+  for (const orderId of ids) {
+    try {
+      await apiFetch(`/print-jobs/order/${orderId}`, { method: 'POST' });
+      successCount++;
+    } catch (err) {
+      showBanner(`Bestellung ${orderId.slice(0,8)}: ${err.message}`);
+    }
+  }
+  selectedOrderIds.clear();
+  await loadOrders();
+  setLoading('bulk-print-btn', false);
+  if (successCount) showBanner(`${successCount} Etikett(en) gedruckt.`, 'success');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+</script>
+
+</body>
+</html>
