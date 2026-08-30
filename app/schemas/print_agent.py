@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -17,6 +18,7 @@ class PrintAgentOut(BaseModel):
     id: uuid.UUID
     name: str
     status: str
+    last_seen_at: datetime | None
 
     class Config:
         from_attributes = True
