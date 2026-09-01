@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, orders, print_agents, print_jobs, tenants
+from app.routers import auth, ebay, orders, print_agents, print_jobs, tenants
 
 app = FastAPI(title="eBay Seller SaaS API", version="0.1.0")
 
@@ -12,6 +12,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
+app.include_router(tenants.router)
+app.include_router(orders.router)
+app.include_router(print_agents.router)
+app.include_router(print_jobs.router)
+app.include_router(ebay.router)
 
 
 @app.get("/health")
