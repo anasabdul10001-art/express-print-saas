@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — Express Print SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+        <h1 class="text-lg font-bold">Versandzentrale</h1>
+        <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
+    </nav>
+
+    <main class="max-w-2xl mx-auto p-6 space-y-6">
+        <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-bold mb-2">eBay-Konto</h2>
+            <p class="text-gray-400 text-sm mb-4" id="ebay-desc">Status wird geladen...</p>
+
+            <button id="ebay-connect-btn" onclick="connectEbay()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition hidden">
+                Mit eBay verbinden
+            </button>
+            <button id="ebay-disconnect-btn" onclick="disconnectEbay()"
+                    class="bg-red-700 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition hidden">
+                eBay-Verbindung trennen
+            </button>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "../login.html";
+        }
+
+        function authHeaders() {
+            return { "Authorization": `Bearer ${token}` };
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "../login.html";
+        }
+
+        function showBanner(text, isError) {
+            const banner = document.getElementById("banner");
+            banner.innerText = text;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
+        }
+
+        // Show the eBay connect/disconnect result the browser was just redirected back with.
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("ebay_connected")) {
+            showBanner("eBay-Konto erfolgreich verbunden!", false);
+        } else if (params.get("ebay_error")) {
+            showBanner(`Fehler bei der eBay-Verbindung: ${params.get("ebay_error")}`, true);
+        }
+
+        async function loadEbayStatus() {
+            const descEl = document.getElementById("ebay-desc");
+            const connectBtn = document.getElementById("ebay-connect-btn");
+            const disconnectBtn = document.getElementById("ebay-disconnect-btn");
+
+            try {
+                const response = await fetch(`${API_URL}/ebay/status`, { headers: authHeaders() });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data) {
+                    descEl.innerText = `Verbunden als ${data.ebay_username || "eBay-Verkäufer"}.`;
+                    disconnectBtn.classList.remove("hidden");
+                } else {
+                    descEl.innerText = "Noch kein eBay-Konto verbunden.";
+                    connectBtn.classList.remove("hidden");
+                }
+            } catch (err) {
+                descEl.innerText = "Server nicht erreichbar. Bitte Seite neu laden.";
+            }
+        }
+
+        async function connectEbay() {
+            try {
+                const response = await fetch(`${API_URL}/ebay/authorize-url`, { headers: authHeaders() });
+                const data = await response.json();
+                window.location.href = data.authorize_url;
+            } catch (err) {
+                showBanner("Verbindung zu eBay konnte nicht gestartet werden.", true);
+            }
+        }
+
+        async function disconnectEbay() {
+            try {
+                await fetch(`${API_URL}/ebay/disconnect`, { method: "POST", headers: authHeaders() });
+                window.location.reload();
+            } catch (err) {
+                showBanner("Trennen der eBay-Verbindung fehlgeschlagen.", true);
+            }
+        }
+
+        loadEbayStatus();
+    </script>
+</body>
+</html>

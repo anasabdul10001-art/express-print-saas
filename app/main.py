@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.routers import auth, ebay, orders, print_agents, print_jobs, tenants
 
@@ -27,3 +28,9 @@ def health_check():
     keep this fast and dependency-free so it can't false-negative from a
     slow database, only from the app process itself being down."""
     return {"status": "ok"}
+
+
+# Serves the frontend (index.html, login.html, app/dashboard.html, app/ebay.html)
+# from the same service, at the same domain, so the API and the UI share one
+# Render deployment. Mounted last so it never shadows the API routes above.
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")

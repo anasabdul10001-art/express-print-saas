@@ -8,8 +8,9 @@
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
     <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 class="text-2xl font-bold mb-6 text-center">Versandzentrale</h2>
-        
+        <h2 class="text-2xl font-bold mb-2 text-center">Versandzentrale</h2>
+        <p class="text-gray-400 text-sm text-center mb-6">Erstelle dein Konto</p>
+
         <div id="error-box" class="hidden bg-red-600 text-white p-3 rounded mb-4 text-center text-sm"></div>
         <div id="success-box" class="hidden bg-green-600 text-white p-3 rounded mb-4 text-center text-sm"></div>
 
@@ -30,6 +31,11 @@
                 Konto erstellen
             </button>
         </form>
+
+        <p class="text-gray-400 text-sm text-center mt-6">
+            Schon ein Konto?
+            <a href="login.html" class="text-yellow-500 hover:text-yellow-400 font-semibold">Jetzt anmelden</a>
+        </p>
     </div>
 
     <script>
@@ -72,8 +78,10 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    succBox.innerText = "Konto erfolgreich erstellt!";
+                    succBox.innerText = "Konto erfolgreich erstellt! Du wirst weitergeleitet...";
                     succBox.classList.remove("hidden");
+                    localStorage.setItem("access_token", data.access_token);
+                    setTimeout(() => { window.location.href = "app/dashboard.html"; }, 1000);
                 } else {
                     errBox.innerText = data.detail || "Fehler beim Erstellen des Kontos.";
                     errBox.classList.remove("hidden");
