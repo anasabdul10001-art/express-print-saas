@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Produkte — Express Print SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+        <h1 class="text-lg font-bold">Versandzentrale</h1>
+        <div class="flex items-center gap-6">
+            <a href="dashboard.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Dashboard</a>
+            <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto p-6 space-y-6">
+        <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <div class="flex items-center justify-between gap-4">
+            <h2 class="text-2xl font-bold">Produkte</h2>
+            <button onclick="openForm()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                + Neues Produkt
+            </button>
+        </div>
+
+        <input type="text" id="search-input" placeholder="Suche nach SKU oder Titel..."
+               oninput="debouncedLoad()"
+               class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-white">
+
+        <!-- Add / edit form, hidden by default -->
+        <div id="form-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+            <h3 id="form-title" class="text-lg font-bold">Neues Produkt</h3>
+            <input type="hidden" id="product-id">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm mb-1">SKU *</label>
+                    <input type="text" id="field-sku"
+                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Titel *</label>
+                    <input type="text" id="field-title"
+                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Regalplatz</label>
+                    <input type="text" id="field-shelf" placeholder="z.B. A3-14"
+                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Bild-URL</label>
+                    <input type="text" id="field-image"
+                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Einkaufspreis (€)</label>
+                    <input type="number" step="0.01" id="field-purchase"
+                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Verkaufspreis (€)</label>
+                    <input type="number" step="0.01" id="field-selling"
+                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                </div>
+            </div>
+
+            <div id="form-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
+
+            <div class="flex gap-3">
+                <button onclick="saveProduct()"
+                        class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    Speichern
+                </button>
+                <button onclick="closeForm()"
+                        class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+                    Abbrechen
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="hidden bg-gray-800 p-8 rounded-lg text-center space-y-3">
+            <p class="text-gray-400">Noch keine Produkte vorhanden.</p>
+            <button onclick="openForm()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                Erstes Produkt anlegen
+            </button>
+        </div>
+
+        <!-- Product table -->
+        <div id="table-wrap" class="hidden bg-gray-800 rounded-lg shadow-lg overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-gray-400 border-b border-gray-700">
+                        <th class="p-3">Bild</th>
+                        <th class="p-3">SKU</th>
+                        <th class="p-3">Titel</th>
+                        <th class="p-3">Regalplatz</th>
+                        <th class="p-3">EK</th>
+                        <th class="p-3">VK</th>
+                        <th class="p-3">Gewinn</th>
+                        <th class="p-3">Marge</th>
+                        <th class="p-3">Status</th>
+                        <th class="p-3">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="products-tbody"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "../login.html";
+        }
+
+        function authHeaders(json = false) {
+            const headers = { "Authorization": `Bearer ${token}` };
+            if (json) headers["Content-Type"] = "application/json";
+            return headers;
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "../login.html";
+        }
+
+        function showBanner(text, isError) {
+            const banner = document.getElementById("banner");
+            banner.innerText = text;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
+            setTimeout(() => banner.classList.add("hidden"), 4000);
+        }
+
+        function euro(value) {
+            return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)} €`;
+        }
+
+        function openForm(product = null) {
+            document.getElementById("form-panel").classList.remove("hidden");
+            document.getElementById("form-error").classList.add("hidden");
+            document.getElementById("form-title").innerText = product ? "Produkt bearbeiten" : "Neues Produkt";
+            document.getElementById("product-id").value = product ? product.id : "";
+            document.getElementById("field-sku").value = product ? product.sku : "";
+            document.getElementById("field-title").value = product ? product.title : "";
+            document.getElementById("field-shelf").value = product ? (product.shelf_location || "") : "";
+            document.getElementById("field-image").value = product ? (product.image_url || "") : "";
+            document.getElementById("field-purchase").value = product ? (product.purchase_price ?? "") : "";
+            document.getElementById("field-selling").value = product ? (product.selling_price ?? "") : "";
+            document.getElementById("form-panel").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function closeForm() {
+            document.getElementById("form-panel").classList.add("hidden");
+        }
+
+        async function saveProduct() {
+            const errorBox = document.getElementById("form-error");
+            errorBox.classList.add("hidden");
+
+            const id = document.getElementById("product-id").value;
+            const sku = document.getElementById("field-sku").value.trim();
+            const title = document.getElementById("field-title").value.trim();
+
+            if (!sku || !title) {
+                errorBox.innerText = "SKU und Titel sind Pflichtfelder.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            const purchaseRaw = document.getElementById("field-purchase").value;
+            const sellingRaw = document.getElementById("field-selling").value;
+
+            const payload = {
+                sku,
+                title,
+                shelf_location: document.getElementById("field-shelf").value.trim() || null,
+                image_url: document.getElementById("field-image").value.trim() || null,
+                purchase_price: purchaseRaw === "" ? null : Number(purchaseRaw),
+                selling_price: sellingRaw === "" ? null : Number(sellingRaw),
+            };
+
+            try {
+                const response = await fetch(
+                    id ? `${API_URL}/products/${id}` : `${API_URL}/products`,
+                    {
+                        method: id ? "PATCH" : "POST",
+                        headers: authHeaders(true),
+                        body: JSON.stringify(payload),
+                    }
+                );
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                closeForm();
+                showBanner(id ? "Produkt aktualisiert." : "Produkt angelegt.", false);
+                loadProducts();
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function deactivateProduct(id, title) {
+            if (!confirm(`"${title}" wirklich deaktivieren?`)) return;
+
+            try {
+                const response = await fetch(`${API_URL}/products/${id}`, {
+                    method: "DELETE",
+                    headers: authHeaders(),
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok && response.status !== 204) {
+                    showBanner("Deaktivieren fehlgeschlagen.", true);
+                    return;
+                }
+                showBanner("Produkt deaktiviert.", false);
+                loadProducts();
+            } catch (err) {
+                showBanner("Server nicht erreichbar.", true);
+            }
+        }
+
+        function renderProducts(products) {
+            const tbody = document.getElementById("products-tbody");
+            const emptyState = document.getElementById("empty-state");
+            const tableWrap = document.getElementById("table-wrap");
+
+            if (products.length === 0) {
+                emptyState.classList.remove("hidden");
+                tableWrap.classList.add("hidden");
+                return;
+            }
+            emptyState.classList.add("hidden");
+            tableWrap.classList.remove("hidden");
+
+            tbody.innerHTML = products.map(p => `
+                <tr class="border-b border-gray-700 ${p.active ? "" : "opacity-50"}">
+                    <td class="p-3">
+                        ${p.image_url
+                            ? `<img src="${p.image_url}" class="w-10 h-10 object-cover rounded" onerror="this.style.display='none'">`
+                            : `<div class="w-10 h-10 bg-gray-700 rounded"></div>`}
+                    </td>
+                    <td class="p-3 font-mono text-xs">${p.sku}</td>
+                    <td class="p-3">${p.title}</td>
+                    <td class="p-3 text-gray-400">${p.shelf_location || "—"}</td>
+                    <td class="p-3">${euro(p.purchase_price)}</td>
+                    <td class="p-3">${euro(p.selling_price)}</td>
+                    <td class="p-3 ${p.profit_per_unit >= 0 ? "text-green-400" : "text-red-400"}">${euro(p.profit_per_unit)}</td>
+                    <td class="p-3">${p.margin_percent !== null && p.margin_percent !== undefined ? p.margin_percent + " %" : "—"}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded text-xs ${p.active ? "bg-green-700" : "bg-gray-600"}">
+                            ${p.active ? "Aktiv" : "Inaktiv"}
+                        </span>
+                    </td>
+                    <td class="p-3 whitespace-nowrap">
+                        <button onclick='openForm(${JSON.stringify(p)})' class="text-yellow-500 hover:text-yellow-400 text-xs mr-3">Bearbeiten</button>
+                        ${p.active ? `<button onclick="deactivateProduct('${p.id}', ${JSON.stringify(p.title)})" class="text-red-400 hover:text-red-300 text-xs">Deaktivieren</button>` : ""}
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        async function loadProducts() {
+            const search = document.getElementById("search-input").value.trim();
+            const url = new URL(`${API_URL}/products`);
+            if (search) url.searchParams.set("search", search);
+
+            try {
+                const response = await fetch(url, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                renderProducts(data);
+            } catch (err) {
+                showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
+            }
+        }
+
+        let debounceTimer;
+        function debouncedLoad() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(loadProducts, 300);
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>
