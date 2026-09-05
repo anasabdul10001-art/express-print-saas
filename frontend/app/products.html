@@ -66,6 +66,11 @@
                     <input type="number" step="0.01" id="field-selling"
                            class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
                 </div>
+                <div>
+                    <label class="block text-sm mb-1">Lagerbestand (Menge)</label>
+                    <input type="number" step="1" min="0" id="field-stock"
+                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                </div>
             </div>
 
             <div id="form-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
@@ -100,6 +105,7 @@
                         <th class="p-3">SKU</th>
                         <th class="p-3">Titel</th>
                         <th class="p-3">Regalplatz</th>
+                        <th class="p-3">Menge</th>
                         <th class="p-3">EK</th>
                         <th class="p-3">VK</th>
                         <th class="p-3">Gewinn</th>
@@ -154,6 +160,7 @@
             document.getElementById("field-image").value = product ? (product.image_url || "") : "";
             document.getElementById("field-purchase").value = product ? (product.purchase_price ?? "") : "";
             document.getElementById("field-selling").value = product ? (product.selling_price ?? "") : "";
+            document.getElementById("field-stock").value = product ? (product.stock_quantity ?? 0) : 0;
             document.getElementById("form-panel").scrollIntoView({ behavior: "smooth" });
         }
 
@@ -177,6 +184,7 @@
 
             const purchaseRaw = document.getElementById("field-purchase").value;
             const sellingRaw = document.getElementById("field-selling").value;
+            const stockRaw = document.getElementById("field-stock").value;
 
             const payload = {
                 sku,
@@ -185,6 +193,7 @@
                 image_url: document.getElementById("field-image").value.trim() || null,
                 purchase_price: purchaseRaw === "" ? null : Number(purchaseRaw),
                 selling_price: sellingRaw === "" ? null : Number(sellingRaw),
+                stock_quantity: stockRaw === "" ? 0 : Number(stockRaw),
             };
 
             try {
@@ -259,6 +268,7 @@
                     <td class="p-3 font-mono text-xs">${p.sku}</td>
                     <td class="p-3">${p.title}</td>
                     <td class="p-3 text-gray-400">${p.shelf_location || "—"}</td>
+                    <td class="p-3 ${p.stock_quantity === 0 ? "text-red-400" : ""}">${p.stock_quantity ?? 0}</td>
                     <td class="p-3">${euro(p.purchase_price)}</td>
                     <td class="p-3">${euro(p.selling_price)}</td>
                     <td class="p-3 ${p.profit_per_unit >= 0 ? "text-green-400" : "text-red-400"}">${euro(p.profit_per_unit)}</td>

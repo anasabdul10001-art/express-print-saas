@@ -1,9 +1,6 @@
 import uuid
 from decimal import Decimal
-
 from pydantic import BaseModel, Field
-
-
 class ProductCreate(BaseModel):
     sku: str = Field(..., min_length=1, max_length=100)
     title: str = Field(..., min_length=1, max_length=500)
@@ -11,8 +8,7 @@ class ProductCreate(BaseModel):
     shelf_location: str | None = None
     purchase_price: Decimal | None = None
     selling_price: Decimal | None = None
-
-
+    stock_quantity: int = 0
 class ProductUpdate(BaseModel):
     """All fields optional - PATCH semantics, only sent fields get changed."""
     sku: str | None = Field(None, min_length=1, max_length=100)
@@ -22,8 +18,7 @@ class ProductUpdate(BaseModel):
     purchase_price: Decimal | None = None
     selling_price: Decimal | None = None
     active: bool | None = None
-
-
+    stock_quantity: int | None = None
 class ProductOut(BaseModel):
     id: uuid.UUID
     sku: str
@@ -33,11 +28,10 @@ class ProductOut(BaseModel):
     purchase_price: Decimal | None
     selling_price: Decimal | None
     active: bool
-
+    stock_quantity: int
     # Computed, not stored - always derived fresh from the two price fields
     # above so it can never drift out of sync with them.
     profit_per_unit: Decimal | None = None
     margin_percent: Decimal | None = None
-
     class Config:
         from_attributes = True
