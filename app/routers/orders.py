@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from app.core.deps import get_current_user, get_db
@@ -11,11 +13,26 @@ def _serialize_order(order: Order) -> OrderOut:
     Builds OrderItemOut manually rather than relying on automatic ORM->schema
     mapping, because image_url/shelf_location intentionally come from the
     linked Product (live data), not straight off the OrderItem row -
-    see the note in models/order.py.
+    see the note in models/order.py. Profit uses the item's OWN unit_price
+    and purchase_price snapshots (not live product prices), so a later
+    price change never rewrites the profit of a past order.
     """
     items_out = []
+    total_profit = Decimal("0")
+    profit_known = True
+
     for item in order.items:
         product = item.product
+
+        if item.unit_price is not None and item.purchase_price is not None:
+            profit = (item.unit_price - item.purchase_price) * item.quantity
+        else:
+            profit = None
+            profit_known = False
+
+        if profit is not None:
+            total_profit += profit
+
         items_out.append(
             OrderItemOut(
                 id=item.id,
@@ -26,6 +43,7 @@ def _serialize_order(order: Order) -> OrderOut:
                 # Prefer the product's CURRENT shelf location; fall back to
                 # the order_item's snapshot only if the product was removed.
                 shelf_location=(product.shelf_location if product else None) or item.shelf_location,
+                profit=profit,
             )
         )
     return OrderOut(
@@ -33,6 +51,7 @@ def _serialize_order(order: Order) -> OrderOut:
         external_order_ref=order.external_order_ref,
         status=order.status,
         items=items_out,
+        total_profit=total_profit if profit_known else None,
     )
 @router.get("", response_model=list[OrderOut])
 def list_orders(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -55,8 +74,8 @@ def create_order(
     Creates a real order from actual products the seller owns. Price and
     shelf_location are always pulled fresh from the product at creation
     time - never trusted from the request - so a seller can't be tricked
-    into an order with a wrong price, and the shelf_location snapshot
-    reflects where the item actually was when the order came in.
+    into an order with a wrong price, and the shelf_location/purchase_price
+    snapshots reflect what was true when the order came in.
     """
     order = Order(tenant_id=current_user.tenant_id, external_order_ref=payload.external_order_ref, status="new")
     db.add(order)
@@ -76,6 +95,7 @@ def create_order(
             product_id=product.id,
             quantity=item_in.quantity,
             unit_price=product.selling_price,
+            purchase_price=product.purchase_price,
             shelf_location=product.shelf_location,
         ))
 
@@ -91,39 +111,4 @@ def create_order(
 def create_test_order(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Seeds one fake order with two items, so the dashboard/print-mode flow
-    can be tested end-to-end before the real eBay Orders integration exists.
-    """
-    product_a = Product(
-        tenant_id=current_user.tenant_id,
-        sku="TEST-001",
-        title="USB-C Ladekabel 2m",
-        image_url="https://placehold.co/80x80?text=USB-C",
-        shelf_location="A3-14",
-    )
-    product_b = Product(
-        tenant_id=current_user.tenant_id,
-        sku="TEST-002",
-        title="Handyhülle Silikon Schwarz",
-        image_url="https://placehold.co/80x80?text=Hülle",
-        shelf_location="B1-02",
-    )
-    db.add_all([product_a, product_b])
-    db.flush()
-    order = Order(tenant_id=current_user.tenant_id, external_order_ref="TEST-ORDER", status="new")
-    db.add(order)
-    db.flush()
-    db.add_all([
-        OrderItem(order_id=order.id, product_id=product_a.id, quantity=1,
-                  unit_price=6.99, shelf_location=product_a.shelf_location),
-        OrderItem(order_id=order.id, product_id=product_b.id, quantity=2,
-                  unit_price=4.50, shelf_location=product_b.shelf_location),
-    ])
-    db.commit()
-    db.refresh(order)
-    order = (
-        db.query(Order)
-        .options(joinedload(Order.items).joinedload(OrderItem.product))
-        .filter(Order.id == order.id)
-        .first()
-    )
-    return _serialize_order(order)
+    can be tested end-to-end before the real eBay Orders integration

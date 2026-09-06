@@ -18,6 +18,10 @@ class OrderItemOut(BaseModel):
     # snapshot only if the linked product no longer exists.
     image_url: str | None
     shelf_location: str | None
+    # Computed from unit_price and the purchase_price SNAPSHOT (not the
+    # product's current cost) - see models/order.py for why the snapshot
+    # is used here instead of a live value.
+    profit: Decimal | None = None
     class Config:
         from_attributes = True
 class OrderOut(BaseModel):
@@ -25,5 +29,8 @@ class OrderOut(BaseModel):
     external_order_ref: str | None
     status: str
     items: list[OrderItemOut]
+    # Sum of all items' profit. None if any item is missing cost data
+    # (can't claim a total profit that's silently partial).
+    total_profit: Decimal | None = None
     class Config:
         from_attributes = True

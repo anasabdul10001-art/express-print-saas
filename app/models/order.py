@@ -39,6 +39,12 @@ class OrderItem(Base):
     quantity = Column(Integer, nullable=False, default=1)
     unit_price = Column(DECIMAL(10, 2))
 
+    # Snapshot of the product's purchase_price at order time, so profit
+    # stays accurate even if the product's cost later changes (e.g. a new
+    # purchase batch at a different price). Same reasoning as shelf_location
+    # below: history should reflect what was true when the order happened.
+    purchase_price = Column(DECIMAL(10, 2))
+
     # A shelf_location SNAPSHOT, captured at order-import time. This exists
     # as a fallback/audit trail (e.g. if a product is later deleted or
     # re-SKU'd, this order still shows where it was picked from). It is

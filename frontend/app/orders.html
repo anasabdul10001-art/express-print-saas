@@ -250,6 +250,7 @@
                         <td class="p-3 text-gray-400">${item.shelf_location || "—"}</td>
                         <td class="p-3">${item.quantity}</td>
                         <td class="p-3">${euro(item.unit_price)}</td>
+                        <td class="p-3 ${item.profit >= 0 ? "text-green-400" : "text-red-400"}">${euro(item.profit)}</td>
                     </tr>
                 `).join("");
 
@@ -260,9 +261,22 @@
                                 <span class="font-semibold">${order.external_order_ref || "Ohne Referenz"}</span>
                                 <span class="ml-3 px-2 py-1 rounded text-xs bg-gray-700">${statusLabel(order.status)}</span>
                             </div>
-                            <span class="text-yellow-500 font-bold">${euro(total)}</span>
+                            <div class="text-right">
+                                <div class="text-yellow-500 font-bold">${euro(total)}</div>
+                                <div class="text-xs ${order.total_profit >= 0 ? "text-green-400" : "text-red-400"}">Gewinn: ${euro(order.total_profit)}</div>
+                            </div>
                         </div>
                         <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-gray-500 text-xs border-b border-gray-700">
+                                    <th class="p-3"></th>
+                                    <th class="p-3">Produkt</th>
+                                    <th class="p-3">Regal</th>
+                                    <th class="p-3">Menge</th>
+                                    <th class="p-3">Preis</th>
+                                    <th class="p-3">Gewinn</th>
+                                </tr>
+                            </thead>
                             <tbody>${itemsHtml}</tbody>
                         </table>
                     </div>
