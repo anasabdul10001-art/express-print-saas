@@ -76,11 +76,14 @@ def create_order(
     time - never trusted from the request - so a seller can't be tricked
     into an order with a wrong price, and the shelf_location/purchase_price
     snapshots reflect what was true when the order came in.
-    """
-    order = Order(tenant_id=current_user.tenant_id, external_order_ref=payload.external_order_ref, status="new")
-    db.add(order)
-    db.flush()
 
+    Stock is checked and decremented here too: an order can't be created
+    for more units than are currently on hand, and once created, those
+    units are immediately removed from stock_quantity. All products are
+    checked BEFORE any stock is touched, so a failure on item 3 of 3
+    never leaves items 1-2 partially decremented.
+    """
+    products_by_id = {}
     for item_in in payload.items:
         product = (
             db.query(Product)
@@ -89,6 +92,22 @@ def create_order(
         )
         if not product:
             raise HTTPException(status_code=404, detail=f"Produkt {item_in.product_id} nicht gefunden.")
+        if product.stock_quantity < item_in.quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Nicht genügend Lagerbestand für '{product.title}': "
+                    f"{product.stock_quantity} verfügbar, {item_in.quantity} angefordert."
+                ),
+            )
+        products_by_id[item_in.product_id] = product
+
+    order = Order(tenant_id=current_user.tenant_id, external_order_ref=payload.external_order_ref, status="new")
+    db.add(order)
+    db.flush()
+
+    for item_in in payload.items:
+        product = products_by_id[item_in.product_id]
 
         db.add(OrderItem(
             order_id=order.id,
@@ -98,6 +117,7 @@ def create_order(
             purchase_price=product.purchase_price,
             shelf_location=product.shelf_location,
         ))
+        product.stock_quantity -= item_in.quantity
 
     db.commit()
     order = (

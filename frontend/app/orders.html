@@ -123,7 +123,7 @@
             const container = document.getElementById("items-container");
 
             const options = allProducts
-                .map(p => `<option value="${p.id}">${p.title} (${p.sku})${p.selling_price !== null ? " — " + euro(p.selling_price) : ""}</option>`)
+                .map(p => `<option value="${p.id}">${p.title} (${p.sku})${p.selling_price !== null ? " — " + euro(p.selling_price) : ""} — Lager: ${p.stock_quantity}</option>`)
                 .join("");
 
             const row = document.createElement("div");
