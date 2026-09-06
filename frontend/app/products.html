@@ -55,6 +55,14 @@
                     <label class="block text-sm mb-1">Bild-URL</label>
                     <input type="text" id="field-image"
                            class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                    <div class="mt-2 flex items-center gap-3">
+                        <label class="cursor-pointer bg-gray-600 hover:bg-gray-500 text-white text-xs font-semibold py-1.5 px-3 rounded transition">
+                            <span id="upload-label">Bild vom Gerät hochladen</span>
+                            <input type="file" id="field-image-file" accept="image/png,image/jpeg,image/webp,image/gif"
+                                   class="hidden" onchange="uploadImage()">
+                        </label>
+                        <img id="image-preview" class="hidden w-10 h-10 object-cover rounded">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm mb-1">Einkaufspreis (€)</label>
@@ -161,11 +169,62 @@
             document.getElementById("field-purchase").value = product ? (product.purchase_price ?? "") : "";
             document.getElementById("field-selling").value = product ? (product.selling_price ?? "") : "";
             document.getElementById("field-stock").value = product ? (product.stock_quantity ?? 0) : 0;
+            document.getElementById("field-image-file").value = "";
+            const preview = document.getElementById("image-preview");
+            if (product && product.image_url) {
+                preview.src = product.image_url;
+                preview.classList.remove("hidden");
+            } else {
+                preview.classList.add("hidden");
+            }
             document.getElementById("form-panel").scrollIntoView({ behavior: "smooth" });
         }
 
         function closeForm() {
             document.getElementById("form-panel").classList.add("hidden");
+        }
+
+        async function uploadImage() {
+            const fileInput = document.getElementById("field-image-file");
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const label = document.getElementById("upload-label");
+            const errorBox = document.getElementById("form-error");
+            errorBox.classList.add("hidden");
+            const originalLabel = label.innerText;
+            label.innerText = "Wird hochgeladen...";
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch(`${API_URL}/uploads/product-image`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: formData,
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Upload fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                document.getElementById("field-image").value = data.image_url;
+                const preview = document.getElementById("image-preview");
+                preview.src = data.image_url;
+                preview.classList.remove("hidden");
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.classList.remove("hidden");
+            } finally {
+                label.innerText = originalLabel;
+            }
         }
 
         async function saveProduct() {
