@@ -1,12 +1,14 @@
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 from app.core.deps import get_current_user, get_db
 from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.user import User
-from app.schemas.order import OrderCreate, OrderItemOut, OrderOut
+from app.schemas.order import OrderCreate, OrderItemOut, OrderOut, OrderSummaryOut
 router = APIRouter(prefix="/orders", tags=["orders"])
 def _serialize_order(order: Order) -> OrderOut:
     """
@@ -64,6 +66,46 @@ def list_orders(current_user: User = Depends(get_current_user), db: Session = De
         .all()
     )
     return [_serialize_order(o) for o in orders]
+
+
+@router.get("/summary", response_model=OrderSummaryOut)
+def order_summary(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Powers the dashboard's quick numbers. Boundaries are UTC calendar days/
+    months (not the seller's local timezone) - fine for a rough at-a-glance
+    figure, but worth knowing if "today" ever looks off by a few hours
+    around midnight. Profit here simply skips items with unknown cost data
+    rather than voiding the whole total (unlike a single order's
+    total_profit, which goes to None if ANY item is unknown) - a dashboard
+    estimate is more useful approximate than blank.
+    """
+    now = datetime.now(timezone.utc)
+    start_of_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    start_of_month = start_of_today.replace(day=1)
+
+    def counts_and_profit(since: datetime) -> tuple[int, Decimal]:
+        orders_count = (
+            db.query(func.count(Order.id))
+            .filter(Order.tenant_id == current_user.tenant_id, Order.created_at >= since)
+            .scalar()
+        ) or 0
+        profit = (
+            db.query(func.sum((OrderItem.unit_price - OrderItem.purchase_price) * OrderItem.quantity))
+            .join(Order, Order.id == OrderItem.order_id)
+            .filter(Order.tenant_id == current_user.tenant_id, Order.created_at >= since)
+            .scalar()
+        ) or Decimal("0")
+        return orders_count, profit
+
+    orders_today, profit_today = counts_and_profit(start_of_today)
+    orders_month, profit_month = counts_and_profit(start_of_month)
+
+    return OrderSummaryOut(
+        orders_today=orders_today,
+        profit_today=profit_today,
+        orders_month=orders_month,
+        profit_month=profit_month,
+    )
 @router.post("", response_model=OrderOut, status_code=201)
 def create_order(
     payload: OrderCreate,

@@ -34,3 +34,8 @@ class OrderOut(BaseModel):
     total_profit: Decimal | None = None
     class Config:
         from_attributes = True
+class OrderSummaryOut(BaseModel):
+    orders_today: int
+    profit_today: Decimal
+    orders_month: int
+    profit_month: Decimal

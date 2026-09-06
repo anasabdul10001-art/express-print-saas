@@ -19,6 +19,25 @@
     <main class="max-w-2xl mx-auto p-6 space-y-6">
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <p class="text-gray-400 text-xs mb-1">Bestellungen heute</p>
+                <p class="text-2xl font-bold" id="summary-orders-today">—</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <p class="text-gray-400 text-xs mb-1">Gewinn heute</p>
+                <p class="text-2xl font-bold text-green-400" id="summary-profit-today">—</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <p class="text-gray-400 text-xs mb-1">Bestellungen diesen Monat</p>
+                <p class="text-2xl font-bold" id="summary-orders-month">—</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+                <p class="text-gray-400 text-xs mb-1">Gewinn diesen Monat</p>
+                <p class="text-2xl font-bold text-green-400" id="summary-profit-month">—</p>
+            </div>
+        </div>
+
         <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
             <h2 class="text-xl font-bold mb-2">eBay-Konto</h2>
             <p class="text-gray-400 text-sm mb-4" id="ebay-desc">Status wird geladen...</p>
@@ -111,7 +130,28 @@
             }
         }
 
+        function euro(value) {
+            return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)} €`;
+        }
+
+        async function loadSummary() {
+            try {
+                const response = await fetch(`${API_URL}/orders/summary`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                document.getElementById("summary-orders-today").innerText = data.orders_today;
+                document.getElementById("summary-profit-today").innerText = euro(data.profit_today);
+                document.getElementById("summary-orders-month").innerText = data.orders_month;
+                document.getElementById("summary-profit-month").innerText = euro(data.profit_month);
+            } catch (err) {
+                // Summary is a nice-to-have on this page; a failed fetch here
+                // shouldn't block the eBay section below, so just leave the
+                // "—" placeholders instead of showing an error banner.
+            }
+        }
+
         loadEbayStatus();
+        loadSummary();
     </script>
 </body>
 </html>
