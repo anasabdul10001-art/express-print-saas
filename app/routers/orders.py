@@ -107,8 +107,3 @@ def create_order(
         .first()
     )
     return _serialize_order(order)
-@router.post("/test", response_model=OrderOut, status_code=201)
-def create_test_order(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """
-    Seeds one fake order with two items, so the dashboard/print-mode flow
-    can be tested end-to-end before the real eBay Orders integration
