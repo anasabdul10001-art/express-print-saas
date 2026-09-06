@@ -1,15 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
-
 from app.core.deps import get_current_user, get_db
 from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.user import User
-from app.schemas.order import OrderItemOut, OrderOut
-
+from app.schemas.order import OrderCreate, OrderItemOut, OrderOut
 router = APIRouter(prefix="/orders", tags=["orders"])
-
-
 def _serialize_order(order: Order) -> OrderOut:
     """
     Builds OrderItemOut manually rather than relying on automatic ORM->schema
@@ -38,8 +34,6 @@ def _serialize_order(order: Order) -> OrderOut:
         status=order.status,
         items=items_out,
     )
-
-
 @router.get("", response_model=list[OrderOut])
 def list_orders(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Feeds the dashboard's Orders table: thumbnail, name, shelf location, status."""
@@ -51,8 +45,48 @@ def list_orders(current_user: User = Depends(get_current_user), db: Session = De
         .all()
     )
     return [_serialize_order(o) for o in orders]
+@router.post("", response_model=OrderOut, status_code=201)
+def create_order(
+    payload: OrderCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Creates a real order from actual products the seller owns. Price and
+    shelf_location are always pulled fresh from the product at creation
+    time - never trusted from the request - so a seller can't be tricked
+    into an order with a wrong price, and the shelf_location snapshot
+    reflects where the item actually was when the order came in.
+    """
+    order = Order(tenant_id=current_user.tenant_id, external_order_ref=payload.external_order_ref, status="new")
+    db.add(order)
+    db.flush()
 
+    for item_in in payload.items:
+        product = (
+            db.query(Product)
+            .filter(Product.id == item_in.product_id, Product.tenant_id == current_user.tenant_id)
+            .first()
+        )
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Produkt {item_in.product_id} nicht gefunden.")
 
+        db.add(OrderItem(
+            order_id=order.id,
+            product_id=product.id,
+            quantity=item_in.quantity,
+            unit_price=product.selling_price,
+            shelf_location=product.shelf_location,
+        ))
+
+    db.commit()
+    order = (
+        db.query(Order)
+        .options(joinedload(Order.items).joinedload(OrderItem.product))
+        .filter(Order.id == order.id)
+        .first()
+    )
+    return _serialize_order(order)
 @router.post("/test", response_model=OrderOut, status_code=201)
 def create_test_order(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
@@ -75,11 +109,9 @@ def create_test_order(current_user: User = Depends(get_current_user), db: Sessio
     )
     db.add_all([product_a, product_b])
     db.flush()
-
     order = Order(tenant_id=current_user.tenant_id, external_order_ref="TEST-ORDER", status="new")
     db.add(order)
     db.flush()
-
     db.add_all([
         OrderItem(order_id=order.id, product_id=product_a.id, quantity=1,
                   unit_price=6.99, shelf_location=product_a.shelf_location),
@@ -88,7 +120,6 @@ def create_test_order(current_user: User = Depends(get_current_user), db: Sessio
     ])
     db.commit()
     db.refresh(order)
-
     order = (
         db.query(Order)
         .options(joinedload(Order.items).joinedload(OrderItem.product))

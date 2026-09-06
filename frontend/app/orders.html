@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bestellungen — Express Print SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+        <h1 class="text-lg font-bold">Versandzentrale</h1>
+        <div class="flex items-center gap-6">
+            <a href="../app/dashboard.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Dashboard</a>
+            <a href="products.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Produkte</a>
+            <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto p-6 space-y-6">
+        <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <div class="flex items-center justify-between gap-4">
+            <h2 class="text-2xl font-bold">Bestellungen</h2>
+            <button onclick="openForm()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                + Neue Bestellung
+            </button>
+        </div>
+
+        <!-- New order form, hidden by default -->
+        <div id="form-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+            <h3 class="text-lg font-bold">Neue Bestellung</h3>
+
+            <div>
+                <label class="block text-sm mb-1">Referenz (optional)</label>
+                <input type="text" id="field-ref" placeholder="z.B. eigene Notiz oder Bestellnummer"
+                       class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+            </div>
+
+            <div>
+                <label class="block text-sm mb-2">Artikel</label>
+                <div id="items-container" class="space-y-3"></div>
+                <button type="button" onclick="addItemRow()"
+                        class="mt-3 text-yellow-500 hover:text-yellow-400 text-sm font-semibold">
+                    + Artikel hinzufügen
+                </button>
+            </div>
+
+            <div id="form-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
+
+            <div class="flex gap-3">
+                <button onclick="saveOrder()"
+                        class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    Bestellung anlegen
+                </button>
+                <button onclick="closeForm()"
+                        class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+                    Abbrechen
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="hidden bg-gray-800 p-8 rounded-lg text-center space-y-3">
+            <p class="text-gray-400">Noch keine Bestellungen vorhanden.</p>
+            <button onclick="openForm()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                Erste Bestellung anlegen
+            </button>
+        </div>
+
+        <!-- Orders list -->
+        <div id="orders-list" class="space-y-4"></div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "../login.html";
+        }
+
+        let allProducts = [];
+        let itemRowCount = 0;
+
+        function authHeaders(json = false) {
+            const headers = { "Authorization": `Bearer ${token}` };
+            if (json) headers["Content-Type"] = "application/json";
+            return headers;
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "../login.html";
+        }
+
+        function showBanner(text, isError) {
+            const banner = document.getElementById("banner");
+            banner.innerText = text;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
+            setTimeout(() => banner.classList.add("hidden"), 4000);
+        }
+
+        function euro(value) {
+            return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)} €`;
+        }
+
+        function statusLabel(status) {
+            const map = {
+                new: "Neu",
+                ready_to_print: "Druckbereit",
+                printed: "Gedruckt",
+                shipped: "Versendet",
+                canceled: "Storniert",
+            };
+            return map[status] || status;
+        }
+
+        function addItemRow() {
+            itemRowCount++;
+            const id = itemRowCount;
+            const container = document.getElementById("items-container");
+
+            const options = allProducts
+                .map(p => `<option value="${p.id}">${p.title} (${p.sku})${p.selling_price !== null ? " — " + euro(p.selling_price) : ""}</option>`)
+                .join("");
+
+            const row = document.createElement("div");
+            row.id = `item-row-${id}`;
+            row.className = "flex gap-3 items-center";
+            row.innerHTML = `
+                <select class="item-product flex-1 p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                    <option value="">Produkt wählen...</option>
+                    ${options}
+                </select>
+                <input type="number" class="item-quantity w-24 p-2 rounded bg-gray-700 border border-gray-600 text-white" value="1" min="1" step="1">
+                <button type="button" onclick="document.getElementById('item-row-${id}').remove()"
+                        class="text-red-400 hover:text-red-300 text-sm">Entfernen</button>
+            `;
+            container.appendChild(row);
+        }
+
+        async function openForm() {
+            document.getElementById("form-panel").classList.remove("hidden");
+            document.getElementById("form-error").classList.add("hidden");
+            document.getElementById("field-ref").value = "";
+            document.getElementById("items-container").innerHTML = "";
+            itemRowCount = 0;
+
+            if (allProducts.length === 0) {
+                await loadProductsForSelect();
+            }
+
+            if (allProducts.length === 0) {
+                showBanner("Bitte zuerst mindestens ein Produkt anlegen.", true);
+                closeForm();
+                return;
+            }
+
+            addItemRow();
+            document.getElementById("form-panel").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function closeForm() {
+            document.getElementById("form-panel").classList.add("hidden");
+        }
+
+        async function loadProductsForSelect() {
+            try {
+                const response = await fetch(`${API_URL}/products?active=true`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                allProducts = await response.json();
+            } catch (err) {
+                showBanner("Produkte konnten nicht geladen werden.", true);
+            }
+        }
+
+        async function saveOrder() {
+            const errorBox = document.getElementById("form-error");
+            errorBox.classList.add("hidden");
+
+            const rows = document.querySelectorAll("#items-container > div");
+            const items = [];
+            for (const row of rows) {
+                const productId = row.querySelector(".item-product").value;
+                const quantity = Number(row.querySelector(".item-quantity").value);
+                if (!productId) continue;
+                items.push({ product_id: productId, quantity: quantity || 1 });
+            }
+
+            if (items.length === 0) {
+                errorBox.innerText = "Bitte mindestens einen Artikel mit Produkt auswählen.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            const payload = {
+                external_order_ref: document.getElementById("field-ref").value.trim() || null,
+                items,
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/orders`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify(payload),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Anlegen fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                closeForm();
+                showBanner("Bestellung angelegt.", false);
+                loadOrders();
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        function renderOrders(orders) {
+            const list = document.getElementById("orders-list");
+            const emptyState = document.getElementById("empty-state");
+
+            if (orders.length === 0) {
+                emptyState.classList.remove("hidden");
+                list.innerHTML = "";
+                return;
+            }
+            emptyState.classList.add("hidden");
+
+            list.innerHTML = orders.map(order => {
+                const total = order.items.reduce((sum, i) => sum + (Number(i.unit_price || 0) * i.quantity), 0);
+                const itemsHtml = order.items.map(item => `
+                    <tr class="border-b border-gray-700">
+                        <td class="p-3">
+                            ${item.image_url
+                                ? `<img src="${item.image_url}" class="w-8 h-8 object-cover rounded" onerror="this.style.display='none'">`
+                                : `<div class="w-8 h-8 bg-gray-700 rounded"></div>`}
+                        </td>
+                        <td class="p-3">${item.product_title}</td>
+                        <td class="p-3 text-gray-400">${item.shelf_location || "—"}</td>
+                        <td class="p-3">${item.quantity}</td>
+                        <td class="p-3">${euro(item.unit_price)}</td>
+                    </tr>
+                `).join("");
+
+                return `
+                    <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+                        <div class="p-4 flex items-center justify-between bg-gray-750 border-b border-gray-700">
+                            <div>
+                                <span class="font-semibold">${order.external_order_ref || "Ohne Referenz"}</span>
+                                <span class="ml-3 px-2 py-1 rounded text-xs bg-gray-700">${statusLabel(order.status)}</span>
+                            </div>
+                            <span class="text-yellow-500 font-bold">${euro(total)}</span>
+                        </div>
+                        <table class="w-full text-sm">
+                            <tbody>${itemsHtml}</tbody>
+                        </table>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_URL}/orders`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                renderOrders(data);
+            } catch (err) {
+                showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
+            }
+        }
+
+        loadOrders();
+    </script>
+</body>
+</html>
