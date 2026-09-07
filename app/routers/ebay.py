@@ -56,7 +56,16 @@ def get_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return db.query(EbayAccount).filter(EbayAccount.tenant_id == current_user.tenant_id).first()
+    """
+    Only returns the account if it's actually CONNECTED. A DISCONNECTED row
+    still exists after disconnect() (tokens nulled, not the row itself), so
+    without this filter the frontend would keep showing "connected" forever.
+    """
+    return (
+        db.query(EbayAccount)
+        .filter(EbayAccount.tenant_id == current_user.tenant_id, EbayAccount.status == "CONNECTED")
+        .first()
+    )
 
 
 @router.post("/disconnect")
