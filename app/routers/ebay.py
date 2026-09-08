@@ -7,7 +7,7 @@ from app.core.deps import get_current_user, get_db
 from app.models.ebay_account import EbayAccount
 from app.models.user import User
 from app.schemas.ebay import AuthorizeUrlOut, EbayAccountOut
-from app.services import ebay_oauth_service
+from app.services import ebay_oauth_service, ebay_order_service
 
 router = APIRouter(prefix="/ebay", tags=["ebay"])
 
@@ -78,3 +78,29 @@ def disconnect_ebay(
         raise HTTPException(status_code=404, detail="No eBay account connected for this tenant")
     ebay_oauth_service.disconnect(account, db)
     return {"status": "disconnected"}
+
+
+@router.post("/sync-orders")
+def sync_orders(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Pulls new orders from eBay's Fulfillment API and creates local orders
+    from them. Safe to call repeatedly - already-imported eBay orders are
+    skipped (see ebay_order_service for the duplicate-protection logic).
+    """
+    account = (
+        db.query(EbayAccount)
+        .filter(EbayAccount.tenant_id == current_user.tenant_id, EbayAccount.status == "CONNECTED")
+        .first()
+    )
+    if not account:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+
+    try:
+        result = ebay_order_service.sync_orders(account, current_user.tenant_id, db)
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail=f"eBay-Synchronisierung fehlgeschlagen: {exc}")
+
+    return result

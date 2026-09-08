@@ -19,12 +19,18 @@
     <main class="max-w-5xl mx-auto p-6 space-y-6">
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
-        <div class="flex items-center justify-between gap-4">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
             <h2 class="text-2xl font-bold">Bestellungen</h2>
-            <button onclick="openForm()"
-                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
-                + Neue Bestellung
-            </button>
+            <div class="flex gap-3">
+                <button id="sync-btn" onclick="syncEbayOrders()"
+                        class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+                    Von eBay synchronisieren
+                </button>
+                <button onclick="openForm()"
+                        class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    + Neue Bestellung
+                </button>
+            </div>
         </div>
 
         <!-- New order form, hidden by default -->
@@ -99,7 +105,7 @@
             const banner = document.getElementById("banner");
             banner.innerText = text;
             banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
-            setTimeout(() => banner.classList.add("hidden"), 4000);
+            setTimeout(() => banner.classList.add("hidden"), 6000);
         }
 
         function euro(value) {
@@ -117,13 +123,53 @@
             return map[status] || status;
         }
 
+        async function syncEbayOrders() {
+            const btn = document.getElementById("sync-btn");
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "Wird synchronisiert...";
+
+            try {
+                const response = await fetch(`${API_URL}/ebay/sync-orders`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showBanner(data.detail || "Synchronisierung fehlgeschlagen.", true);
+                    return;
+                }
+
+                let message = `${data.created} neue Bestellung(en) importiert.`;
+                if (data.skipped > 0) {
+                    message += ` ${data.skipped} übersprungen.`;
+                }
+                showBanner(message, data.skipped > 0 && data.created === 0);
+
+                if (data.skipped_reasons && data.skipped_reasons.length > 0) {
+                    console.warn("eBay Sync - übersprungene Bestellungen:", data.skipped_reasons);
+                }
+
+                loadOrders();
+            } catch (err) {
+                showBanner("Server nicht erreichbar. Bitte erneut versuchen.", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+
         function addItemRow() {
             itemRowCount++;
             const id = itemRowCount;
             const container = document.getElementById("items-container");
 
             const options = allProducts
-                .map(p => `<option value="${p.id}">${p.title} (${p.sku})${p.selling_price !== null ? " — " + euro(p.selling_price) : ""} — Lager: ${p.stock_quantity}</option>`)
+                .map(p => `<option value="${p.id}">${p.title} (${p.sku})${p.selling_price !== null ? " — " + euro(p.selling_price) : ""}</option>`)
                 .join("");
 
             const row = document.createElement("div");
