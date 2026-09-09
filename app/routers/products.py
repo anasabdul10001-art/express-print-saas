@@ -129,4 +129,76 @@ def deactivate_product(
 ):
     """
     Soft delete: sets active=False rather than removing the row. Order
-    items
+    items can reference a product's id (see models/order.py), so a hard
+    delete would either fail on the foreign key or silently orphan order
+    history - neither is acceptable. A deactivated product simply stops
+    showing up by default and can't be picked for new orders.
+    """
+    product = (
+        db.query(Product)
+        .filter(Product.id == product_id, Product.tenant_id == current_user.tenant_id)
+        .first()
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Produkt nicht gefunden")
+
+    product.active = False
+    db.commit()
+
+
+@router.post("/{product_id}/restock", response_model=ProductOut)
+def restock_product(
+    product_id: str,
+    payload: RestockCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Adds stock via a dedicated endpoint (not a plain PATCH to stock_quantity)
+    so every increase is always logged as a StockMovement with reason
+    "restock" - a PATCH would silently overwrite the number with no record
+    of why it changed.
+    """
+    product = (
+        db.query(Product)
+        .filter(Product.id == product_id, Product.tenant_id == current_user.tenant_id)
+        .first()
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Produkt nicht gefunden")
+
+    product.stock_quantity += payload.quantity
+    db.add(StockMovement(
+        tenant_id=current_user.tenant_id,
+        product_id=product.id,
+        quantity_change=payload.quantity,
+        reason="restock",
+        reference=None,
+    ))
+    db.commit()
+    db.refresh(product)
+    return _with_profit(product)
+
+
+@router.get("/{product_id}/movements", response_model=list[StockMovementOut])
+def list_stock_movements(
+    product_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Full movement history for one product, newest first."""
+    product = (
+        db.query(Product)
+        .filter(Product.id == product_id, Product.tenant_id == current_user.tenant_id)
+        .first()
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Produkt nicht gefunden")
+
+    movements = (
+        db.query(StockMovement)
+        .filter(StockMovement.product_id == product_id, StockMovement.tenant_id == current_user.tenant_id)
+        .order_by(StockMovement.created_at.desc())
+        .all()
+    )
+    return movements
