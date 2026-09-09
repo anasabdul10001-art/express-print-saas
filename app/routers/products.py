@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
 from app.models.product import Product
+from app.models.stock_movement import StockMovement
 from app.models.user import User
-from app.schemas.product import ProductCreate, ProductOut, ProductUpdate
+from app.schemas.product import ProductCreate, ProductOut, ProductUpdate, RestockCreate, StockMovementOut
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -128,18 +129,4 @@ def deactivate_product(
 ):
     """
     Soft delete: sets active=False rather than removing the row. Order
-    items can reference a product's id (see models/order.py), so a hard
-    delete would either fail on the foreign key or silently orphan order
-    history - neither is acceptable. A deactivated product simply stops
-    showing up by default and can't be picked for new orders.
-    """
-    product = (
-        db.query(Product)
-        .filter(Product.id == product_id, Product.tenant_id == current_user.tenant_id)
-        .first()
-    )
-    if not product:
-        raise HTTPException(status_code=404, detail="Produkt nicht gefunden")
-
-    product.active = False
-    db.commit()
+    items can reference a product's id (see

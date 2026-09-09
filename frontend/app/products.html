@@ -11,6 +11,7 @@
         <h1 class="text-lg font-bold">Versandzentrale</h1>
         <div class="flex items-center gap-6">
             <a href="dashboard.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Dashboard</a>
+            <a href="orders.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Bestellungen</a>
             <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
         </div>
     </nav>
@@ -78,6 +79,7 @@
                     <label class="block text-sm mb-1">Lagerbestand (Menge)</label>
                     <input type="number" step="1" min="0" id="field-stock"
                            class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                    <p class="text-xs text-gray-500 mt-1">Nur für die Ersteinrichtung. Später bitte "+ Bestand" in der Tabelle verwenden, damit die Änderung im Verlauf protokolliert wird.</p>
                 </div>
             </div>
 
@@ -93,6 +95,15 @@
                     Abbrechen
                 </button>
             </div>
+        </div>
+
+        <!-- Stock movement history panel, hidden by default -->
+        <div id="history-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold">Lagerbestand-Verlauf: <span id="history-product-title"></span></h3>
+                <button onclick="closeHistory()" class="text-gray-400 hover:text-white text-sm">Schließen</button>
+            </div>
+            <div id="history-list" class="space-y-2 text-sm"></div>
         </div>
 
         <!-- Empty state -->
@@ -157,8 +168,24 @@
             return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)} €`;
         }
 
+        function reasonLabel(reason) {
+            const map = {
+                order: "Manuelle Bestellung",
+                ebay_sync: "eBay-Bestellung",
+                restock: "Lager aufgefüllt",
+                manual_correction: "Manuelle Korrektur",
+            };
+            return map[reason] || reason;
+        }
+
+        function formatDate(isoString) {
+            const d = new Date(isoString);
+            return d.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+        }
+
         function openForm(product = null) {
             document.getElementById("form-panel").classList.remove("hidden");
+            document.getElementById("history-panel").classList.add("hidden");
             document.getElementById("form-error").classList.add("hidden");
             document.getElementById("form-title").innerText = product ? "Produkt bearbeiten" : "Neues Produkt";
             document.getElementById("product-id").value = product ? product.id : "";
@@ -304,6 +331,74 @@
             }
         }
 
+        async function restockProduct(id, title) {
+            const input = prompt(`Wie viele Einheiten von "${title}" wurden hinzugefügt?`);
+            if (input === null) return;
+
+            const quantity = Number(input);
+            if (!Number.isInteger(quantity) || quantity <= 0) {
+                showBanner("Bitte eine gültige positive Zahl eingeben.", true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/products/${id}/restock`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ quantity }),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) {
+                    showBanner(data.detail || "Auffüllen fehlgeschlagen.", true);
+                    return;
+                }
+                showBanner(`${quantity} Einheiten zu "${title}" hinzugefügt.`, false);
+                loadProducts();
+            } catch (err) {
+                showBanner("Server nicht erreichbar.", true);
+            }
+        }
+
+        async function showHistory(id, title) {
+            document.getElementById("form-panel").classList.add("hidden");
+            document.getElementById("history-panel").classList.remove("hidden");
+            document.getElementById("history-product-title").innerText = title;
+            document.getElementById("history-list").innerHTML = `<p class="text-gray-500">Lädt...</p>`;
+            document.getElementById("history-panel").scrollIntoView({ behavior: "smooth" });
+
+            try {
+                const response = await fetch(`${API_URL}/products/${id}/movements`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const movements = await response.json();
+
+                const list = document.getElementById("history-list");
+                if (movements.length === 0) {
+                    list.innerHTML = `<p class="text-gray-500">Noch keine Bewegungen für dieses Produkt.</p>`;
+                    return;
+                }
+
+                list.innerHTML = movements.map(m => `
+                    <div class="flex items-center justify-between border-b border-gray-700 py-2">
+                        <div>
+                            <span class="${m.quantity_change >= 0 ? "text-green-400" : "text-red-400"} font-semibold">
+                                ${m.quantity_change >= 0 ? "+" : ""}${m.quantity_change}
+                            </span>
+                            <span class="text-gray-300 ml-2">${reasonLabel(m.reason)}</span>
+                            ${m.reference ? `<span class="text-gray-500 ml-2">(${m.reference})</span>` : ""}
+                        </div>
+                        <span class="text-gray-500 text-xs">${formatDate(m.created_at)}</span>
+                    </div>
+                `).join("");
+            } catch (err) {
+                document.getElementById("history-list").innerHTML = `<p class="text-red-400">Verlauf konnte nicht geladen werden.</p>`;
+            }
+        }
+
+        function closeHistory() {
+            document.getElementById("history-panel").classList.add("hidden");
+        }
+
         function renderProducts(products) {
             const tbody = document.getElementById("products-tbody");
             const emptyState = document.getElementById("empty-state");
@@ -337,8 +432,10 @@
                             ${p.active ? "Aktiv" : "Inaktiv"}
                         </span>
                     </td>
-                    <td class="p-3 whitespace-nowrap">
-                        <button onclick='openForm(${JSON.stringify(p)})' class="text-yellow-500 hover:text-yellow-400 text-xs mr-3">Bearbeiten</button>
+                    <td class="p-3 whitespace-nowrap space-x-2">
+                        <button onclick='openForm(${JSON.stringify(p)})' class="text-yellow-500 hover:text-yellow-400 text-xs">Bearbeiten</button>
+                        <button onclick='restockProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})' class="text-blue-400 hover:text-blue-300 text-xs">+ Bestand</button>
+                        <button onclick='showHistory(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})' class="text-gray-400 hover:text-gray-300 text-xs">Verlauf</button>
                         ${p.active ? `<button onclick="deactivateProduct('${p.id}', ${JSON.stringify(p.title)})" class="text-red-400 hover:text-red-300 text-xs">Deaktivieren</button>` : ""}
                     </td>
                 </tr>

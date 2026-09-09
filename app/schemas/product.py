@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field
 class ProductCreate(BaseModel):
@@ -33,5 +34,18 @@ class ProductOut(BaseModel):
     # above so it can never drift out of sync with them.
     profit_per_unit: Decimal | None = None
     margin_percent: Decimal | None = None
+    class Config:
+        from_attributes = True
+class RestockCreate(BaseModel):
+    """Adds stock through a dedicated endpoint (not a plain PATCH) so the
+    addition is always logged as a StockMovement - a PATCH to stock_quantity
+    overwrites the number with no history of why it changed."""
+    quantity: int = Field(..., gt=0)
+class StockMovementOut(BaseModel):
+    id: uuid.UUID
+    quantity_change: int
+    reason: str
+    reference: str | None
+    created_at: datetime
     class Config:
         from_attributes = True

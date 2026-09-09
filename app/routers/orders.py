@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.deps import get_current_user, get_db
 from app.models.order import Order, OrderItem
 from app.models.product import Product
+from app.models.stock_movement import StockMovement
 from app.models.user import User
 from app.schemas.order import OrderCreate, OrderItemOut, OrderOut, OrderSummaryOut
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -123,7 +124,8 @@ def create_order(
     for more units than are currently on hand, and once created, those
     units are immediately removed from stock_quantity. All products are
     checked BEFORE any stock is touched, so a failure on item 3 of 3
-    never leaves items 1-2 partially decremented.
+    never leaves items 1-2 partially decremented. Each decrement is also
+    logged as a StockMovement row for the audit trail.
     """
     products_by_id = {}
     for item_in in payload.items:
@@ -160,6 +162,14 @@ def create_order(
             shelf_location=product.shelf_location,
         ))
         product.stock_quantity -= item_in.quantity
+
+        db.add(StockMovement(
+            tenant_id=current_user.tenant_id,
+            product_id=product.id,
+            quantity_change=-item_in.quantity,
+            reason="order",
+            reference=payload.external_order_ref,
+        ))
 
     db.commit()
     order = (

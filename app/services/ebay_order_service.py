@@ -16,7 +16,8 @@ Design choices worth knowing:
       (an eBay order already happened in the real world - refusing to
       record it wouldn't undo the sale, it would just hide it. Stock can
       go negative here as a visible signal to restock, rather than an
-      import failure).
+      import failure). Each decrement is logged as a StockMovement row,
+      same as manual orders, so the audit trail covers both sources.
 """
 
 from datetime import datetime, timezone
@@ -28,6 +29,7 @@ from uuid import UUID
 from app.models.ebay_account import EbayAccount
 from app.models.order import Order, OrderItem
 from app.models.product import Product
+from app.models.stock_movement import StockMovement
 from app.services import ebay_oauth_service
 
 EBAY_API_BASE = {
@@ -114,6 +116,14 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             # Best-effort decrement; never blocks the import if stock is
             # insufficient - see module docstring.
             product.stock_quantity = max(0, product.stock_quantity - quantity)
+
+            db.add(StockMovement(
+                tenant_id=tenant_id,
+                product_id=product.id,
+                quantity_change=-quantity,
+                reason="ebay_sync",
+                reference=ebay_order_id,
+            ))
 
         created_count += 1
 
