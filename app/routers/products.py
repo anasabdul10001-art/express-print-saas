@@ -129,4 +129,4 @@ def deactivate_product(
 ):
     """
     Soft delete: sets active=False rather than removing the row. Order
-    items can reference a product's id (see
+    items
