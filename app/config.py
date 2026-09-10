@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     # Resend's own onboarding@resend.dev sandbox address (which only
     # delivers to the Resend account's own verified email until a real
     # domain is verified).
-    resend_from_email: str = "Express Print <onboarding@resend.dev>"
+    resend_from_email: str = "ShipSync <onboarding@resend.dev>"
     # --- Scheduled market-research snapshots ---
     # Shared secret checked on POST /market-research/tracked/run-snapshots,
     # so only our own daily scheduler (not the public internet) can trigger

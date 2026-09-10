@@ -1,5 +1,5 @@
 """
-Talks to the Express Print backend: polls for the next pending print job,
+Talks to the ShipSync backend: polls for the next pending print job,
 downloads its label PDF, prints it, and reports back whether it succeeded.
 
 Mirrors the server-side contract in app/routers/print_agents.py and
