@@ -235,7 +235,7 @@
                     <td class="p-3">${e.description}</td>
                     <td class="p-3 text-red-400">${euro(e.amount)}</td>
                     <td class="p-3">
-                        <button onclick="deleteExpense('${e.id}', ${JSON.stringify(e.description)})"
+                        <button onclick='deleteExpense(${JSON.stringify(e.id)}, ${JSON.stringify(e.description)})'
                                 class="text-red-400 hover:text-red-300 text-xs">Löschen</button>
                     </td>
                 </tr>
