@@ -34,7 +34,25 @@ def load_config() -> dict | None:
     return data
 
 
-def save_config(agent_id: str, api_key: str, printer_name: str) -> None:
+def save_config(
+    agent_id: str,
+    api_key: str,
+    printer_name: str,
+    watch_folder: str | None = None,
+    watch_rotation: int = 0,
+) -> None:
+    # watch_folder/watch_rotation are optional - the hot-folder feature
+    # (auto-print whatever new PDF lands in a chosen folder) is opt-in per
+    # installation, since each customer's download habits differ.
     os.makedirs(_CONFIG_DIR, exist_ok=True)
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump({"agent_id": agent_id, "api_key": api_key, "printer_name": printer_name}, f)
+        json.dump(
+            {
+                "agent_id": agent_id,
+                "api_key": api_key,
+                "printer_name": printer_name,
+                "watch_folder": watch_folder,
+                "watch_rotation": watch_rotation,
+            },
+            f,
+        )

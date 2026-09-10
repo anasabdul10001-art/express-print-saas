@@ -31,12 +31,18 @@
             </button>
         </div>
 
-        <p class="text-gray-400 text-sm">
-            Ein Print-Agent ist das kleine Programm, das auf dem Rechner neben deinem
-            Etikettendrucker läuft. Jeder Agent braucht einen eigenen API-Key, den du
-            beim Anlegen einmalig kopierst und in die <code class="bg-gray-800 px-1 rounded">config.json</code>
-            des Agents einträgst.
-        </p>
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-3">
+            <p class="text-gray-300 text-sm">
+                Ein Print-Agent ist das kleine Windows-Programm, das auf dem Rechner neben deinem
+                Etikettendrucker läuft und automatisch druckt. Jeder Agent braucht einen eigenen
+                Agent-ID + API-Key (siehe "+ Neuer Print-Agent" oben), die du beim ersten Start
+                des Programms einträgst.
+            </p>
+            <a href="https://github.com/anasabdul10001-art/express-print-saas/releases/download/print-agent-v1.0.0/PrintAgentSetup.exe"
+               class="inline-block bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                ⬇ Print-Agent herunterladen (Windows)
+            </a>
+        </div>
 
         <!-- Add form, hidden by default -->
         <div id="form-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
