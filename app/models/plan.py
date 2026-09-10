@@ -30,6 +30,9 @@ class Plan(Base):
     printer_limit = Column(Integer, nullable=True)
     user_limit = Column(Integer, nullable=True)
 
+    # Null or 0 = no trial. Not enforced anywhere yet - see module docstring.
+    trial_days = Column(Integer, nullable=True)
+
     features = Column(ARRAY(String), nullable=False, default=list)
 
     is_active = Column(Boolean, nullable=False, default=True)  # shown on the (future) public pricing page

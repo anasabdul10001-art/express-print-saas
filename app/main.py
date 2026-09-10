@@ -1,10 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 
+from app.database import engine
 from app.routers import admin, auth, ebay, expenses, market_research, orders, plans, print_agents, print_jobs, products, tenants, uploads
 
 app = FastAPI(title="eBay Seller SaaS API", version="0.1.0")
+
+# There's no Alembic here (see init_db.py) - create_all() only creates
+# missing tables, it never adds a column to one that already exists in
+# production. Running new-column ALTERs here, guarded with IF NOT EXISTS,
+# keeps them applying automatically on every deploy without a manual
+# migration step against the live database.
+with engine.begin() as connection:
+    connection.execute(text("ALTER TABLE plans ADD COLUMN IF NOT EXISTS trial_days INTEGER"))
 
 app.add_middleware(
     CORSMiddleware,

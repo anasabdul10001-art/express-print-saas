@@ -13,6 +13,7 @@ class PlanCreate(BaseModel):
     order_limit: int | None = None
     printer_limit: int | None = None
     user_limit: int | None = None
+    trial_days: int | None = None
     features: list[str] = Field(default_factory=list)
     is_active: bool = True
     is_recommended: bool = False
@@ -27,6 +28,7 @@ class PlanUpdate(BaseModel):
     order_limit: int | None = None
     printer_limit: int | None = None
     user_limit: int | None = None
+    trial_days: int | None = None
     features: list[str] | None = None
     is_active: bool | None = None
     is_recommended: bool | None = None
@@ -42,6 +44,7 @@ class PlanOut(BaseModel):
     order_limit: int | None
     printer_limit: int | None
     user_limit: int | None
+    trial_days: int | None
     features: list[str]
     is_active: bool
     is_recommended: bool
