@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Testphase abgelaufen — Express Print</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white text-slate-900 min-h-screen flex flex-col">
+    <nav class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <a href="index.html" class="flex items-center gap-2">
+            <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="font-bold text-sm">Express Print</span>
+        </a>
+        <button onclick="logout()" class="text-slate-500 hover:text-slate-900 text-sm transition">Abmelden</button>
+    </nav>
+
+    <main class="flex-1 flex items-center justify-center p-6">
+        <div class="w-full max-w-md text-center">
+            <div class="mx-auto mb-6 w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+            </div>
+
+            <h1 class="text-2xl font-bold mb-3">Deine kostenlose Testphase ist abgelaufen</h1>
+            <p id="detail-message" class="text-slate-500 text-sm mb-8">
+                Um Express Print weiterhin zu nutzen, wähle bitte einen bezahlten Plan.
+            </p>
+
+            <a href="pricing.html" class="block w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg transition shadow-sm shadow-red-600/20 mb-3">
+                Jetzt Plan wählen
+            </a>
+            <button onclick="logout()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-lg transition">
+                Abmelden
+            </button>
+
+            <p class="text-slate-400 text-xs mt-8">
+                Du hast bereits upgegradet oder denkst, das ist ein Fehler? <a href="mailto:hallo@expressprint.example" class="text-red-600 font-semibold">Kontaktiere uns</a>.
+            </p>
+        </div>
+    </main>
+
+    <script>
+        // Set by trial-guard.js (from app/*.html) or login.html right before
+        // redirecting here, so this page can show the API's exact wording
+        // instead of only ever the generic fallback text above.
+        const storedMessage = sessionStorage.getItem("trial_expired_message");
+        if (storedMessage) {
+            document.getElementById("detail-message").innerText = storedMessage;
+            sessionStorage.removeItem("trial_expired_message");
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>
