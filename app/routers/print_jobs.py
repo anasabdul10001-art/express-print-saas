@@ -115,6 +115,9 @@ def trigger_print_for_order(
     db.refresh(job)
 
     return {"id": str(job.id), "status": job.status, "order_id": str(order.id)}
+
+
+@router.patch("/{job_id}/status")
 def update_job_status(
     job_id: str,
     payload: PrintJobStatusUpdate,
