@@ -39,6 +39,18 @@ def get_current_user(
     return user
 
 
+def get_current_superadmin(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Gate for the cross-tenant Super Admin panel. `is_superadmin` is a
+    platform-level flag on the user row, unrelated to their `role` within
+    their own tenant, and is never settable through any tenant-facing
+    endpoint - only ever flipped directly in the database.
+    """
+    if not current_user.is_superadmin:
+        raise HTTPException(status_code=403, detail="Nur für Plattform-Administratoren")
+    return current_user
+
+
 def get_print_agent_from_api_key(
     authorization: str = Header(..., alias="Authorization"),
     db: Session = Depends(get_db),

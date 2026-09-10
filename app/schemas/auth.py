@@ -1,3 +1,5 @@
+import uuid
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -25,3 +27,20 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str = Field(..., min_length=8)
+
+
+class UserMeOut(BaseModel):
+    id: uuid.UUID
+    email: EmailStr
+    full_name: str | None
+    tenant_id: uuid.UUID
+    role: str
+    is_superadmin: bool
+
+    class Config:
+        from_attributes = True
+
+
+class UpdateEmailRequest(BaseModel):
+    email: EmailStr
+    current_password: str = Field(..., description="Confirms it's really you before changing your login email")

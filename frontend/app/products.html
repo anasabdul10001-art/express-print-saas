@@ -178,6 +178,24 @@
             document.getElementById("menu-icon-close").classList.toggle("hidden");
         }
 
+
+        async function injectAdminLink() {
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
+                if (!response.ok) return;
+                const me = await response.json();
+                if (!me.is_superadmin) return;
+
+                const desktopLogout = document.querySelector('nav .hidden.md\\:flex button[onclick="logout()"]');
+                const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Admin</a>');
+                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Admin</a>');
+            } catch (err) {
+                // Non-critical - regular tenants simply never see this link.
+            }
+        }
+        injectAdminLink();
+
         function logout() {
             localStorage.removeItem("access_token");
             window.location.href = "../login.html";

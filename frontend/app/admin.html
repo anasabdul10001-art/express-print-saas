@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin — Express Print</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
+        <div class="flex items-center justify-between">
+            <h1 class="text-lg font-bold">Versandzentrale</h1>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="dashboard.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Dashboard</a>
+                <a href="products.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Produkte</a>
+                <a href="orders.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Bestellungen</a>
+                <a href="expenses.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Ausgaben</a>
+                <a href="market-research.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Marktrecherche</a>
+                <a href="print-agents.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Print-Agents</a>
+                <a href="settings.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Einstellungen</a>
+                <a href="admin.html" class="text-red-600 text-sm font-semibold">Admin</a>
+                <button onclick="logout()" class="text-slate-500 hover:text-slate-900 text-sm transition">Abmelden</button>
+            </div>
+            <button onclick="toggleMobileMenu()" class="md:hidden p-2 -mr-2 text-slate-600" aria-label="Menü öffnen">
+                <svg id="menu-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                <svg id="menu-icon-close" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden flex flex-col gap-1 mt-4">
+            <a href="dashboard.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Dashboard</a>
+            <a href="products.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Produkte</a>
+            <a href="orders.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Bestellungen</a>
+            <a href="expenses.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Ausgaben</a>
+            <a href="market-research.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Marktrecherche</a>
+            <a href="print-agents.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Print-Agents</a>
+            <a href="settings.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Einstellungen</a>
+            <a href="admin.html" class="block px-3 py-2.5 rounded-lg bg-red-50 text-red-600 text-sm font-semibold">Admin</a>
+            <button onclick="logout()" class="text-left px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Abmelden</button>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto p-6 space-y-6">
+        <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <div>
+            <h2 class="text-2xl font-bold">Plattform-Administration</h2>
+            <p class="text-slate-500 text-sm mt-1">Nur für dich als Plattform-Betreiber sichtbar - nicht für deine Händler.</p>
+        </div>
+
+        <!-- Logo -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold">Logo</h3>
+            <p class="text-slate-500 text-sm">Wird auf der Login-/Registrierungsseite und im Dashboard verwendet.</p>
+            <div class="flex items-center gap-4">
+                <div id="logo-preview-wrap" class="hidden w-16 h-16 rounded-lg border border-slate-200 overflow-hidden flex items-center justify-center bg-slate-50">
+                    <img id="logo-preview" class="max-w-full max-h-full object-contain">
+                </div>
+                <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-lg transition">
+                    <span id="logo-upload-label">Logo hochladen</span>
+                    <input type="file" id="logo-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" onchange="uploadLogo()">
+                </label>
+            </div>
+        </div>
+
+        <!-- Plans -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold">Preispläne</h3>
+                <button onclick="openPlanForm()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition">+ Neuer Plan</button>
+            </div>
+
+            <div id="plan-form" class="hidden border border-slate-200 rounded-lg p-4 space-y-3">
+                <h4 id="plan-form-title" class="font-semibold">Neuer Plan</h4>
+                <input type="hidden" id="plan-id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">Name *</label>
+                        <input type="text" id="plan-name" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">Preis pro Monat (€)</label>
+                        <input type="number" step="0.01" id="plan-price" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Beschreibung</label>
+                    <input type="text" id="plan-description" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">Max. Bestellungen/Monat</label>
+                        <input type="number" id="plan-order-limit" placeholder="leer = unbegrenzt" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">Max. Print-Agents</label>
+                        <input type="number" id="plan-printer-limit" placeholder="leer = unbegrenzt" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1">Max. Benutzer</label>
+                        <input type="number" id="plan-user-limit" placeholder="leer = unbegrenzt" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Funktionen (eine pro Zeile)</label>
+                    <textarea id="plan-features" rows="4" placeholder="eBay-Synchronisierung&#10;Automatisches Drucken&#10;Marktrecherche" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"></textarea>
+                </div>
+                <div class="flex items-center gap-6">
+                    <label class="flex items-center gap-2 text-sm text-slate-700">
+                        <input type="checkbox" id="plan-active" checked> Aktiv (auf Preisseite sichtbar)
+                    </label>
+                    <label class="flex items-center gap-2 text-sm text-slate-700">
+                        <input type="checkbox" id="plan-recommended"> Empfohlen
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-slate-700">Reihenfolge</label>
+                        <input type="number" id="plan-order" value="0" class="w-16 px-2 py-1 rounded-lg bg-white border border-slate-300 text-sm">
+                    </div>
+                </div>
+                <div id="plan-form-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+                <div class="flex gap-3">
+                    <button onclick="savePlan()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition">Speichern</button>
+                    <button onclick="closePlanForm()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2 px-4 rounded-lg transition">Abbrechen</button>
+                </div>
+            </div>
+
+            <div id="plans-empty" class="hidden text-slate-500 text-sm">Noch keine Pläne angelegt.</div>
+            <div id="plans-list" class="space-y-3"></div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "../login.html";
+        }
+
+        function authHeaders(json = false) {
+            const headers = { "Authorization": `Bearer ${token}` };
+            if (json) headers["Content-Type"] = "application/json";
+            return headers;
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById("mobile-menu").classList.toggle("hidden");
+            document.getElementById("menu-icon-open").classList.toggle("hidden");
+            document.getElementById("menu-icon-close").classList.toggle("hidden");
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "../login.html";
+        }
+
+        function showBanner(text, isError) {
+            const banner = document.getElementById("banner");
+            banner.innerText = text;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-50 text-red-700 border border-red-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`;
+            setTimeout(() => banner.classList.add("hidden"), 4000);
+        }
+
+        function euro(value) {
+            return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)} €`;
+        }
+
+        async function verifyAccess() {
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const me = await response.json();
+                if (!me.is_superadmin) {
+                    window.location.href = "dashboard.html";
+                    return;
+                }
+                loadSettings();
+                loadPlans();
+            } catch (err) {
+                showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch(`${API_URL}/admin/settings`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (data.logo_url) {
+                    document.getElementById("logo-preview").src = data.logo_url;
+                    document.getElementById("logo-preview-wrap").classList.remove("hidden");
+                }
+            } catch (err) {
+                // Non-critical - the upload button still works without a preview.
+            }
+        }
+
+        async function uploadLogo() {
+            const fileInput = document.getElementById("logo-file");
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const label = document.getElementById("logo-upload-label");
+            const originalLabel = label.innerText;
+            label.innerText = "Wird hochgeladen...";
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch(`${API_URL}/admin/logo`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: formData,
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showBanner(data.detail || "Logo-Upload fehlgeschlagen.", true);
+                    return;
+                }
+
+                document.getElementById("logo-preview").src = data.logo_url;
+                document.getElementById("logo-preview-wrap").classList.remove("hidden");
+                showBanner("Logo aktualisiert.", false);
+            } catch (err) {
+                showBanner("Server nicht erreichbar.", true);
+            } finally {
+                label.innerText = originalLabel;
+            }
+        }
+
+        function openPlanForm(plan = null) {
+            document.getElementById("plan-form").classList.remove("hidden");
+            document.getElementById("plan-form-error").classList.add("hidden");
+            document.getElementById("plan-form-title").innerText = plan ? "Plan bearbeiten" : "Neuer Plan";
+            document.getElementById("plan-id").value = plan ? plan.id : "";
+            document.getElementById("plan-name").value = plan ? plan.name : "";
+            document.getElementById("plan-description").value = plan ? (plan.description || "") : "";
+            document.getElementById("plan-price").value = plan ? (plan.price_monthly ?? "") : "";
+            document.getElementById("plan-order-limit").value = plan ? (plan.order_limit ?? "") : "";
+            document.getElementById("plan-printer-limit").value = plan ? (plan.printer_limit ?? "") : "";
+            document.getElementById("plan-user-limit").value = plan ? (plan.user_limit ?? "") : "";
+            document.getElementById("plan-features").value = plan ? (plan.features || []).join("\n") : "";
+            document.getElementById("plan-active").checked = plan ? plan.is_active : true;
+            document.getElementById("plan-recommended").checked = plan ? plan.is_recommended : false;
+            document.getElementById("plan-order").value = plan ? plan.display_order : 0;
+            document.getElementById("plan-form").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function closePlanForm() {
+            document.getElementById("plan-form").classList.add("hidden");
+        }
+
+        async function savePlan() {
+            const errorBox = document.getElementById("plan-form-error");
+            errorBox.classList.add("hidden");
+
+            const id = document.getElementById("plan-id").value;
+            const name = document.getElementById("plan-name").value.trim();
+            if (!name) {
+                errorBox.innerText = "Bitte einen Namen eingeben.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            const priceRaw = document.getElementById("plan-price").value;
+            const orderLimitRaw = document.getElementById("plan-order-limit").value;
+            const printerLimitRaw = document.getElementById("plan-printer-limit").value;
+            const userLimitRaw = document.getElementById("plan-user-limit").value;
+            const featuresRaw = document.getElementById("plan-features").value;
+
+            const payload = {
+                name,
+                description: document.getElementById("plan-description").value.trim() || null,
+                price_monthly: priceRaw === "" ? null : Number(priceRaw),
+                order_limit: orderLimitRaw === "" ? null : Number(orderLimitRaw),
+                printer_limit: printerLimitRaw === "" ? null : Number(printerLimitRaw),
+                user_limit: userLimitRaw === "" ? null : Number(userLimitRaw),
+                features: featuresRaw.split("\n").map(f => f.trim()).filter(f => f.length > 0),
+                is_active: document.getElementById("plan-active").checked,
+                is_recommended: document.getElementById("plan-recommended").checked,
+                display_order: Number(document.getElementById("plan-order").value) || 0,
+            };
+
+            try {
+                const response = await fetch(
+                    id ? `${API_URL}/admin/plans/${id}` : `${API_URL}/admin/plans`,
+                    {
+                        method: id ? "PATCH" : "POST",
+                        headers: authHeaders(true),
+                        body: JSON.stringify(payload),
+                    }
+                );
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                closePlanForm();
+                showBanner(id ? "Plan aktualisiert." : "Plan angelegt.", false);
+                loadPlans();
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar.";
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function deletePlan(id, name) {
+            if (!confirm(`Plan "${name}" wirklich löschen?`)) return;
+
+            try {
+                const response = await fetch(`${API_URL}/admin/plans/${id}`, {
+                    method: "DELETE",
+                    headers: authHeaders(),
+                });
+                if (response.status === 401) { logout(); return; }
+                showBanner("Plan gelöscht.", false);
+                loadPlans();
+            } catch (err) {
+                showBanner("Server nicht erreichbar.", true);
+            }
+        }
+
+        function renderPlans(plans) {
+            const list = document.getElementById("plans-list");
+            const emptyState = document.getElementById("plans-empty");
+
+            if (plans.length === 0) {
+                emptyState.classList.remove("hidden");
+                list.innerHTML = "";
+                return;
+            }
+            emptyState.classList.add("hidden");
+
+            list.innerHTML = plans.map(p => `
+                <div class="border border-slate-200 rounded-lg p-4 flex items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold">${p.name}</span>
+                            ${p.is_recommended ? '<span class="px-2 py-0.5 rounded-full text-xs bg-red-50 text-red-600">Empfohlen</span>' : ""}
+                            ${!p.is_active ? '<span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-500">Inaktiv</span>' : ""}
+                        </div>
+                        <p class="text-sm text-slate-500 mt-1">${p.description || ""}</p>
+                        <p class="text-lg font-bold text-red-600 mt-1">${euro(p.price_monthly)} <span class="text-xs font-normal text-slate-400">/ Monat</span></p>
+                        ${p.features.length > 0 ? `<ul class="text-xs text-slate-500 mt-2 list-disc list-inside">${p.features.map(f => `<li>${f}</li>`).join("")}</ul>` : ""}
+                    </div>
+                    <div class="flex flex-col gap-2 flex-shrink-0">
+                        <button onclick='openPlanForm(${JSON.stringify(p)})' class="text-blue-600 hover:text-blue-700 text-xs font-semibold">Bearbeiten</button>
+                        <button onclick='deletePlan(${JSON.stringify(p.id)}, ${JSON.stringify(p.name)})' class="text-red-600 hover:text-red-700 text-xs font-semibold">Löschen</button>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        async function loadPlans() {
+            try {
+                const response = await fetch(`${API_URL}/admin/plans`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                if (response.status === 403) { window.location.href = "dashboard.html"; return; }
+                const data = await response.json();
+                renderPlans(data);
+            } catch (err) {
+                showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
+            }
+        }
+
+        verifyAccess();
+    </script>
+</body>
+</html>

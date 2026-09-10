@@ -62,6 +62,26 @@
             </button>
         </div>
 
+        <!-- Account / login email -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold">Konto</h3>
+            <div>
+                <label class="block text-sm mb-1">E-Mail (zum Anmelden)</label>
+                <input type="email" id="field-email"
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Aktuelles Passwort (zur Bestätigung)</label>
+                <input type="password" id="field-email-password" autocomplete="current-password"
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            </div>
+            <div id="email-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <button onclick="saveEmail()"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                E-Mail ändern
+            </button>
+        </div>
+
         <!-- Print mode -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 class="text-lg font-bold">Druckmodus</h3>
@@ -124,6 +144,24 @@
             document.getElementById("menu-icon-close").classList.toggle("hidden");
         }
 
+
+        async function injectAdminLink() {
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
+                if (!response.ok) return;
+                const me = await response.json();
+                if (!me.is_superadmin) return;
+
+                const desktopLogout = document.querySelector('nav .hidden.md\\:flex button[onclick="logout()"]');
+                const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Admin</a>');
+                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Admin</a>');
+            } catch (err) {
+                // Non-critical - regular tenants simply never see this link.
+            }
+        }
+        injectAdminLink();
+
         function logout() {
             localStorage.removeItem("access_token");
             window.location.href = "../login.html";
@@ -149,6 +187,59 @@
                 if (radio) radio.checked = true;
             } catch (err) {
                 showBanner("Einstellungen konnten nicht geladen werden. Bitte Seite neu laden.", true);
+            }
+        }
+
+        async function loadAccount() {
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                document.getElementById("field-email").value = data.email || "";
+            } catch (err) {
+                // Non-critical - the field just starts empty if this fails.
+            }
+        }
+
+        async function saveEmail() {
+            const errorBox = document.getElementById("email-error");
+            errorBox.classList.add("hidden");
+
+            const email = document.getElementById("field-email").value.trim();
+            const password = document.getElementById("field-email-password").value;
+
+            if (!email || !password) {
+                errorBox.innerText = "Bitte E-Mail und aktuelles Passwort eingeben.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me/email`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ email, current_password: password }),
+                });
+
+                if (response.status === 401) {
+                    errorBox.innerText = "Passwort ist falsch.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Ändern fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                document.getElementById("field-email-password").value = "";
+                showBanner("E-Mail-Adresse geändert. Bitte merke sie dir für die nächste Anmeldung.", false);
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.classList.remove("hidden");
             }
         }
 
@@ -230,6 +321,7 @@
         }
 
         loadTenant();
+        loadAccount();
     </script>
 </body>
 </html>

@@ -17,5 +17,10 @@ class User(Base):
     full_name = Column(String(255))
     role = Column(String(20), nullable=False, default="owner")
     is_active = Column(Boolean, nullable=False, default=True)
+    # Platform-level flag, separate from `role` (which describes standing
+    # within one's own tenant). Grants access to the cross-tenant Super
+    # Admin panel - plans, site logo, etc. Not settable via any tenant-
+    # facing endpoint.
+    is_superadmin = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())

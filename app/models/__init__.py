@@ -9,9 +9,10 @@ from app.models.stock_movement import StockMovement
 from app.models.expense import Expense
 from app.models.password_reset_token import PasswordResetToken
 from app.models.market_research import TrackedSearch, MarketSnapshot
+from app.models.plan import Plan, SiteSettings
 
 __all__ = [
     "Tenant", "User", "PrintAgent", "PrintJob", "Product", "Order", "OrderItem",
     "EbayAccount", "EbayOAuthState", "StockMovement", "Expense", "PasswordResetToken",
-    "TrackedSearch", "MarketSnapshot",
+    "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings",
 ]

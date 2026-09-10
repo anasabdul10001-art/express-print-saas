@@ -4,12 +4,20 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.core.deps import get_db
+from app.core.deps import get_current_user, get_db
 from app.core.security import create_access_token, generate_api_key, hash_api_key, hash_password, verify_password
 from app.models.password_reset_token import PasswordResetToken
 from app.models.tenant import Tenant
 from app.models.user import User
-from app.schemas.auth import ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, TokenResponse
+from app.schemas.auth import (
+    ForgotPasswordRequest,
+    LoginRequest,
+    RegisterRequest,
+    ResetPasswordRequest,
+    TokenResponse,
+    UpdateEmailRequest,
+    UserMeOut,
+)
 from app.services.email_service import send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -95,3 +103,27 @@ def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db))
     db.commit()
 
     return {"message": "Passwort erfolgreich geändert. Du kannst dich jetzt anmelden."}
+
+
+@router.get("/me", response_model=UserMeOut)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch("/me/email", response_model=UserMeOut)
+def update_email(
+    payload: UpdateEmailRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(status_code=401, detail="Passwort ist falsch.")
+
+    existing = db.query(User).filter(User.email == payload.email, User.id != current_user.id).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Diese E-Mail-Adresse wird bereits verwendet.")
+
+    current_user.email = payload.email
+    db.commit()
+    db.refresh(current_user)
+    return current_user
