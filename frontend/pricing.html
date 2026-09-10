@@ -7,6 +7,8 @@
     <title>Preise — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="site-logo.js"></script>
+    <script src="translations.js"></script>
+    <script src="i18n.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen">
     <nav class="bg-white border-b border-slate-200 px-6 py-4">
@@ -18,30 +20,36 @@
                 </svg>
             </a>
             <div class="flex items-center gap-4">
-                <a href="login.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Anmelden</a>
-                <a href="index.html" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition">Kostenlos starten</a>
+                <div class="flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <a href="login.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition" data-i18n="nav.login">Anmelden</a>
+                <a href="index.html" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition" data-i18n="nav.registerCta">Kostenlos starten</a>
             </div>
         </div>
     </nav>
 
     <main class="max-w-6xl mx-auto px-6 py-16">
         <div class="text-center max-w-2xl mx-auto mb-14">
-            <h1 class="text-3xl sm:text-4xl font-bold">Einfache, transparente Preise</h1>
-            <p class="text-slate-500 mt-3">Wähle den Plan, der zu deinem Versandvolumen passt. Jederzeit kündbar.</p>
+            <h1 class="text-3xl sm:text-4xl font-bold" data-i18n="pricing.title">Einfache, transparente Preise</h1>
+            <p class="text-slate-500 mt-3" data-i18n="pricing.subtitle">Wähle den Plan, der zu deinem Versandvolumen passt. Jederzeit kündbar.</p>
         </div>
 
-        <div id="loading-state" class="text-center text-slate-400 py-12">Preise werden geladen...</div>
-        <div id="error-state" class="hidden text-center text-red-600 py-12">
+        <div id="loading-state" class="text-center text-slate-400 py-12" data-i18n="pricing.loading">Preise werden geladen...</div>
+        <div id="error-state" class="hidden text-center text-red-600 py-12" data-i18n="pricing.loadError">
             Preise konnten nicht geladen werden. Bitte Seite neu laden.
         </div>
-        <div id="empty-state" class="hidden text-center text-slate-400 py-12">
+        <div id="empty-state" class="hidden text-center text-slate-400 py-12" data-i18n="pricing.empty">
             Aktuell sind keine Preispläne verfügbar.
         </div>
 
         <div id="plans-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"></div>
 
         <p class="text-center text-slate-400 text-xs mt-14">
-            Alle Preise zzgl. MwSt. Fragen? <a href="mailto:hallo@expressprint.example" class="text-red-600 font-semibold">Kontaktiere uns</a>.
+            <span data-i18n="pricing.footNote">Alle Preise zzgl. MwSt. Fragen?</span>
+            <a href="mailto:hallo@expressprint.example" class="text-red-600 font-semibold" data-i18n="pricing.contactUs">Kontaktiere uns</a>.
         </p>
     </main>
 
@@ -50,17 +58,17 @@
 
         function formatPrice(plan) {
             if (plan.price_monthly === null || plan.price_monthly === undefined) {
-                return { amount: "Kontakt", suffix: "" };
+                return { amount: t("pricing.contact"), suffix: "" };
             }
             const amount = Number(plan.price_monthly);
             if (amount === 0) {
-                return { amount: "Kostenlos", suffix: "" };
+                return { amount: t("pricing.free"), suffix: "" };
             }
-            return { amount: `${amount.toFixed(2)} ${plan.currency}`, suffix: "/ Monat" };
+            return { amount: `${amount.toFixed(2)} ${plan.currency}`, suffix: t("pricing.perMonth") };
         }
 
         function limitLine(value, label) {
-            const text = value === null || value === undefined ? `Unbegrenzt ${label}` : `${value} ${label}`;
+            const text = value === null || value === undefined ? `${t("pricing.unlimited")} ${label}` : `${value} ${label}`;
             return `
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xs">✓</span>
@@ -79,9 +87,9 @@
         function renderPlan(plan) {
             const price = formatPrice(plan);
             const limits = [
-                limitLine(plan.order_limit, "Bestellungen / Monat"),
-                limitLine(plan.printer_limit, "Print-Agents"),
-                limitLine(plan.user_limit, "Benutzer"),
+                limitLine(plan.order_limit, t("pricing.limitOrders")),
+                limitLine(plan.printer_limit, t("pricing.limitPrinters")),
+                limitLine(plan.user_limit, t("pricing.limitUsers")),
             ].join("");
             const features = (plan.features || []).map(featureLine).join("");
 
@@ -92,23 +100,32 @@
 
             return `
                 <div class="bg-white rounded-2xl p-8 flex flex-col ${cardClasses}">
-                    ${highlight ? '<span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Empfohlen</span>' : ""}
+                    ${highlight ? `<span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full">${t("pricing.recommended")}</span>` : ""}
                     <h3 class="text-lg font-bold">${plan.name}</h3>
                     <p class="text-slate-500 text-sm mt-1 min-h-[2.5rem]">${plan.description || ""}</p>
                     <div class="mt-4 mb-2">
                         <span class="text-3xl font-bold">${price.amount}</span>
                         ${price.suffix ? `<span class="text-slate-400 text-sm ml-1">${price.suffix}</span>` : ""}
                     </div>
-                    ${plan.trial_days ? `<p class="text-emerald-600 text-sm font-semibold mb-4">${plan.trial_days} Tage kostenlos testen</p>` : '<div class="mb-4"></div>'}
+                    ${plan.trial_days ? `<p class="text-emerald-600 text-sm font-semibold mb-4">${plan.trial_days} ${t("pricing.trialDays")}</p>` : '<div class="mb-4"></div>'}
                     <ul class="space-y-3 flex-1">
                         ${limits}
                         ${features}
                     </ul>
                     <a href="index.html?plan=${encodeURIComponent(plan.name)}"
                        class="mt-8 block text-center font-semibold py-2.5 rounded-lg transition ${highlight ? "bg-red-600 hover:bg-red-700 text-white shadow-sm shadow-red-600/20" : "bg-slate-100 hover:bg-slate-200 text-slate-900"}">
-                        Jetzt starten
+                        ${t("pricing.cta")}
                     </a>
                 </div>`;
+        }
+
+        // Cached so a language switch can re-render the cards (translated
+        // labels, same data) without hitting the API again.
+        let loadedPlans = null;
+
+        function renderPlansGrid() {
+            if (!loadedPlans) return;
+            document.getElementById("plans-grid").innerHTML = loadedPlans.map(renderPlan).join("");
         }
 
         async function loadPlans() {
@@ -129,7 +146,8 @@
                     return;
                 }
 
-                grid.innerHTML = plans.map(renderPlan).join("");
+                loadedPlans = plans;
+                renderPlansGrid();
                 grid.classList.remove("hidden");
             } catch (err) {
                 loadingState.classList.add("hidden");
@@ -137,6 +155,7 @@
             }
         }
 
+        document.addEventListener("langchange", renderPlansGrid);
         loadPlans();
     </script>
 </body>
