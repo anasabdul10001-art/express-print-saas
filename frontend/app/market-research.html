@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marktrecherche — Express Print</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+        <h1 class="text-lg font-bold">Versandzentrale</h1>
+        <div class="flex items-center gap-6">
+            <a href="dashboard.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Dashboard</a>
+            <a href="products.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Produkte</a>
+            <a href="orders.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Bestellungen</a>
+            <a href="expenses.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Ausgaben</a>
+            <a href="market-research.html" class="text-red-600 text-sm font-semibold">Marktrecherche</a>
+            <a href="print-agents.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Print-Agents</a>
+            <a href="settings.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Einstellungen</a>
+            <button onclick="logout()" class="text-slate-500 hover:text-slate-900 text-sm transition">Abmelden</button>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto p-6 space-y-6">
+        <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <div>
+            <h2 class="text-2xl font-bold">Marktrecherche</h2>
+            <p class="text-slate-500 text-sm mt-1">
+                Durchsuche aktuelle eBay-Angebote: Preise, Verkäufer und geschätzte Verkaufszahlen.
+                Basiert auf eBays öffentlicher Browse-API (keine eBay-Verbindung nötig).
+            </p>
+        </div>
+
+        <form onsubmit="handleSearch(event)" class="flex gap-3">
+            <input type="text" id="query-input" required placeholder="z.B. USB-C Kabel, Handyhülle iPhone 15..."
+                   class="flex-1 px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            <button type="submit" id="search-btn"
+                    class="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 rounded-lg transition">
+                Suchen
+            </button>
+        </form>
+
+        <p class="text-slate-400 text-xs">
+            Hinweis: "Verkauft (geschätzt)" ist eine von eBay berechnete Schätzung, keine exakte Zahl,
+            und wird nur für die ersten 15 Ergebnisse geladen (deshalb dauert eine Suche einige Sekunden).
+        </p>
+
+        <div id="loading-state" class="hidden text-center text-slate-500 py-12">Suche läuft...</div>
+
+        <div id="empty-state" class="hidden bg-white border border-slate-200 p-8 rounded-xl text-center">
+            <p class="text-slate-500">Keine Ergebnisse für diese Suche.</p>
+        </div>
+
+        <div id="results-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "../login.html";
+        }
+
+        function authHeaders() {
+            return { "Authorization": `Bearer ${token}` };
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "../login.html";
+        }
+
+        function showBanner(text, isError) {
+            const banner = document.getElementById("banner");
+            banner.innerText = text;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-50 text-red-700 border border-red-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`;
+            setTimeout(() => banner.classList.add("hidden"), 5000);
+        }
+
+        function money(value, currency) {
+            if (value === null || value === undefined) return "—";
+            return `${Number(value).toFixed(2)} ${currency || "EUR"}`;
+        }
+
+        function renderResults(items) {
+            const grid = document.getElementById("results-grid");
+            const emptyState = document.getElementById("empty-state");
+
+            if (items.length === 0) {
+                emptyState.classList.remove("hidden");
+                grid.classList.add("hidden");
+                return;
+            }
+            emptyState.classList.add("hidden");
+            grid.classList.remove("hidden");
+
+            grid.innerHTML = items.map(item => `
+                <a href="${item.item_web_url || '#'}" target="_blank" rel="noopener"
+                   class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden hover:border-red-300 transition flex flex-col">
+                    <div class="aspect-square bg-slate-100 flex items-center justify-center overflow-hidden">
+                        ${item.image_url
+                            ? `<img src="${item.image_url}" class="w-full h-full object-cover" onerror="this.style.display='none'">`
+                            : `<span class="text-slate-300 text-xs">Kein Bild</span>`}
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col gap-2">
+                        <p class="text-sm font-medium leading-snug line-clamp-2">${item.title || "Ohne Titel"}</p>
+                        <p class="text-lg font-bold text-red-600">${money(item.price, item.currency)}</p>
+                        <div class="text-xs text-slate-500 space-y-1 mt-auto pt-2 border-t border-slate-100">
+                            <p>Verkäufer: <span class="font-medium text-slate-700">${item.seller_username || "—"}</span>
+                               ${item.seller_feedback_percentage ? `<span class="text-emerald-600">(${item.seller_feedback_percentage}% / ${item.seller_feedback_score ?? "—"})</span>` : ""}
+                            </p>
+                            <p>Verkauft (geschätzt): <span class="font-semibold ${item.estimated_sold_quantity ? "text-emerald-600" : "text-slate-400"}">${item.estimated_sold_quantity ?? "—"}</span></p>
+                            <p>Verfügbar (geschätzt): <span class="font-medium text-slate-700">${item.estimated_available_quantity ?? "—"}</span></p>
+                        </div>
+                    </div>
+                </a>
+            `).join("");
+        }
+
+        async function handleSearch(event) {
+            event.preventDefault();
+            const query = document.getElementById("query-input").value.trim();
+            if (!query) return;
+
+            const btn = document.getElementById("search-btn");
+            const loading = document.getElementById("loading-state");
+            const emptyState = document.getElementById("empty-state");
+            const grid = document.getElementById("results-grid");
+
+            btn.disabled = true;
+            btn.innerText = "Suche läuft...";
+            loading.classList.remove("hidden");
+            emptyState.classList.add("hidden");
+            grid.classList.add("hidden");
+
+            try {
+                const url = new URL(`${API_URL}/market-research/search`);
+                url.searchParams.set("q", query);
+                url.searchParams.set("limit", "30");
+
+                const response = await fetch(url, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showBanner(data.detail || "Suche fehlgeschlagen.", true);
+                    return;
+                }
+
+                renderResults(data);
+            } catch (err) {
+                showBanner("Server nicht erreichbar. Bitte erneut versuchen.", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Suchen";
+                loading.classList.add("hidden");
+            }
+        }
+    </script>
+</body>
+</html>
