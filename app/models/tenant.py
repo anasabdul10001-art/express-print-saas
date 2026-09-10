@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, DateTime, CheckConstraint
+from sqlalchemy import Column, String, DateTime, CheckConstraint, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -14,6 +14,12 @@ class Tenant(Base):
     company_name = Column(String(255), nullable=False)
     country_code = Column(String(2), nullable=False, default="DE")
     status = Column(String(20), nullable=False, default="active")
+
+    plan_id = Column(UUID(as_uuid=True), ForeignKey("plans.id"), nullable=True)
+    # Null = no trial deadline (no plan matched at signup, or the plan has
+    # no trial_days set). Once past, get_current_user blocks non-superadmin
+    # requests until a real subscription exists - see deps.py.
+    trial_ends_at = Column(DateTime(timezone=True), nullable=True)
 
     # Controls how shipping labels get printed for this tenant's orders:
     #   INSTANT           - auto-print the moment an order arrives

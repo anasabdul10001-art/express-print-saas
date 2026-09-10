@@ -8,11 +8,27 @@ from sqlalchemy.orm import Session
 from app.core.security import decode_access_token, hash_api_key
 from app.database import get_db  # noqa: F401 - re-exported so existing `from app.core.deps import get_db` imports keep working
 from app.models.print_agent import PrintAgent
+from app.models.tenant import Tenant
 from app.models.user import User
 
 # tokenUrl is just used for Swagger UI's "Authorize" button - it doesn't
 # affect actual auth logic.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+TRIAL_EXPIRED_DETAIL = "Deine kostenlose Testphase ist abgelaufen. Bitte wähle einen bezahlten Plan, um fortzufahren."
+
+
+def trial_expired(tenant: Tenant | None) -> bool:
+    """
+    True once a tenant's trial deadline has passed. `trial_ends_at` is null
+    for tenants that never had a trial (no plan matched at signup, or the
+    plan has no trial_days) - those are never blocked here. There's no
+    "paid/subscribed" flag yet (see app/models/plan.py), so once a trial
+    ends there is currently no way back in except a superadmin manually
+    clearing trial_ends_at - that's the intended behavior until real
+    billing exists.
+    """
+    return tenant is not None and tenant.trial_ends_at is not None and tenant.trial_ends_at < datetime.now(timezone.utc)
 
 
 def get_current_user(
@@ -36,6 +52,14 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_id).first()
     if user is None or not user.is_active:
         raise credentials_exception
+
+    # Superadmins run the platform - a trial deadline on their own tenant
+    # (if they even have one) never applies to them.
+    if not user.is_superadmin:
+        tenant = db.query(Tenant).filter(Tenant.id == user.tenant_id).first()
+        if trial_expired(tenant):
+            raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=TRIAL_EXPIRED_DETAIL)
+
     return user
 
 

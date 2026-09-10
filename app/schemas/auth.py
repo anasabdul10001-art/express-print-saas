@@ -8,6 +8,10 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8)
     full_name: str | None = None
+    # Which pricing-page plan the signup came from, e.g. "Pro". Optional -
+    # a direct registration with no plan selected falls back to a default
+    # plan in the register endpoint.
+    plan_name: str | None = None
 
 
 class LoginRequest(BaseModel):
