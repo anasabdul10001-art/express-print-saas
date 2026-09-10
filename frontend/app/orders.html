@@ -18,13 +18,13 @@
                 </svg>
             </a>
             <div class="hidden md:flex items-center gap-6">
-                <a href="../app/dashboard.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Dashboard</a>
-                <a href="products.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Produkte</a>
-                <a href="expenses.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Ausgaben</a>
-                <a href="market-research.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Marktrecherche</a>
-                <a href="print-agents.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Print-Agents</a>
-                <a href="settings.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Einstellungen</a>
-                <button onclick="logout()" class="text-slate-500 hover:text-slate-900 text-sm transition">Abmelden</button>
+                <a href="../app/dashboard.html" class="text-slate-600 hover:text-red-600 hover:bg-slate-50 text-sm font-semibold px-3 py-2 rounded-lg transition">Dashboard</a>
+                <a href="products.html" class="text-slate-600 hover:text-red-600 hover:bg-slate-50 text-sm font-semibold px-3 py-2 rounded-lg transition">Produkte</a>
+                <a href="expenses.html" class="text-slate-600 hover:text-red-600 hover:bg-slate-50 text-sm font-semibold px-3 py-2 rounded-lg transition">Ausgaben</a>
+                <a href="market-research.html" class="text-slate-600 hover:text-red-600 hover:bg-slate-50 text-sm font-semibold px-3 py-2 rounded-lg transition">Marktrecherche</a>
+                <a href="print-agents.html" class="text-slate-600 hover:text-red-600 hover:bg-slate-50 text-sm font-semibold px-3 py-2 rounded-lg transition">Print-Agents</a>
+                <a href="settings.html" class="text-slate-600 hover:text-red-600 hover:bg-slate-50 text-sm font-semibold px-3 py-2 rounded-lg transition">Einstellungen</a>
+                <button onclick="logout()" class="text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-sm px-3 py-2 rounded-lg transition">Abmelden</button>
             </div>
             <button onclick="toggleMobileMenu()" class="md:hidden p-2 -mr-2 text-slate-600" aria-label="Menü öffnen">
                 <svg id="menu-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -139,7 +139,7 @@
 
                 const desktopLogout = document.querySelector('nav .hidden.md\\:flex button[onclick="logout()"]');
                 const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
-                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Admin</a>');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="text-slate-600 hover:text-red-600 hover:bg-slate-50 text-sm font-semibold px-3 py-2 rounded-lg transition">Admin</a>');
                 if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Admin</a>');
             } catch (err) {
                 // Non-critical - regular tenants simply never see this link.
