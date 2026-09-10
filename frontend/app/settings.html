@@ -6,16 +6,16 @@
     <title>Einstellungen — Express Print SaaS</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+<body class="bg-black text-white min-h-screen">
+    <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
         <h1 class="text-lg font-bold">Versandzentrale</h1>
         <div class="flex items-center gap-6">
-            <a href="dashboard.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Dashboard</a>
-            <a href="products.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Produkte</a>
-            <a href="orders.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Bestellungen</a>
-            <a href="expenses.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Ausgaben</a>
-            <a href="print-agents.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Print-Agents</a>
-            <a href="settings.html" class="text-yellow-500 text-sm font-semibold">Einstellungen</a>
+            <a href="dashboard.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Dashboard</a>
+            <a href="products.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Produkte</a>
+            <a href="orders.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Bestellungen</a>
+            <a href="expenses.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Ausgaben</a>
+            <a href="print-agents.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Print-Agents</a>
+            <a href="settings.html" class="text-red-500 text-sm font-semibold">Einstellungen</a>
             <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
         </div>
     </nav>
@@ -26,33 +26,33 @@
         <h2 class="text-2xl font-bold">Einstellungen</h2>
 
         <!-- Company info -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+        <div class="bg-neutral-900 p-6 rounded-lg shadow-lg space-y-4">
             <h3 class="text-lg font-bold">Unternehmen</h3>
             <div>
                 <label class="block text-sm mb-1">Firmenname</label>
                 <input type="text" id="field-company-name"
-                       class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                       class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
             </div>
             <div>
                 <label class="block text-sm mb-1">Land (Ländercode, z.B. DE, AT, CH)</label>
                 <input type="text" id="field-country" maxlength="2"
-                       class="w-24 p-2 rounded bg-gray-700 border border-gray-600 text-white uppercase">
+                       class="w-24 p-2 rounded bg-neutral-800 border border-neutral-700 text-white uppercase">
             </div>
             <div id="company-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
             <button onclick="saveCompany()"
-                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                 Speichern
             </button>
         </div>
 
         <!-- Print mode -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+        <div class="bg-neutral-900 p-6 rounded-lg shadow-lg space-y-4">
             <h3 class="text-lg font-bold">Druckmodus</h3>
             <p class="text-gray-400 text-sm">
                 Bestimmt, wie Versandetiketten für neue Bestellungen gedruckt werden.
             </p>
 
-            <label class="flex items-start gap-3 p-3 rounded border border-gray-700 hover:border-gray-600 cursor-pointer">
+            <label class="flex items-start gap-3 p-3 rounded border border-neutral-800 hover:border-neutral-700 cursor-pointer">
                 <input type="radio" name="print-mode" value="DASHBOARD_MANUAL" class="mt-1">
                 <span>
                     <span class="font-semibold">Manuell im Dashboard</span>
@@ -60,27 +60,27 @@
                 </span>
             </label>
 
-            <label class="flex items-start gap-3 p-3 rounded border border-gray-700 hover:border-gray-600 cursor-pointer">
+            <label class="flex items-start gap-3 p-3 rounded border border-neutral-800 hover:border-neutral-700 cursor-pointer">
                 <input type="radio" name="print-mode" value="INSTANT" class="mt-1">
                 <span>
                     <span class="font-semibold">Sofort automatisch</span>
                     <span class="block text-gray-400 text-sm">Etiketten sollen sofort bei Eingang einer Bestellung gedruckt werden.</span>
-                    <span class="block text-yellow-500 text-xs mt-1">⚠ Hinweis: Diese Automatik ist im Backend noch nicht umgesetzt. Bestellungen müssen aktuell auch in diesem Modus manuell über "Etikett drucken" ausgelöst werden.</span>
+                    <span class="block text-red-500 text-xs mt-1">⚠ Hinweis: Diese Automatik ist im Backend noch nicht umgesetzt. Bestellungen müssen aktuell auch in diesem Modus manuell über "Etikett drucken" ausgelöst werden.</span>
                 </span>
             </label>
 
-            <label class="flex items-start gap-3 p-3 rounded border border-gray-700 hover:border-gray-600 cursor-pointer">
+            <label class="flex items-start gap-3 p-3 rounded border border-neutral-800 hover:border-neutral-700 cursor-pointer">
                 <input type="radio" name="print-mode" value="INTEGRATED" class="mt-1">
                 <span>
                     <span class="font-semibold">Kombiniert (Etikett + Kommissionierzettel)</span>
                     <span class="block text-gray-400 text-sm">Ein PDF aus Versandetikett und Kommissionierzettel (Produktfoto, Name, Lagerplatz).</span>
-                    <span class="block text-yellow-500 text-xs mt-1">⚠ Hinweis: Diese PDF-Zusammenführung ist noch nicht gebaut. Solange dieser Modus aktiv ist, lehnt "Etikett drucken" jeden Druckversuch ab.</span>
+                    <span class="block text-red-500 text-xs mt-1">⚠ Hinweis: Diese PDF-Zusammenführung ist noch nicht gebaut. Solange dieser Modus aktiv ist, lehnt "Etikett drucken" jeden Druckversuch ab.</span>
                 </span>
             </label>
 
             <div id="mode-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
             <button onclick="savePrintMode()"
-                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                 Druckmodus speichern
             </button>
         </div>
@@ -108,7 +108,7 @@
         function showBanner(text, isError) {
             const banner = document.getElementById("banner");
             banner.innerText = text;
-            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600 text-white" : "bg-white text-black"}`;
             setTimeout(() => banner.classList.add("hidden"), 4000);
         }
 

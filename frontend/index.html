@@ -3,39 +3,93 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Versandzentrale — Express Print SaaS</title>
+    <title>Konto erstellen — Express Print</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
-    <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 class="text-2xl font-bold mb-2 text-center">Versandzentrale</h2>
-        <p class="text-gray-400 text-sm text-center mb-6">Erstelle dein Konto</p>
+<body class="bg-black text-white min-h-screen flex">
+    <!-- Left: branding panel (hidden on small screens) -->
+    <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-black via-black to-neutral-900 items-center justify-center p-12">
+        <div class="absolute -top-24 -left-24 w-96 h-96 bg-red-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 right-0 w-72 h-72 bg-red-500/10 rounded-full blur-3xl"></div>
 
-        <div id="error-box" class="hidden bg-red-600 text-white p-3 rounded mb-4 text-center text-sm"></div>
-        <div id="success-box" class="hidden bg-green-600 text-white p-3 rounded mb-4 text-center text-sm"></div>
+        <div class="relative max-w-md space-y-8">
+            <div class="flex items-center gap-2">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="8" fill="#DC2626"/>
+                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="text-xl font-bold">Express Print</span>
+            </div>
 
-        <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
-            <div>
-                <label class="block text-sm mb-1">Firmenname</label>
-                <input type="text" id="company_name" required class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
-            </div>
-            <div>
-                <label class="block text-sm mb-1">E-Mail</label>
-                <input type="email" id="email" required class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
-            </div>
-            <div>
-                <label class="block text-sm mb-1">Passwort</label>
-                <input type="password" id="password" required class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
-            </div>
-            <button type="submit" id="submit-btn" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 rounded transition">
-                Konto erstellen
-            </button>
-        </form>
+            <h1 class="text-3xl font-bold leading-snug">
+                In wenigen Minuten startklar für automatisierten Versand.
+            </h1>
+            <p class="text-gray-400">
+                Konto erstellen → eBay verbinden → Drucker einrichten → loslegen.
+            </p>
 
-        <p class="text-gray-400 text-sm text-center mt-6">
-            Schon ein Konto?
-            <a href="login.html" class="text-yellow-500 hover:text-yellow-400 font-semibold">Jetzt anmelden</a>
-        </p>
+            <div class="space-y-4 pt-2">
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+                    <span class="text-gray-300">Konto erstellen</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-neutral-800 text-gray-300 text-xs font-bold flex items-center justify-center">2</span>
+                    <span class="text-gray-500">eBay-Konto verbinden</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-neutral-800 text-gray-300 text-xs font-bold flex items-center justify-center">3</span>
+                    <span class="text-gray-500">Print-Agent einrichten</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-neutral-800 text-gray-300 text-xs font-bold flex items-center justify-center">4</span>
+                    <span class="text-gray-500">Bestellungen bearbeiten</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: form -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-6">
+        <div class="w-full max-w-md">
+            <div class="lg:hidden flex items-center gap-2 justify-center mb-8">
+                <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="8" fill="#DC2626"/>
+                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="text-lg font-bold">Express Print</span>
+            </div>
+
+            <h2 class="text-2xl font-bold mb-2 text-center lg:text-left">Konto erstellen</h2>
+            <p class="text-gray-400 text-sm mb-6 text-center lg:text-left">Kostenlos starten, in unter 2 Minuten</p>
+
+            <div id="error-box" class="hidden bg-red-600 text-white p-3 rounded mb-4 text-center text-sm"></div>
+            <div id="success-box" class="hidden bg-white text-black p-3 rounded mb-4 text-center text-sm"></div>
+
+            <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm mb-1">Firmenname</label>
+                    <input type="text" id="company_name" required class="w-full p-2 rounded bg-neutral-900 border border-neutral-800 text-white focus:border-red-600 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">E-Mail</label>
+                    <input type="email" id="email" required class="w-full p-2 rounded bg-neutral-900 border border-neutral-800 text-white focus:border-red-600 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Passwort</label>
+                    <input type="password" id="password" required minlength="8" class="w-full p-2 rounded bg-neutral-900 border border-neutral-800 text-white focus:border-red-600 focus:outline-none">
+                    <p class="text-xs text-gray-500 mt-1">Mindestens 8 Zeichen</p>
+                </div>
+                <button type="submit" id="submit-btn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded transition">
+                    Konto erstellen
+                </button>
+            </form>
+
+            <p class="text-gray-400 text-sm text-center mt-6">
+                Schon ein Konto?
+                <a href="login.html" class="text-red-500 hover:text-red-400 font-semibold">Jetzt anmelden</a>
+            </p>
+        </div>
     </div>
 
     <script>

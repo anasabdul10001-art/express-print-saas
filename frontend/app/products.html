@@ -6,15 +6,15 @@
     <title>Produkte — Express Print SaaS</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+<body class="bg-black text-white min-h-screen">
+    <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
         <h1 class="text-lg font-bold">Versandzentrale</h1>
         <div class="flex items-center gap-6">
-            <a href="dashboard.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Dashboard</a>
-            <a href="orders.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Bestellungen</a>
-            <a href="expenses.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Ausgaben</a>
-            <a href="print-agents.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Print-Agents</a>
-            <a href="settings.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Einstellungen</a>
+            <a href="dashboard.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Dashboard</a>
+            <a href="orders.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Bestellungen</a>
+            <a href="expenses.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Ausgaben</a>
+            <a href="print-agents.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Print-Agents</a>
+            <a href="settings.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Einstellungen</a>
             <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
         </div>
     </nav>
@@ -25,17 +25,17 @@
         <div class="flex items-center justify-between gap-4">
             <h2 class="text-2xl font-bold">Produkte</h2>
             <button onclick="openForm()"
-                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                 + Neues Produkt
             </button>
         </div>
 
         <input type="text" id="search-input" placeholder="Suche nach SKU oder Titel..."
                oninput="debouncedLoad()"
-               class="w-full p-2 rounded bg-gray-800 border border-gray-700 text-white">
+               class="w-full p-2 rounded bg-neutral-900 border border-neutral-800 text-white">
 
         <!-- Add / edit form, hidden by default -->
-        <div id="form-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+        <div id="form-panel" class="hidden bg-neutral-900 p-6 rounded-lg shadow-lg space-y-4">
             <h3 id="form-title" class="text-lg font-bold">Neues Produkt</h3>
             <input type="hidden" id="product-id">
 
@@ -43,24 +43,24 @@
                 <div>
                     <label class="block text-sm mb-1">SKU *</label>
                     <input type="text" id="field-sku"
-                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                           class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
                 </div>
                 <div>
                     <label class="block text-sm mb-1">Titel *</label>
                     <input type="text" id="field-title"
-                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                           class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
                 </div>
                 <div>
                     <label class="block text-sm mb-1">Regalplatz</label>
                     <input type="text" id="field-shelf" placeholder="z.B. A3-14"
-                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                           class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
                 </div>
                 <div>
                     <label class="block text-sm mb-1">Bild-URL</label>
                     <input type="text" id="field-image"
-                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                           class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
                     <div class="mt-2 flex items-center gap-3">
-                        <label class="cursor-pointer bg-gray-600 hover:bg-gray-500 text-white text-xs font-semibold py-1.5 px-3 rounded transition">
+                        <label class="cursor-pointer bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-semibold py-1.5 px-3 rounded transition">
                             <span id="upload-label">Bild vom Gerät hochladen</span>
                             <input type="file" id="field-image-file" accept="image/png,image/jpeg,image/webp,image/gif"
                                    class="hidden" onchange="uploadImage()">
@@ -71,17 +71,17 @@
                 <div>
                     <label class="block text-sm mb-1">Einkaufspreis (€)</label>
                     <input type="number" step="0.01" id="field-purchase"
-                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                           class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
                 </div>
                 <div>
                     <label class="block text-sm mb-1">Verkaufspreis (€)</label>
                     <input type="number" step="0.01" id="field-selling"
-                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                           class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
                 </div>
                 <div>
                     <label class="block text-sm mb-1">Lagerbestand (Menge)</label>
                     <input type="number" step="1" min="0" id="field-stock"
-                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                           class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
                     <p class="text-xs text-gray-500 mt-1">Nur für die Ersteinrichtung. Später bitte "+ Bestand" in der Tabelle verwenden, damit die Änderung im Verlauf protokolliert wird.</p>
                 </div>
             </div>
@@ -90,18 +90,18 @@
 
             <div class="flex gap-3">
                 <button onclick="saveProduct()"
-                        class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                        class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                     Speichern
                 </button>
                 <button onclick="closeForm()"
-                        class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+                        class="bg-neutral-800 hover:bg-neutral-700 text-white font-bold py-2 px-4 rounded transition">
                     Abbrechen
                 </button>
             </div>
         </div>
 
         <!-- Stock movement history panel, hidden by default -->
-        <div id="history-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+        <div id="history-panel" class="hidden bg-neutral-900 p-6 rounded-lg shadow-lg space-y-4">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold">Lagerbestand-Verlauf: <span id="history-product-title"></span></h3>
                 <button onclick="closeHistory()" class="text-gray-400 hover:text-white text-sm">Schließen</button>
@@ -110,19 +110,19 @@
         </div>
 
         <!-- Empty state -->
-        <div id="empty-state" class="hidden bg-gray-800 p-8 rounded-lg text-center space-y-3">
+        <div id="empty-state" class="hidden bg-neutral-900 p-8 rounded-lg text-center space-y-3">
             <p class="text-gray-400">Noch keine Produkte vorhanden.</p>
             <button onclick="openForm()"
-                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                 Erstes Produkt anlegen
             </button>
         </div>
 
         <!-- Product table -->
-        <div id="table-wrap" class="hidden bg-gray-800 rounded-lg shadow-lg overflow-x-auto">
+        <div id="table-wrap" class="hidden bg-neutral-900 rounded-lg shadow-lg overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="text-left text-gray-400 border-b border-gray-700">
+                    <tr class="text-left text-gray-400 border-b border-neutral-800">
                         <th class="p-3">Bild</th>
                         <th class="p-3">SKU</th>
                         <th class="p-3">Titel</th>
@@ -163,7 +163,7 @@
         function showBanner(text, isError) {
             const banner = document.getElementById("banner");
             banner.innerText = text;
-            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600 text-white" : "bg-white text-black"}`;
             setTimeout(() => banner.classList.add("hidden"), 4000);
         }
 
@@ -382,9 +382,9 @@
                 }
 
                 list.innerHTML = movements.map(m => `
-                    <div class="flex items-center justify-between border-b border-gray-700 py-2">
+                    <div class="flex items-center justify-between border-b border-neutral-800 py-2">
                         <div>
-                            <span class="${m.quantity_change >= 0 ? "text-green-400" : "text-red-400"} font-semibold">
+                            <span class="${m.quantity_change >= 0 ? "text-white" : "text-red-400"} font-semibold">
                                 ${m.quantity_change >= 0 ? "+" : ""}${m.quantity_change}
                             </span>
                             <span class="text-gray-300 ml-2">${reasonLabel(m.reason)}</span>
@@ -416,11 +416,11 @@
             tableWrap.classList.remove("hidden");
 
             tbody.innerHTML = products.map(p => `
-                <tr class="border-b border-gray-700 ${p.active ? "" : "opacity-50"}">
+                <tr class="border-b border-neutral-800 ${p.active ? "" : "opacity-50"}">
                     <td class="p-3">
                         ${p.image_url
                             ? `<img src="${p.image_url}" class="w-10 h-10 object-cover rounded" onerror="this.style.display='none'">`
-                            : `<div class="w-10 h-10 bg-gray-700 rounded"></div>`}
+                            : `<div class="w-10 h-10 bg-neutral-800 rounded"></div>`}
                     </td>
                     <td class="p-3 font-mono text-xs">${p.sku}</td>
                     <td class="p-3">${p.title}</td>
@@ -428,15 +428,15 @@
                     <td class="p-3 ${p.stock_quantity === 0 ? "text-red-400" : ""}">${p.stock_quantity ?? 0}</td>
                     <td class="p-3">${euro(p.purchase_price)}</td>
                     <td class="p-3">${euro(p.selling_price)}</td>
-                    <td class="p-3 ${p.profit_per_unit >= 0 ? "text-green-400" : "text-red-400"}">${euro(p.profit_per_unit)}</td>
+                    <td class="p-3 ${p.profit_per_unit >= 0 ? "text-white" : "text-red-400"}">${euro(p.profit_per_unit)}</td>
                     <td class="p-3">${p.margin_percent !== null && p.margin_percent !== undefined ? p.margin_percent + " %" : "—"}</td>
                     <td class="p-3">
-                        <span class="px-2 py-1 rounded text-xs ${p.active ? "bg-green-700" : "bg-gray-600"}">
+                        <span class="px-2 py-1 rounded text-xs ${p.active ? "bg-white text-black" : "bg-neutral-700 text-white"}">
                             ${p.active ? "Aktiv" : "Inaktiv"}
                         </span>
                     </td>
                     <td class="p-3 whitespace-nowrap space-x-2">
-                        <button onclick='openForm(${JSON.stringify(p)})' class="text-yellow-500 hover:text-yellow-400 text-xs">Bearbeiten</button>
+                        <button onclick='openForm(${JSON.stringify(p)})' class="text-red-500 hover:text-red-400 text-xs">Bearbeiten</button>
                         <button onclick='restockProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})' class="text-blue-400 hover:text-blue-300 text-xs">+ Bestand</button>
                         <button onclick='showHistory(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})' class="text-gray-400 hover:text-gray-300 text-xs">Verlauf</button>
                         ${p.active ? `<button onclick='deactivateProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})' class="text-red-400 hover:text-red-300 text-xs">Deaktivieren</button>` : ""}

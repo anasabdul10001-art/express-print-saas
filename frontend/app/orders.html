@@ -6,15 +6,15 @@
     <title>Bestellungen — Express Print SaaS</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+<body class="bg-black text-white min-h-screen">
+    <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
         <h1 class="text-lg font-bold">Versandzentrale</h1>
         <div class="flex items-center gap-6">
-            <a href="../app/dashboard.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Dashboard</a>
-            <a href="products.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Produkte</a>
-            <a href="expenses.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Ausgaben</a>
-            <a href="print-agents.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Print-Agents</a>
-            <a href="settings.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Einstellungen</a>
+            <a href="../app/dashboard.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Dashboard</a>
+            <a href="products.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Produkte</a>
+            <a href="expenses.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Ausgaben</a>
+            <a href="print-agents.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Print-Agents</a>
+            <a href="settings.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Einstellungen</a>
             <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
         </div>
     </nav>
@@ -26,31 +26,31 @@
             <h2 class="text-2xl font-bold">Bestellungen</h2>
             <div class="flex gap-3">
                 <button id="sync-btn" onclick="syncEbayOrders()"
-                        class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+                        class="bg-neutral-800 hover:bg-neutral-700 text-white font-bold py-2 px-4 rounded transition">
                     Von eBay synchronisieren
                 </button>
                 <button onclick="openForm()"
-                        class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                        class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                     + Neue Bestellung
                 </button>
             </div>
         </div>
 
         <!-- New order form, hidden by default -->
-        <div id="form-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+        <div id="form-panel" class="hidden bg-neutral-900 p-6 rounded-lg shadow-lg space-y-4">
             <h3 class="text-lg font-bold">Neue Bestellung</h3>
 
             <div>
                 <label class="block text-sm mb-1">Referenz (optional)</label>
                 <input type="text" id="field-ref" placeholder="z.B. eigene Notiz oder Bestellnummer"
-                       class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                       class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
             </div>
 
             <div>
                 <label class="block text-sm mb-2">Artikel</label>
                 <div id="items-container" class="space-y-3"></div>
                 <button type="button" onclick="addItemRow()"
-                        class="mt-3 text-yellow-500 hover:text-yellow-400 text-sm font-semibold">
+                        class="mt-3 text-red-500 hover:text-red-400 text-sm font-semibold">
                     + Artikel hinzufügen
                 </button>
             </div>
@@ -59,21 +59,21 @@
 
             <div class="flex gap-3">
                 <button onclick="saveOrder()"
-                        class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                        class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                     Bestellung anlegen
                 </button>
                 <button onclick="closeForm()"
-                        class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+                        class="bg-neutral-800 hover:bg-neutral-700 text-white font-bold py-2 px-4 rounded transition">
                     Abbrechen
                 </button>
             </div>
         </div>
 
         <!-- Empty state -->
-        <div id="empty-state" class="hidden bg-gray-800 p-8 rounded-lg text-center space-y-3">
+        <div id="empty-state" class="hidden bg-neutral-900 p-8 rounded-lg text-center space-y-3">
             <p class="text-gray-400">Noch keine Bestellungen vorhanden.</p>
             <button onclick="openForm()"
-                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                 Erste Bestellung anlegen
             </button>
         </div>
@@ -107,7 +107,7 @@
         function showBanner(text, isError) {
             const banner = document.getElementById("banner");
             banner.innerText = text;
-            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600 text-white" : "bg-white text-black"}`;
             setTimeout(() => banner.classList.add("hidden"), 6000);
         }
 
@@ -179,11 +179,11 @@
             row.id = `item-row-${id}`;
             row.className = "flex gap-3 items-center";
             row.innerHTML = `
-                <select class="item-product flex-1 p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                <select class="item-product flex-1 p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
                     <option value="">Produkt wählen...</option>
                     ${options}
                 </select>
-                <input type="number" class="item-quantity w-24 p-2 rounded bg-gray-700 border border-gray-600 text-white" value="1" min="1" step="1">
+                <input type="number" class="item-quantity w-24 p-2 rounded bg-neutral-800 border border-neutral-700 text-white" value="1" min="1" step="1">
                 <button type="button" onclick="document.getElementById('item-row-${id}').remove()"
                         class="text-red-400 hover:text-red-300 text-sm">Entfernen</button>
             `;
@@ -312,41 +312,41 @@
             list.innerHTML = orders.map(order => {
                 const total = order.items.reduce((sum, i) => sum + (Number(i.unit_price || 0) * i.quantity), 0);
                 const itemsHtml = order.items.map(item => `
-                    <tr class="border-b border-gray-700">
+                    <tr class="border-b border-neutral-800">
                         <td class="p-3">
                             ${item.image_url
                                 ? `<img src="${item.image_url}" class="w-8 h-8 object-cover rounded" onerror="this.style.display='none'">`
-                                : `<div class="w-8 h-8 bg-gray-700 rounded"></div>`}
+                                : `<div class="w-8 h-8 bg-neutral-800 rounded"></div>`}
                         </td>
                         <td class="p-3">${item.product_title}</td>
                         <td class="p-3 text-gray-400">${item.shelf_location || "—"}</td>
                         <td class="p-3">${item.quantity}</td>
                         <td class="p-3">${euro(item.unit_price)}</td>
-                        <td class="p-3 ${item.profit >= 0 ? "text-green-400" : "text-red-400"}">${euro(item.profit)}</td>
+                        <td class="p-3 ${item.profit >= 0 ? "text-white" : "text-red-400"}">${euro(item.profit)}</td>
                     </tr>
                 `).join("");
 
                 return `
-                    <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-                        <div class="p-4 flex items-center justify-between bg-gray-750 border-b border-gray-700">
+                    <div class="bg-neutral-900 rounded-lg shadow-lg overflow-hidden">
+                        <div class="p-4 flex items-center justify-between bg-gray-750 border-b border-neutral-800">
                             <div>
                                 <span class="font-semibold">${order.external_order_ref || "Ohne Referenz"}</span>
-                                <span class="ml-3 px-2 py-1 rounded text-xs bg-gray-700">${statusLabel(order.status)}</span>
+                                <span class="ml-3 px-2 py-1 rounded text-xs bg-neutral-800">${statusLabel(order.status)}</span>
                                 ${order.status !== "shipped" && order.status !== "canceled" ? `
                                     <button onclick='printOrder(${JSON.stringify(order.id)})'
-                                            class="ml-3 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-semibold py-1 px-3 rounded transition">
+                                            class="ml-3 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold py-1 px-3 rounded transition">
                                         ${order.status === "new" ? "Etikett drucken" : "Erneut drucken"}
                                     </button>
                                 ` : ""}
                             </div>
                             <div class="text-right">
-                                <div class="text-yellow-500 font-bold">${euro(total)}</div>
-                                <div class="text-xs ${order.total_profit >= 0 ? "text-green-400" : "text-red-400"}">Gewinn: ${euro(order.total_profit)}</div>
+                                <div class="text-red-500 font-bold">${euro(total)}</div>
+                                <div class="text-xs ${order.total_profit >= 0 ? "text-white" : "text-red-400"}">Gewinn: ${euro(order.total_profit)}</div>
                             </div>
                         </div>
                         <table class="w-full text-sm">
                             <thead>
-                                <tr class="text-left text-gray-500 text-xs border-b border-gray-700">
+                                <tr class="text-left text-gray-500 text-xs border-b border-neutral-800">
                                     <th class="p-3"></th>
                                     <th class="p-3">Produkt</th>
                                     <th class="p-3">Regal</th>

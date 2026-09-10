@@ -6,16 +6,16 @@
     <title>Print-Agents — Express Print SaaS</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+<body class="bg-black text-white min-h-screen">
+    <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
         <h1 class="text-lg font-bold">Versandzentrale</h1>
         <div class="flex items-center gap-6">
-            <a href="dashboard.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Dashboard</a>
-            <a href="products.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Produkte</a>
-            <a href="orders.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Bestellungen</a>
-            <a href="expenses.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Ausgaben</a>
-            <a href="print-agents.html" class="text-yellow-500 text-sm font-semibold">Print-Agents</a>
-            <a href="settings.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Einstellungen</a>
+            <a href="dashboard.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Dashboard</a>
+            <a href="products.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Produkte</a>
+            <a href="orders.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Bestellungen</a>
+            <a href="expenses.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Ausgaben</a>
+            <a href="print-agents.html" class="text-red-500 text-sm font-semibold">Print-Agents</a>
+            <a href="settings.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Einstellungen</a>
             <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
         </div>
     </nav>
@@ -26,12 +26,12 @@
         <div class="flex items-center justify-between gap-4">
             <h2 class="text-2xl font-bold">Print-Agents</h2>
             <button onclick="openForm()"
-                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                 + Neuer Print-Agent
             </button>
         </div>
 
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-3">
+        <div class="bg-neutral-900 p-6 rounded-lg shadow-lg space-y-3">
             <p class="text-gray-300 text-sm">
                 Ein Print-Agent ist das kleine Windows-Programm, das auf dem Rechner neben deinem
                 Etikettendrucker läuft und automatisch druckt. Jeder Agent braucht einen eigenen
@@ -39,70 +39,70 @@
                 des Programms einträgst.
             </p>
             <a href="https://github.com/anasabdul10001-art/express-print-saas/releases/download/print-agent-v1.0.0/PrintAgentSetup.exe"
-               class="inline-block bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+               class="inline-block bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                 ⬇ Print-Agent herunterladen (Windows)
             </a>
         </div>
 
         <!-- Setup guide -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+        <div class="bg-neutral-900 p-6 rounded-lg shadow-lg space-y-4">
             <h3 class="text-lg font-bold">So richtest du automatisches Drucken ein</h3>
             <ol class="space-y-3 text-sm text-gray-300">
                 <li class="flex gap-3">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">1</span>
                     <span>Oben auf <strong>"+ Neuer Print-Agent"</strong> klicken und einen Namen vergeben. Agent-ID und API-Key sofort kopieren (werden nur einmal angezeigt).</span>
                 </li>
                 <li class="flex gap-3">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-600 text-white text-xs font-bold flex items-center justify-center">2</span>
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">2</span>
                     <span><strong>"Print-Agent herunterladen"</strong> oben klicken, Programm starten, Agent-ID + API-Key einfügen und deinen Drucker auswählen.</span>
                 </li>
                 <li class="flex gap-3">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-600 text-white text-xs font-bold flex items-center justify-center">3</span>
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">3</span>
                     <span>Häkchen bei <strong>"PDFs aus einem Ordner automatisch drucken"</strong> setzen und den Ordner bestätigen, in den eBay/DHL deine Etiketten herunterlädt (meist "Downloads").</span>
                 </li>
                 <li class="flex gap-3">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold flex items-center justify-center">✓</span>
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white text-black text-xs font-bold flex items-center justify-center">✓</span>
                     <span>Fertig. Ab jetzt: bei eBay wie gewohnt auf <strong>"Versandetikett drucken"</strong> klicken - der Rest (öffnen, Drucker wählen, drehen, Größe anpassen, drucken) passiert von selbst.</span>
                 </li>
             </ol>
         </div>
 
         <!-- Add form, hidden by default -->
-        <div id="form-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+        <div id="form-panel" class="hidden bg-neutral-900 p-6 rounded-lg shadow-lg space-y-4">
             <h3 class="text-lg font-bold">Neuer Print-Agent</h3>
             <div>
                 <label class="block text-sm mb-1">Name *</label>
                 <input type="text" id="field-name" placeholder="z.B. Lager-PC vorne"
-                       class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                       class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
             </div>
             <div id="form-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
             <div class="flex gap-3">
                 <button onclick="createAgent()"
-                        class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                        class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                     Anlegen
                 </button>
                 <button onclick="closeForm()"
-                        class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+                        class="bg-neutral-800 hover:bg-neutral-700 text-white font-bold py-2 px-4 rounded transition">
                     Abbrechen
                 </button>
             </div>
         </div>
 
         <!-- One-time API key reveal, hidden by default -->
-        <div id="key-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4 border border-yellow-600">
-            <h3 class="text-lg font-bold text-yellow-500">API-Key — jetzt kopieren!</h3>
+        <div id="key-panel" class="hidden bg-neutral-900 p-6 rounded-lg shadow-lg space-y-4 border border-red-600">
+            <h3 class="text-lg font-bold text-red-500">API-Key — jetzt kopieren!</h3>
             <p class="text-gray-400 text-sm">
                 Dieser Key wird aus Sicherheitsgründen nur dieses eine Mal angezeigt.
-                Trag ihn zusammen mit der Agent-ID in die <code class="bg-gray-900 px-1 rounded">config.json</code>
+                Trag ihn zusammen mit der Agent-ID in die <code class="bg-black px-1 rounded">config.json</code>
                 des Print-Agents ein.
             </p>
             <div>
                 <label class="block text-xs text-gray-400 mb-1">Agent-ID</label>
                 <div class="flex gap-2">
                     <input type="text" id="key-agent-id" readonly
-                           class="w-full p-2 rounded bg-gray-900 border border-gray-700 text-gray-300 font-mono text-xs">
+                           class="w-full p-2 rounded bg-black border border-neutral-800 text-gray-300 font-mono text-xs">
                     <button onclick="copyValue('key-agent-id')"
-                            class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold py-2 px-3 rounded transition">
+                            class="bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold py-2 px-3 rounded transition">
                         Kopieren
                     </button>
                 </div>
@@ -111,33 +111,33 @@
                 <label class="block text-xs text-gray-400 mb-1">API-Key</label>
                 <div class="flex gap-2">
                     <input type="text" id="key-value" readonly
-                           class="w-full p-2 rounded bg-gray-900 border border-gray-700 text-gray-300 font-mono text-xs">
+                           class="w-full p-2 rounded bg-black border border-neutral-800 text-gray-300 font-mono text-xs">
                     <button onclick="copyValue('key-value')"
-                            class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold py-2 px-3 rounded transition">
+                            class="bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold py-2 px-3 rounded transition">
                         Kopieren
                     </button>
                 </div>
             </div>
             <button onclick="closeKeyPanel()"
-                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                 Ich habe den Key gespeichert
             </button>
         </div>
 
         <!-- Empty state -->
-        <div id="empty-state" class="hidden bg-gray-800 p-8 rounded-lg text-center space-y-3">
+        <div id="empty-state" class="hidden bg-neutral-900 p-8 rounded-lg text-center space-y-3">
             <p class="text-gray-400">Noch keine Print-Agents angelegt.</p>
             <button onclick="openForm()"
-                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
                 Ersten Print-Agent anlegen
             </button>
         </div>
 
         <!-- Agents table -->
-        <div id="table-wrap" class="hidden bg-gray-800 rounded-lg shadow-lg overflow-x-auto">
+        <div id="table-wrap" class="hidden bg-neutral-900 rounded-lg shadow-lg overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="text-left text-gray-400 border-b border-gray-700">
+                    <tr class="text-left text-gray-400 border-b border-neutral-800">
                         <th class="p-3">Name</th>
                         <th class="p-3">Status</th>
                         <th class="p-3">Zuletzt gesehen</th>
@@ -171,7 +171,7 @@
         function showBanner(text, isError) {
             const banner = document.getElementById("banner");
             banner.innerText = text;
-            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600 text-white" : "bg-white text-black"}`;
             setTimeout(() => banner.classList.add("hidden"), 4000);
         }
 
@@ -183,11 +183,11 @@
 
         function statusLabel(status) {
             const map = {
-                online: { text: "Online", cls: "bg-green-700" },
-                offline: { text: "Offline", cls: "bg-gray-600" },
+                online: { text: "Online", cls: "bg-white text-black" },
+                offline: { text: "Offline", cls: "bg-neutral-700" },
                 disabled: { text: "Deaktiviert", cls: "bg-red-700" },
             };
-            return map[status] || { text: status, cls: "bg-gray-600" };
+            return map[status] || { text: status, cls: "bg-neutral-700" };
         }
 
         function openForm() {
@@ -297,7 +297,7 @@
             tbody.innerHTML = agents.map(a => {
                 const s = statusLabel(a.status);
                 return `
-                <tr class="border-b border-gray-700 ${a.status === "disabled" ? "opacity-50" : ""}">
+                <tr class="border-b border-neutral-800 ${a.status === "disabled" ? "opacity-50" : ""}">
                     <td class="p-3">${a.name}</td>
                     <td class="p-3">
                         <span class="px-2 py-1 rounded text-xs ${s.cls}">${s.text}</span>
@@ -305,7 +305,7 @@
                     <td class="p-3 text-gray-400">${formatDate(a.last_seen_at)}</td>
                     <td class="p-3">
                         ${a.status === "disabled"
-                            ? `<button onclick='toggleAgent(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)}, false)' class="text-yellow-500 hover:text-yellow-400 text-xs">Aktivieren</button>`
+                            ? `<button onclick='toggleAgent(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)}, false)' class="text-red-500 hover:text-red-400 text-xs">Aktivieren</button>`
                             : `<button onclick='toggleAgent(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)}, true)' class="text-red-400 hover:text-red-300 text-xs">Deaktivieren</button>`}
                     </td>
                 </tr>
