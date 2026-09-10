@@ -135,6 +135,9 @@
                 if (response.ok) {
                     localStorage.setItem("access_token", data.access_token);
                     window.location.href = "app/dashboard.html";
+                } else if (response.status === 402) {
+                    if (data.detail) sessionStorage.setItem("trial_expired_message", data.detail);
+                    window.location.href = "trial-expired.html";
                 } else {
                     errBox.innerText = data.detail || "E-Mail oder Passwort ist falsch.";
                     errBox.classList.remove("hidden");
