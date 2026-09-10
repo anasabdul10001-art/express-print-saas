@@ -9,14 +9,19 @@
         .then((data) => {
             if (!data || !data.logo_url) return;
 
+            // Height only (not width) - set via admin.html's logo-size slider,
+            // default 32px. Width is left to scale naturally so a wide
+            // rectangular logo isn't squeezed/cropped into the square box the
+            // default icon mark used.
+            const height = Number(data.logo_height) || 32;
+
             document.querySelectorAll("svg.brand-logo").forEach((svg) => {
                 const img = document.createElement("img");
                 img.src = data.logo_url;
                 img.alt = "Logo";
-                img.width = Number(svg.getAttribute("width")) || 26;
-                img.height = Number(svg.getAttribute("height")) || 26;
+                img.style.height = `${height}px`;
+                img.style.width = "auto";
                 img.style.borderRadius = "6px";
-                img.style.objectFit = "cover";
                 svg.replaceWith(img);
             });
         })

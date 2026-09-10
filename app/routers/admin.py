@@ -8,7 +8,7 @@ from app.config import settings
 from app.core.deps import get_current_superadmin, get_db
 from app.models.plan import Plan, SiteSettings
 from app.models.user import User
-from app.schemas.admin import PlanCreate, PlanOut, PlanUpdate, SiteSettingsOut
+from app.schemas.admin import PlanCreate, PlanOut, PlanUpdate, SiteSettingsOut, SiteSettingsUpdate
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -89,6 +89,20 @@ def get_site_settings(
     db: Session = Depends(get_db),
 ):
     return _get_or_create_settings(db)
+
+
+@router.patch("/settings", response_model=SiteSettingsOut)
+def update_site_settings(
+    payload: SiteSettingsUpdate,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    settings_row = _get_or_create_settings(db)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(settings_row, field, value)
+    db.commit()
+    db.refresh(settings_row)
+    return settings_row
 
 
 @router.post("/logo", response_model=SiteSettingsOut)

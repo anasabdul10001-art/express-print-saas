@@ -68,6 +68,21 @@
                     <input type="file" id="logo-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" onchange="uploadLogo()">
                 </label>
             </div>
+
+            <div id="logo-size-section" class="hidden pt-4 border-t border-slate-100 space-y-3">
+                <label class="block text-xs text-slate-500">Logo-Größe auf der Seite (Höhe in Pixel)</label>
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-lg border border-slate-200 overflow-hidden flex items-center justify-center bg-slate-50 flex-shrink-0">
+                        <img id="logo-size-preview" class="max-w-full" style="border-radius:4px;">
+                    </div>
+                    <input type="range" id="logo-size-slider" min="16" max="120" value="32" class="flex-1" oninput="onLogoSizeInput()">
+                    <span id="logo-size-value" class="text-sm font-semibold w-12 text-right">32px</span>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="saveLogoSize()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition">Größe speichern</button>
+                    <button onclick="resetLogoSize()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2 px-4 rounded-lg transition">Zurücksetzen (32px)</button>
+                </div>
+            </div>
         </div>
 
         <!-- Plans -->
@@ -192,15 +207,64 @@
             }
         }
 
+        function applyLogoSettings(data) {
+            if (!data.logo_url) return;
+
+            document.getElementById("logo-preview").src = data.logo_url;
+            document.getElementById("logo-preview-wrap").classList.remove("hidden");
+
+            const height = data.logo_height || 32;
+            document.getElementById("logo-size-section").classList.remove("hidden");
+            document.getElementById("logo-size-slider").value = height;
+            document.getElementById("logo-size-value").innerText = `${height}px`;
+            const sizePreview = document.getElementById("logo-size-preview");
+            sizePreview.src = data.logo_url;
+            sizePreview.style.height = `${height}px`;
+            sizePreview.style.width = "auto";
+        }
+
+        function onLogoSizeInput() {
+            const height = document.getElementById("logo-size-slider").value;
+            document.getElementById("logo-size-value").innerText = `${height}px`;
+            const sizePreview = document.getElementById("logo-size-preview");
+            sizePreview.style.height = `${height}px`;
+            sizePreview.style.width = "auto";
+        }
+
+        async function patchLogoHeight(height) {
+            try {
+                const response = await fetch(`${API_URL}/admin/settings`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ logo_height: height }),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) {
+                    showBanner(data.detail || "Speichern fehlgeschlagen.", true);
+                    return;
+                }
+                applyLogoSettings(data);
+                showBanner("Logo-Größe gespeichert.", false);
+            } catch (err) {
+                showBanner("Server nicht erreichbar.", true);
+            }
+        }
+
+        function saveLogoSize() {
+            patchLogoHeight(Number(document.getElementById("logo-size-slider").value));
+        }
+
+        function resetLogoSize() {
+            patchLogoHeight(null);
+        }
+
         async function loadSettings() {
             try {
                 const response = await fetch(`${API_URL}/admin/settings`, { headers: authHeaders() });
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
-                if (data.logo_url) {
-                    document.getElementById("logo-preview").src = data.logo_url;
-                    document.getElementById("logo-preview-wrap").classList.remove("hidden");
-                }
+                applyLogoSettings(data);
             } catch (err) {
                 // Non-critical - the upload button still works without a preview.
             }
@@ -232,8 +296,7 @@
                     return;
                 }
 
-                document.getElementById("logo-preview").src = data.logo_url;
-                document.getElementById("logo-preview-wrap").classList.remove("hidden");
+                applyLogoSettings(data);
                 showBanner("Logo aktualisiert.", false);
             } catch (err) {
                 showBanner("Server nicht erreichbar.", true);
