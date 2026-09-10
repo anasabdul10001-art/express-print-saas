@@ -11,6 +11,13 @@ class ExpenseCreate(BaseModel):
     expense_date: date
 
 
+class ExpenseUpdate(BaseModel):
+    """All fields optional - PATCH semantics, only sent fields get changed."""
+    description: str | None = Field(None, min_length=1, max_length=255)
+    amount: Decimal | None = Field(None, gt=0)
+    expense_date: date | None = None
+
+
 class ExpenseOut(BaseModel):
     id: uuid.UUID
     description: str

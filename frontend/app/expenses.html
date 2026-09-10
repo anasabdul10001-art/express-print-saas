@@ -38,9 +38,10 @@
             </div>
         </div>
 
-        <!-- Add expense form -->
+        <!-- Add / edit expense form -->
         <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
-            <h3 class="text-lg font-bold">Neue Ausgabe</h3>
+            <h3 id="form-title" class="text-lg font-bold">Neue Ausgabe</h3>
+            <input type="hidden" id="expense-id">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="sm:col-span-1">
                     <label class="block text-sm mb-1">Beschreibung *</label>
@@ -59,10 +60,16 @@
                 </div>
             </div>
             <div id="form-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
-            <button onclick="saveExpense()"
-                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
-                Ausgabe hinzufügen
-            </button>
+            <div class="flex gap-3">
+                <button id="save-btn" onclick="saveExpense()"
+                        class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    Ausgabe hinzufügen
+                </button>
+                <button id="cancel-edit-btn" onclick="resetForm()"
+                        class="hidden bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+                    Abbrechen
+                </button>
+            </div>
         </div>
 
         <!-- Empty state -->
@@ -116,8 +123,35 @@
             return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)} €`;
         }
 
+        function todayIso() {
+            return new Date().toISOString().split("T")[0];
+        }
+
         // Default the date field to today, so the common case needs no typing.
-        document.getElementById("field-date").value = new Date().toISOString().split("T")[0];
+        document.getElementById("field-date").value = todayIso();
+
+        function resetForm() {
+            document.getElementById("expense-id").value = "";
+            document.getElementById("field-description").value = "";
+            document.getElementById("field-amount").value = "";
+            document.getElementById("field-date").value = todayIso();
+            document.getElementById("form-title").innerText = "Neue Ausgabe";
+            document.getElementById("save-btn").innerText = "Ausgabe hinzufügen";
+            document.getElementById("cancel-edit-btn").classList.add("hidden");
+            document.getElementById("form-error").classList.add("hidden");
+        }
+
+        function editExpense(id, description, amount, expenseDate) {
+            document.getElementById("expense-id").value = id;
+            document.getElementById("field-description").value = description;
+            document.getElementById("field-amount").value = amount;
+            document.getElementById("field-date").value = expenseDate;
+            document.getElementById("form-title").innerText = "Ausgabe bearbeiten";
+            document.getElementById("save-btn").innerText = "Aktualisieren";
+            document.getElementById("cancel-edit-btn").classList.remove("hidden");
+            document.getElementById("form-error").classList.add("hidden");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
 
         async function loadSummary() {
             try {
@@ -149,6 +183,7 @@
             const errorBox = document.getElementById("form-error");
             errorBox.classList.add("hidden");
 
+            const id = document.getElementById("expense-id").value;
             const description = document.getElementById("field-description").value.trim();
             const amountRaw = document.getElementById("field-amount").value;
             const expenseDate = document.getElementById("field-date").value;
@@ -166,11 +201,14 @@
             };
 
             try {
-                const response = await fetch(`${API_URL}/expenses`, {
-                    method: "POST",
-                    headers: authHeaders(true),
-                    body: JSON.stringify(payload),
-                });
+                const response = await fetch(
+                    id ? `${API_URL}/expenses/${id}` : `${API_URL}/expenses`,
+                    {
+                        method: id ? "PATCH" : "POST",
+                        headers: authHeaders(true),
+                        body: JSON.stringify(payload),
+                    }
+                );
 
                 if (response.status === 401) { logout(); return; }
 
@@ -182,11 +220,8 @@
                     return;
                 }
 
-                document.getElementById("field-description").value = "";
-                document.getElementById("field-amount").value = "";
-                document.getElementById("field-date").value = new Date().toISOString().split("T")[0];
-
-                showBanner("Ausgabe hinzugefügt.", false);
+                showBanner(id ? "Ausgabe aktualisiert." : "Ausgabe hinzugefügt.", false);
+                resetForm();
                 loadExpenses();
                 loadSummary();
             } catch (err) {
@@ -234,7 +269,9 @@
                     <td class="p-3 text-gray-400">${e.expense_date}</td>
                     <td class="p-3">${e.description}</td>
                     <td class="p-3 text-red-400">${euro(e.amount)}</td>
-                    <td class="p-3">
+                    <td class="p-3 space-x-2">
+                        <button onclick='editExpense(${JSON.stringify(e.id)}, ${JSON.stringify(e.description)}, ${e.amount}, ${JSON.stringify(e.expense_date)})'
+                                class="text-yellow-500 hover:text-yellow-400 text-xs">Bearbeiten</button>
                         <button onclick='deleteExpense(${JSON.stringify(e.id)}, ${JSON.stringify(e.description)})'
                                 class="text-red-400 hover:text-red-300 text-xs">Löschen</button>
                     </td>
