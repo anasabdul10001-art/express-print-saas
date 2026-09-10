@@ -6,17 +6,17 @@
     <title>Einstellungen — Express Print SaaS</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white min-h-screen">
-    <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
         <h1 class="text-lg font-bold">Versandzentrale</h1>
         <div class="flex items-center gap-6">
-            <a href="dashboard.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Dashboard</a>
-            <a href="products.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Produkte</a>
-            <a href="orders.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Bestellungen</a>
-            <a href="expenses.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Ausgaben</a>
-            <a href="print-agents.html" class="text-gray-300 hover:text-red-500 text-sm font-semibold">Print-Agents</a>
-            <a href="settings.html" class="text-red-500 text-sm font-semibold">Einstellungen</a>
-            <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
+            <a href="dashboard.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Dashboard</a>
+            <a href="products.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Produkte</a>
+            <a href="orders.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Bestellungen</a>
+            <a href="expenses.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Ausgaben</a>
+            <a href="print-agents.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Print-Agents</a>
+            <a href="settings.html" class="text-red-600 text-sm font-semibold">Einstellungen</a>
+            <button onclick="logout()" class="text-slate-500 hover:text-slate-900 text-sm transition">Abmelden</button>
         </div>
     </nav>
 
@@ -26,61 +26,61 @@
         <h2 class="text-2xl font-bold">Einstellungen</h2>
 
         <!-- Company info -->
-        <div class="bg-neutral-900 p-6 rounded-lg shadow-lg space-y-4">
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 class="text-lg font-bold">Unternehmen</h3>
             <div>
                 <label class="block text-sm mb-1">Firmenname</label>
                 <input type="text" id="field-company-name"
-                       class="w-full p-2 rounded bg-neutral-800 border border-neutral-700 text-white">
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div>
                 <label class="block text-sm mb-1">Land (Ländercode, z.B. DE, AT, CH)</label>
                 <input type="text" id="field-country" maxlength="2"
-                       class="w-24 p-2 rounded bg-neutral-800 border border-neutral-700 text-white uppercase">
+                       class="w-24 p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none uppercase">
             </div>
-            <div id="company-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
+            <div id="company-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="saveCompany()"
-                    class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
                 Speichern
             </button>
         </div>
 
         <!-- Print mode -->
-        <div class="bg-neutral-900 p-6 rounded-lg shadow-lg space-y-4">
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 class="text-lg font-bold">Druckmodus</h3>
-            <p class="text-gray-400 text-sm">
+            <p class="text-slate-500 text-sm">
                 Bestimmt, wie Versandetiketten für neue Bestellungen gedruckt werden.
             </p>
 
-            <label class="flex items-start gap-3 p-3 rounded border border-neutral-800 hover:border-neutral-700 cursor-pointer">
+            <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="DASHBOARD_MANUAL" class="mt-1">
                 <span>
                     <span class="font-semibold">Manuell im Dashboard</span>
-                    <span class="block text-gray-400 text-sm">Du klickst pro Bestellung selbst auf "Etikett drucken" (aktuell die einzige vollständig funktionierende Option).</span>
+                    <span class="block text-slate-500 text-sm">Du klickst pro Bestellung selbst auf "Etikett drucken" (aktuell die einzige vollständig funktionierende Option).</span>
                 </span>
             </label>
 
-            <label class="flex items-start gap-3 p-3 rounded border border-neutral-800 hover:border-neutral-700 cursor-pointer">
+            <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="INSTANT" class="mt-1">
                 <span>
                     <span class="font-semibold">Sofort automatisch</span>
-                    <span class="block text-gray-400 text-sm">Etiketten sollen sofort bei Eingang einer Bestellung gedruckt werden.</span>
-                    <span class="block text-red-500 text-xs mt-1">⚠ Hinweis: Diese Automatik ist im Backend noch nicht umgesetzt. Bestellungen müssen aktuell auch in diesem Modus manuell über "Etikett drucken" ausgelöst werden.</span>
+                    <span class="block text-slate-500 text-sm">Etiketten sollen sofort bei Eingang einer Bestellung gedruckt werden.</span>
+                    <span class="block text-amber-600 text-xs mt-1">⚠ Hinweis: Diese Automatik ist im Backend noch nicht umgesetzt. Bestellungen müssen aktuell auch in diesem Modus manuell über "Etikett drucken" ausgelöst werden.</span>
                 </span>
             </label>
 
-            <label class="flex items-start gap-3 p-3 rounded border border-neutral-800 hover:border-neutral-700 cursor-pointer">
+            <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="INTEGRATED" class="mt-1">
                 <span>
                     <span class="font-semibold">Kombiniert (Etikett + Kommissionierzettel)</span>
-                    <span class="block text-gray-400 text-sm">Ein PDF aus Versandetikett und Kommissionierzettel (Produktfoto, Name, Lagerplatz).</span>
-                    <span class="block text-red-500 text-xs mt-1">⚠ Hinweis: Diese PDF-Zusammenführung ist noch nicht gebaut. Solange dieser Modus aktiv ist, lehnt "Etikett drucken" jeden Druckversuch ab.</span>
+                    <span class="block text-slate-500 text-sm">Ein PDF aus Versandetikett und Kommissionierzettel (Produktfoto, Name, Lagerplatz).</span>
+                    <span class="block text-amber-600 text-xs mt-1">⚠ Hinweis: Diese PDF-Zusammenführung ist noch nicht gebaut. Solange dieser Modus aktiv ist, lehnt "Etikett drucken" jeden Druckversuch ab.</span>
                 </span>
             </label>
 
-            <div id="mode-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
+            <div id="mode-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="savePrintMode()"
-                    class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
                 Druckmodus speichern
             </button>
         </div>
@@ -108,7 +108,7 @@
         function showBanner(text, isError) {
             const banner = document.getElementById("banner");
             banner.innerText = text;
-            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600 text-white" : "bg-white text-black"}`;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-50 text-red-700 border border-red-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`;
             setTimeout(() => banner.classList.add("hidden"), 4000);
         }
 

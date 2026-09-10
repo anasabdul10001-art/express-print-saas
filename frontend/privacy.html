@@ -3,24 +3,30 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Datenschutzerklärung — Express Print SaaS</title>
+    <title>Datenschutzerklärung — Express Print</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white min-h-screen">
-    <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4">
-        <a href="index.html" class="text-lg font-bold">Versandzentrale</a>
+<body class="bg-white text-slate-900 min-h-screen">
+    <nav class="bg-white border-b border-slate-200 px-6 py-4">
+        <a href="index.html" class="flex items-center gap-2 w-fit">
+            <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="text-lg font-bold">Express Print</span>
+        </a>
     </nav>
 
-    <main class="max-w-3xl mx-auto p-6 space-y-6 text-gray-300 text-sm leading-relaxed">
-        <h1 class="text-2xl font-bold text-white">Datenschutzerklärung</h1>
-        <p class="text-red-500 bg-red-900/30 border border-red-700 rounded p-3">
+    <main class="max-w-3xl mx-auto p-6 py-12 space-y-6 text-slate-600 text-sm leading-relaxed">
+        <h1 class="text-3xl font-bold text-slate-900">Datenschutzerklärung</h1>
+        <p class="text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
             Hinweis: Dies ist ein Basis-Entwurf und keine Rechtsberatung. Bitte vor
             offizieller Nutzung durch einen Anwalt/Datenschutzbeauftragten prüfen
             und die mit [PLATZHALTER] markierten Angaben ergänzen.
         </p>
 
         <section class="space-y-2">
-            <h2 class="text-lg font-bold text-white">1. Verantwortlicher</h2>
+            <h2 class="text-lg font-bold text-slate-900">1. Verantwortlicher</h2>
             <p>
                 [PLATZHALTER: Firmenname]<br>
                 [PLATZHALTER: Anschrift]<br>
@@ -29,45 +35,45 @@
         </section>
 
         <section class="space-y-2">
-            <h2 class="text-lg font-bold text-white">2. Welche Daten wir verarbeiten</h2>
-            <p><strong>Kontodaten:</strong> E-Mail-Adresse, Firmenname, Land, verschlüsseltes Passwort — bei der Registrierung angelegt.</p>
-            <p><strong>eBay-Verbindung:</strong> Wenn du dein eBay-Verkäuferkonto verbindest, erhalten wir über eBays offizielle Schnittstelle (OAuth) Zugriffstoken, die verschlüsselt gespeichert werden, sowie Bestelldaten (Artikelnummer, Menge, Preis). Wir speichern aktuell keine persönlichen Käuferdaten (Name, Adresse) aus deinen eBay-Bestellungen.</p>
-            <p><strong>Produkt- und Geschäftsdaten:</strong> von dir selbst angelegte Produkte, Lagerbestände, Bestellungen und Ausgaben.</p>
-            <p><strong>Druck-Agent-Daten:</strong> ein verschlüsselter API-Schlüssel pro registriertem Print-Agent, zur Authentifizierung des lokalen Druckprogramms.</p>
+            <h2 class="text-lg font-bold text-slate-900">2. Welche Daten wir verarbeiten</h2>
+            <p><strong class="text-slate-800">Kontodaten:</strong> E-Mail-Adresse, Firmenname, Land, verschlüsseltes Passwort — bei der Registrierung angelegt.</p>
+            <p><strong class="text-slate-800">eBay-Verbindung:</strong> Wenn du dein eBay-Verkäuferkonto verbindest, erhalten wir über eBays offizielle Schnittstelle (OAuth) Zugriffstoken, die verschlüsselt gespeichert werden, sowie Bestelldaten (Artikelnummer, Menge, Preis). Wir speichern aktuell keine persönlichen Käuferdaten (Name, Adresse) aus deinen eBay-Bestellungen.</p>
+            <p><strong class="text-slate-800">Produkt- und Geschäftsdaten:</strong> von dir selbst angelegte Produkte, Lagerbestände, Bestellungen und Ausgaben.</p>
+            <p><strong class="text-slate-800">Druck-Agent-Daten:</strong> ein verschlüsselter API-Schlüssel pro registriertem Print-Agent, zur Authentifizierung des lokalen Druckprogramms.</p>
         </section>
 
         <section class="space-y-2">
-            <h2 class="text-lg font-bold text-white">3. Zweck der Verarbeitung</h2>
+            <h2 class="text-lg font-bold text-slate-900">3. Zweck der Verarbeitung</h2>
             <p>Die Daten werden ausschließlich zur Bereitstellung der Express-Print-Dienste verarbeitet: Verwaltung von Produkten, Bestellungen, Ausgaben und zum Drucken von Versandetiketten.</p>
         </section>
 
         <section class="space-y-2">
-            <h2 class="text-lg font-bold text-white">4. Weitergabe an Dritte / Auftragsverarbeiter</h2>
+            <h2 class="text-lg font-bold text-slate-900">4. Weitergabe an Dritte / Auftragsverarbeiter</h2>
             <p>Zum Betrieb dieses Dienstes nutzen wir folgende Dienstleister als Auftragsverarbeiter:</p>
             <ul class="list-disc list-inside">
-                <li><strong>Supabase</strong> — Datenbank- und Dateispeicherung</li>
-                <li><strong>Render</strong> — Hosting der Anwendung</li>
-                <li><strong>eBay</strong> — zur Synchronisierung deiner Verkäuferbestellungen, sofern du dein Konto verbindest</li>
+                <li><strong class="text-slate-800">Supabase</strong> — Datenbank- und Dateispeicherung</li>
+                <li><strong class="text-slate-800">Render</strong> — Hosting der Anwendung</li>
+                <li><strong class="text-slate-800">eBay</strong> — zur Synchronisierung deiner Verkäuferbestellungen, sofern du dein Konto verbindest</li>
             </ul>
             <p>Eine Weitergabe an sonstige Dritte findet nicht statt.</p>
         </section>
 
         <section class="space-y-2">
-            <h2 class="text-lg font-bold text-white">5. Speicherdauer</h2>
+            <h2 class="text-lg font-bold text-slate-900">5. Speicherdauer</h2>
             <p>Daten werden gespeichert, solange dein Konto besteht. Bei Kontolöschung werden deine Daten auf Anfrage gelöscht, soweit keine gesetzlichen Aufbewahrungspflichten entgegenstehen.</p>
         </section>
 
         <section class="space-y-2">
-            <h2 class="text-lg font-bold text-white">6. Deine Rechte</h2>
+            <h2 class="text-lg font-bold text-slate-900">6. Deine Rechte</h2>
             <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie auf Datenübertragbarkeit. Wende dich dafür an [PLATZHALTER: Kontakt-E-Mail].</p>
         </section>
 
         <section class="space-y-2">
-            <h2 class="text-lg font-bold text-white">7. Kontakt</h2>
+            <h2 class="text-lg font-bold text-slate-900">7. Kontakt</h2>
             <p>Bei Fragen zum Datenschutz erreichst du uns unter: [PLATZHALTER: Kontakt-E-Mail]</p>
         </section>
 
-        <p class="text-gray-500 text-xs">Stand: [PLATZHALTER: Datum]</p>
+        <p class="text-slate-400 text-xs">Stand: [PLATZHALTER: Datum]</p>
     </main>
 </body>
 </html>
