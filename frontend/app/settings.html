@@ -70,6 +70,21 @@
             </button>
         </div>
 
+        <!-- Profile: name -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold">Profil</h3>
+            <div>
+                <label class="block text-sm mb-1">Name</label>
+                <input type="text" id="field-full-name"
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            </div>
+            <div id="profile-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <button onclick="saveProfile()"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                Name speichern
+            </button>
+        </div>
+
         <!-- Account / login email -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 class="text-lg font-bold">Konto</h3>
@@ -87,6 +102,32 @@
             <button onclick="saveEmail()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
                 E-Mail ändern
+            </button>
+        </div>
+
+        <!-- Password change -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold">Passwort ändern</h3>
+            <div>
+                <label class="block text-sm mb-1">Aktuelles Passwort</label>
+                <input type="password" id="field-current-password" autocomplete="current-password"
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Neues Passwort</label>
+                <input type="password" id="field-new-password" autocomplete="new-password" minlength="8"
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                <p class="text-xs text-slate-400 mt-1">Mindestens 8 Zeichen</p>
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Neues Passwort bestätigen</label>
+                <input type="password" id="field-new-password-confirm" autocomplete="new-password"
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            </div>
+            <div id="password-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <button onclick="savePassword()"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                Passwort ändern
             </button>
         </div>
 
@@ -204,8 +245,94 @@
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
                 document.getElementById("field-email").value = data.email || "";
+                document.getElementById("field-full-name").value = data.full_name || "";
             } catch (err) {
-                // Non-critical - the field just starts empty if this fails.
+                // Non-critical - the fields just start empty if this fails.
+            }
+        }
+
+        async function saveProfile() {
+            const errorBox = document.getElementById("profile-error");
+            errorBox.classList.add("hidden");
+
+            const fullName = document.getElementById("field-full-name").value.trim();
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me/profile`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ full_name: fullName || null }),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                showBanner("Name gespeichert.", false);
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function savePassword() {
+            const errorBox = document.getElementById("password-error");
+            errorBox.classList.add("hidden");
+
+            const currentPassword = document.getElementById("field-current-password").value;
+            const newPassword = document.getElementById("field-new-password").value;
+            const confirmPassword = document.getElementById("field-new-password-confirm").value;
+
+            if (!currentPassword || !newPassword) {
+                errorBox.innerText = "Bitte aktuelles und neues Passwort eingeben.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+            if (newPassword.length < 8) {
+                errorBox.innerText = "Das neue Passwort muss mindestens 8 Zeichen lang sein.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                errorBox.innerText = "Die Passwörter stimmen nicht überein.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me/password`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+                });
+
+                if (response.status === 401) {
+                    errorBox.innerText = "Aktuelles Passwort ist falsch.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Ändern fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                document.getElementById("field-current-password").value = "";
+                document.getElementById("field-new-password").value = "";
+                document.getElementById("field-new-password-confirm").value = "";
+                showBanner("Passwort erfolgreich geändert.", false);
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.classList.remove("hidden");
             }
         }
 

@@ -17,6 +17,8 @@ from app.schemas.auth import (
     ResetPasswordRequest,
     TokenResponse,
     UpdateEmailRequest,
+    UpdatePasswordRequest,
+    UpdateProfileRequest,
     UserMeOut,
 )
 from app.services.email_service import send_password_reset_email
@@ -155,3 +157,30 @@ def update_email(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.patch("/me/profile", response_model=UserMeOut)
+def update_profile(
+    payload: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    current_user.full_name = payload.full_name
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.patch("/me/password")
+def update_password(
+    payload: UpdatePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(status_code=401, detail="Aktuelles Passwort ist falsch.")
+
+    current_user.password_hash = hash_password(payload.new_password)
+    db.commit()
+
+    return {"message": "Passwort erfolgreich geändert."}
