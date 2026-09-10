@@ -1,4 +1,4 @@
-// Swaps the default "Express Print" mark (any <svg class="brand-logo">) for
+// Swaps the default "ShipSync" mark (any <svg class="brand-logo">) for
 // the logo uploaded via admin.html's Super Admin panel, if one has been set.
 // Public endpoint - no auth needed, safe to call from every page.
 (function () {
