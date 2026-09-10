@@ -17,5 +17,12 @@ class Settings(BaseSettings):
     # --- Supabase Storage (product image uploads) ---
     supabase_url: str = ""
     supabase_service_key: str = ""
+    # --- Resend (transactional email, currently just password-reset links) ---
+    resend_api_key: str = ""
+    # Must be an address on a domain verified in the Resend dashboard, or
+    # Resend's own onboarding@resend.dev sandbox address (which only
+    # delivers to the Resend account's own verified email until a real
+    # domain is verified).
+    resend_from_email: str = "Express Print <onboarding@resend.dev>"
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 settings = Settings()
