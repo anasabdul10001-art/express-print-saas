@@ -22,3 +22,7 @@ class PrintAgentOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PrintAgentDisabledUpdate(BaseModel):
+    disabled: bool

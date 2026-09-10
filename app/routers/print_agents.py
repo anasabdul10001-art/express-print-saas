@@ -6,9 +6,28 @@ from app.core.security import generate_api_key, hash_api_key
 from app.models.print_agent import PrintAgent
 from app.models.print_job import PrintJob
 from app.models.user import User
-from app.schemas.print_agent import PrintAgentCreate, PrintAgentCreatedResponse
+from app.schemas.print_agent import (
+    PrintAgentCreate,
+    PrintAgentCreatedResponse,
+    PrintAgentDisabledUpdate,
+    PrintAgentOut,
+)
 
 router = APIRouter(prefix="/print-agents", tags=["print-agents"])
+
+
+@router.get("", response_model=list[PrintAgentOut])
+def list_print_agents(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Feeds the dashboard's Print Agents page: name, status, last seen."""
+    return (
+        db.query(PrintAgent)
+        .filter(PrintAgent.tenant_id == current_user.tenant_id)
+        .order_by(PrintAgent.created_at.desc())
+        .all()
+    )
 
 
 @router.post("", response_model=PrintAgentCreatedResponse, status_code=status.HTTP_201_CREATED)
@@ -35,6 +54,35 @@ def create_print_agent(
     db.refresh(agent)
 
     return PrintAgentCreatedResponse(id=agent.id, name=agent.name, api_key=raw_key)
+
+
+@router.patch("/{agent_id}", response_model=PrintAgentOut)
+def update_print_agent(
+    agent_id: str,
+    payload: PrintAgentDisabledUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Disables or re-enables a Print Agent. Disabling immediately blocks the
+    agent's API key (see get_print_agent_from_api_key) without deleting the
+    row - so past print jobs stay linked to it, and it can be re-enabled
+    later without generating a new key.
+    """
+    agent = (
+        db.query(PrintAgent)
+        .filter(PrintAgent.id == agent_id, PrintAgent.tenant_id == current_user.tenant_id)
+        .first()
+    )
+    if not agent:
+        raise HTTPException(status_code=404, detail="Print agent not found for this account")
+
+    # Re-enabling sets it back to "offline" (not "online") since we don't
+    # actually know it's reachable until it next polls for a job.
+    agent.status = "disabled" if payload.disabled else "offline"
+    db.commit()
+    db.refresh(agent)
+    return agent
 
 
 @router.get("/{agent_id}/next-job")

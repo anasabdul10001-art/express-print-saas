@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Print-Agents — Express Print SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+        <h1 class="text-lg font-bold">Versandzentrale</h1>
+        <div class="flex items-center gap-6">
+            <a href="dashboard.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Dashboard</a>
+            <a href="products.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Produkte</a>
+            <a href="orders.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Bestellungen</a>
+            <a href="expenses.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Ausgaben</a>
+            <a href="print-agents.html" class="text-yellow-500 text-sm font-semibold">Print-Agents</a>
+            <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto p-6 space-y-6">
+        <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <div class="flex items-center justify-between gap-4">
+            <h2 class="text-2xl font-bold">Print-Agents</h2>
+            <button onclick="openForm()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                + Neuer Print-Agent
+            </button>
+        </div>
+
+        <p class="text-gray-400 text-sm">
+            Ein Print-Agent ist das kleine Programm, das auf dem Rechner neben deinem
+            Etikettendrucker läuft. Jeder Agent braucht einen eigenen API-Key, den du
+            beim Anlegen einmalig kopierst und in die <code class="bg-gray-800 px-1 rounded">config.json</code>
+            des Agents einträgst.
+        </p>
+
+        <!-- Add form, hidden by default -->
+        <div id="form-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+            <h3 class="text-lg font-bold">Neuer Print-Agent</h3>
+            <div>
+                <label class="block text-sm mb-1">Name *</label>
+                <input type="text" id="field-name" placeholder="z.B. Lager-PC vorne"
+                       class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+            </div>
+            <div id="form-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
+            <div class="flex gap-3">
+                <button onclick="createAgent()"
+                        class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                    Anlegen
+                </button>
+                <button onclick="closeForm()"
+                        class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+                    Abbrechen
+                </button>
+            </div>
+        </div>
+
+        <!-- One-time API key reveal, hidden by default -->
+        <div id="key-panel" class="hidden bg-gray-800 p-6 rounded-lg shadow-lg space-y-4 border border-yellow-600">
+            <h3 class="text-lg font-bold text-yellow-500">API-Key — jetzt kopieren!</h3>
+            <p class="text-gray-400 text-sm">
+                Dieser Key wird aus Sicherheitsgründen nur dieses eine Mal angezeigt.
+                Trag ihn zusammen mit der Agent-ID in die <code class="bg-gray-900 px-1 rounded">config.json</code>
+                des Print-Agents ein.
+            </p>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Agent-ID</label>
+                <div class="flex gap-2">
+                    <input type="text" id="key-agent-id" readonly
+                           class="w-full p-2 rounded bg-gray-900 border border-gray-700 text-gray-300 font-mono text-xs">
+                    <button onclick="copyValue('key-agent-id')"
+                            class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold py-2 px-3 rounded transition">
+                        Kopieren
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">API-Key</label>
+                <div class="flex gap-2">
+                    <input type="text" id="key-value" readonly
+                           class="w-full p-2 rounded bg-gray-900 border border-gray-700 text-gray-300 font-mono text-xs">
+                    <button onclick="copyValue('key-value')"
+                            class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold py-2 px-3 rounded transition">
+                        Kopieren
+                    </button>
+                </div>
+            </div>
+            <button onclick="closeKeyPanel()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                Ich habe den Key gespeichert
+            </button>
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="hidden bg-gray-800 p-8 rounded-lg text-center space-y-3">
+            <p class="text-gray-400">Noch keine Print-Agents angelegt.</p>
+            <button onclick="openForm()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                Ersten Print-Agent anlegen
+            </button>
+        </div>
+
+        <!-- Agents table -->
+        <div id="table-wrap" class="hidden bg-gray-800 rounded-lg shadow-lg overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-gray-400 border-b border-gray-700">
+                        <th class="p-3">Name</th>
+                        <th class="p-3">Status</th>
+                        <th class="p-3">Zuletzt gesehen</th>
+                        <th class="p-3">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="agents-tbody"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "../login.html";
+        }
+
+        function authHeaders(json = false) {
+            const headers = { "Authorization": `Bearer ${token}` };
+            if (json) headers["Content-Type"] = "application/json";
+            return headers;
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "../login.html";
+        }
+
+        function showBanner(text, isError) {
+            const banner = document.getElementById("banner");
+            banner.innerText = text;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
+            setTimeout(() => banner.classList.add("hidden"), 4000);
+        }
+
+        function formatDate(isoString) {
+            if (!isoString) return "Nie";
+            const d = new Date(isoString);
+            return d.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+        }
+
+        function statusLabel(status) {
+            const map = {
+                online: { text: "Online", cls: "bg-green-700" },
+                offline: { text: "Offline", cls: "bg-gray-600" },
+                disabled: { text: "Deaktiviert", cls: "bg-red-700" },
+            };
+            return map[status] || { text: status, cls: "bg-gray-600" };
+        }
+
+        function openForm() {
+            document.getElementById("form-panel").classList.remove("hidden");
+            document.getElementById("key-panel").classList.add("hidden");
+            document.getElementById("form-error").classList.add("hidden");
+            document.getElementById("field-name").value = "";
+            document.getElementById("form-panel").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function closeForm() {
+            document.getElementById("form-panel").classList.add("hidden");
+        }
+
+        function closeKeyPanel() {
+            document.getElementById("key-panel").classList.add("hidden");
+        }
+
+        async function copyValue(fieldId) {
+            const field = document.getElementById(fieldId);
+            try {
+                await navigator.clipboard.writeText(field.value);
+                showBanner("In die Zwischenablage kopiert.", false);
+            } catch (err) {
+                field.select();
+                showBanner("Automatisches Kopieren nicht möglich — bitte manuell markieren.", true);
+            }
+        }
+
+        async function createAgent() {
+            const errorBox = document.getElementById("form-error");
+            errorBox.classList.add("hidden");
+
+            const name = document.getElementById("field-name").value.trim();
+            if (!name) {
+                errorBox.innerText = "Bitte einen Namen eingeben.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/print-agents`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ name }),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Anlegen fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                closeForm();
+                document.getElementById("key-agent-id").value = data.id;
+                document.getElementById("key-value").value = data.api_key;
+                document.getElementById("key-panel").classList.remove("hidden");
+                document.getElementById("key-panel").scrollIntoView({ behavior: "smooth" });
+                loadAgents();
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function toggleAgent(id, name, disable) {
+            const question = disable
+                ? `Print-Agent "${name}" wirklich deaktivieren? Er kann dann keine Druckaufträge mehr abrufen.`
+                : `Print-Agent "${name}" wieder aktivieren?`;
+            if (!confirm(question)) return;
+
+            try {
+                const response = await fetch(`${API_URL}/print-agents/${id}`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ disabled: disable }),
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    showBanner("Aktion fehlgeschlagen.", true);
+                    return;
+                }
+                showBanner(disable ? "Print-Agent deaktiviert." : "Print-Agent aktiviert.", false);
+                loadAgents();
+            } catch (err) {
+                showBanner("Server nicht erreichbar.", true);
+            }
+        }
+
+        function renderAgents(agents) {
+            const tbody = document.getElementById("agents-tbody");
+            const emptyState = document.getElementById("empty-state");
+            const tableWrap = document.getElementById("table-wrap");
+
+            if (agents.length === 0) {
+                emptyState.classList.remove("hidden");
+                tableWrap.classList.add("hidden");
+                return;
+            }
+            emptyState.classList.add("hidden");
+            tableWrap.classList.remove("hidden");
+
+            tbody.innerHTML = agents.map(a => {
+                const s = statusLabel(a.status);
+                return `
+                <tr class="border-b border-gray-700 ${a.status === "disabled" ? "opacity-50" : ""}">
+                    <td class="p-3">${a.name}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded text-xs ${s.cls}">${s.text}</span>
+                    </td>
+                    <td class="p-3 text-gray-400">${formatDate(a.last_seen_at)}</td>
+                    <td class="p-3">
+                        ${a.status === "disabled"
+                            ? `<button onclick='toggleAgent(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)}, false)' class="text-yellow-500 hover:text-yellow-400 text-xs">Aktivieren</button>`
+                            : `<button onclick='toggleAgent(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)}, true)' class="text-red-400 hover:text-red-300 text-xs">Deaktivieren</button>`}
+                    </td>
+                </tr>
+            `;
+            }).join("");
+        }
+
+        async function loadAgents() {
+            try {
+                const response = await fetch(`${API_URL}/print-agents`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                renderAgents(data);
+            } catch (err) {
+                showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
+            }
+        }
+
+        loadAgents();
+    </script>
+</body>
+</html>
