@@ -101,6 +101,10 @@
                     </div>
                 </div>
                 <div>
+                    <label class="block text-xs text-slate-500 mb-1">Kostenlose Testphase (Tage)</label>
+                    <input type="number" id="plan-trial-days" placeholder="leer = keine Testphase" class="w-full sm:w-1/3 px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
                     <label class="block text-xs text-slate-500 mb-1">Funktionen (eine pro Zeile)</label>
                     <textarea id="plan-features" rows="4" placeholder="eBay-Synchronisierung&#10;Automatisches Drucken&#10;Marktrecherche" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"></textarea>
                 </div>
@@ -241,6 +245,7 @@
             document.getElementById("plan-order-limit").value = plan ? (plan.order_limit ?? "") : "";
             document.getElementById("plan-printer-limit").value = plan ? (plan.printer_limit ?? "") : "";
             document.getElementById("plan-user-limit").value = plan ? (plan.user_limit ?? "") : "";
+            document.getElementById("plan-trial-days").value = plan ? (plan.trial_days ?? "") : "";
             document.getElementById("plan-features").value = plan ? (plan.features || []).join("\n") : "";
             document.getElementById("plan-active").checked = plan ? plan.is_active : true;
             document.getElementById("plan-recommended").checked = plan ? plan.is_recommended : false;
@@ -268,6 +273,7 @@
             const orderLimitRaw = document.getElementById("plan-order-limit").value;
             const printerLimitRaw = document.getElementById("plan-printer-limit").value;
             const userLimitRaw = document.getElementById("plan-user-limit").value;
+            const trialDaysRaw = document.getElementById("plan-trial-days").value;
             const featuresRaw = document.getElementById("plan-features").value;
 
             const payload = {
@@ -277,6 +283,7 @@
                 order_limit: orderLimitRaw === "" ? null : Number(orderLimitRaw),
                 printer_limit: printerLimitRaw === "" ? null : Number(printerLimitRaw),
                 user_limit: userLimitRaw === "" ? null : Number(userLimitRaw),
+                trial_days: trialDaysRaw === "" ? null : Number(trialDaysRaw),
                 features: featuresRaw.split("\n").map(f => f.trim()).filter(f => f.length > 0),
                 is_active: document.getElementById("plan-active").checked,
                 is_recommended: document.getElementById("plan-recommended").checked,
@@ -344,6 +351,7 @@
                             <span class="font-semibold">${p.name}</span>
                             ${p.is_recommended ? '<span class="px-2 py-0.5 rounded-full text-xs bg-red-50 text-red-600">Empfohlen</span>' : ""}
                             ${!p.is_active ? '<span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-500">Inaktiv</span>' : ""}
+                            ${p.trial_days ? `<span class="px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-600">${p.trial_days} Tage Testphase</span>` : ""}
                         </div>
                         <p class="text-sm text-slate-500 mt-1">${p.description || ""}</p>
                         <p class="text-lg font-bold text-red-600 mt-1">${euro(p.price_monthly)} <span class="text-xs font-normal text-slate-400">/ Monat</span></p>

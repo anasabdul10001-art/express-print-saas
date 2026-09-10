@@ -94,10 +94,11 @@
                     ${highlight ? '<span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Empfohlen</span>' : ""}
                     <h3 class="text-lg font-bold">${plan.name}</h3>
                     <p class="text-slate-500 text-sm mt-1 min-h-[2.5rem]">${plan.description || ""}</p>
-                    <div class="mt-4 mb-6">
+                    <div class="mt-4 mb-2">
                         <span class="text-3xl font-bold">${price.amount}</span>
                         ${price.suffix ? `<span class="text-slate-400 text-sm ml-1">${price.suffix}</span>` : ""}
                     </div>
+                    ${plan.trial_days ? `<p class="text-emerald-600 text-sm font-semibold mb-4">${plan.trial_days} Tage kostenlos testen</p>` : '<div class="mb-4"></div>'}
                     <ul class="space-y-3 flex-1">
                         ${limits}
                         ${features}
