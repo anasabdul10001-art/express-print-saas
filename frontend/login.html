@@ -7,6 +7,8 @@
     <title>Anmelden — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="site-logo.js"></script>
+    <script src="translations.js"></script>
+    <script src="i18n.js"></script>
 </head>
 <body class="bg-white text-slate-900 min-h-screen flex flex-col">
     <nav class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
@@ -16,13 +18,20 @@
                 <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </a>
-        <a href="pricing.html" class="lg:hidden inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition shadow-sm shadow-red-600/30">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12.01V2h10.01l8.58 8.58a2 2 0 0 1 0 2.82Z"/>
-                <circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/>
-            </svg>
-            Preise ansehen
-        </a>
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1 text-xs font-semibold">
+                <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                <span class="text-slate-300">|</span>
+                <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+            </div>
+            <a href="pricing.html" class="lg:hidden inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition shadow-sm shadow-red-600/30">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12.01V2h10.01l8.58 8.58a2 2 0 0 1 0 2.82Z"/>
+                    <circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
+                <span data-i18n="nav.pricingCta">Preise ansehen</span>
+            </a>
+        </div>
     </nav>
 
     <div class="flex flex-1">
@@ -32,25 +41,25 @@
         <div class="absolute bottom-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl"></div>
 
         <div class="relative max-w-md space-y-6">
-            <h1 class="text-3xl font-bold leading-snug text-white">
+            <h1 class="text-3xl font-bold leading-snug text-white" data-i18n="login.heroTitle">
                 Versand und Etikettendruck für eBay-Verkäufer, automatisiert.
             </h1>
-            <p class="text-slate-400">
+            <p class="text-slate-400" data-i18n="login.heroSubtitle">
                 Verbinde dein eBay-Konto, verwalte Bestellungen und Lagerbestand, und drucke Versandetiketten automatisch — ohne manuelle Umwege.
             </p>
 
             <ul class="space-y-4 text-sm text-slate-300">
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs">✓</span>
-                    eBay-Bestellungen automatisch synchronisieren
+                    <span data-i18n="login.checklist1">eBay-Bestellungen automatisch synchronisieren</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs">✓</span>
-                    Versandetiketten drucken, ohne den Computer anzufassen
+                    <span data-i18n="login.checklist2">Versandetiketten drucken, ohne den Computer anzufassen</span>
                 </li>
                 <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs">✓</span>
-                    Lagerbestand und Gewinn immer im Blick
+                    <span data-i18n="login.checklist3">Lagerbestand und Gewinn immer im Blick</span>
                 </li>
             </ul>
 
@@ -60,7 +69,7 @@
                         <path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12.01V2h10.01l8.58 8.58a2 2 0 0 1 0 2.82Z"/>
                         <circle cx="7" cy="7" r="1.5" fill="#E11D48" stroke="none"/>
                     </svg>
-                    Preise ansehen
+                    <span data-i18n="nav.pricingCta">Preise ansehen</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1">
                         <path d="M5 12h14M13 6l6 6-6 6"/>
                     </svg>
@@ -79,34 +88,34 @@
                 </svg>
             </div>
 
-            <h2 class="text-2xl font-bold mb-2 text-center lg:text-left">Willkommen zurück</h2>
-            <p class="text-slate-500 text-sm mb-6 text-center lg:text-left">Melde dich bei deinem Konto an</p>
+            <h2 class="text-2xl font-bold mb-2 text-center lg:text-left" data-i18n="login.formTitle">Willkommen zurück</h2>
+            <p class="text-slate-500 text-sm mb-6 text-center lg:text-left" data-i18n="login.formSubtitle">Melde dich bei deinem Konto an</p>
 
             <div id="error-box" class="hidden bg-red-50 text-red-700 border border-red-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
 
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">E-Mail</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="login.email">E-Mail</label>
                     <input type="email" id="email" required autocomplete="email"
                            class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
                 </div>
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
-                        <label class="block text-sm font-medium text-slate-700">Passwort</label>
-                        <a href="forgot-password.html" class="text-xs text-red-600 hover:text-red-700 font-medium">Passwort vergessen?</a>
+                        <label class="block text-sm font-medium text-slate-700" data-i18n="login.password">Passwort</label>
+                        <a href="forgot-password.html" class="text-xs text-red-600 hover:text-red-700 font-medium" data-i18n="login.forgotPassword">Passwort vergessen?</a>
                     </div>
                     <input type="password" id="password" required autocomplete="current-password"
                            class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
                 </div>
                 <button type="submit" id="submit-btn"
                         class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg transition shadow-sm shadow-red-600/20">
-                    Anmelden
+                    <span data-i18n="login.submit">Anmelden</span>
                 </button>
             </form>
 
             <p class="text-slate-500 text-sm text-center mt-6">
-                Noch kein Konto?
-                <a href="index.html" class="text-red-600 hover:text-red-700 font-semibold">Jetzt registrieren</a>
+                <span data-i18n="login.noAccount">Noch kein Konto?</span>
+                <a href="index.html" class="text-red-600 hover:text-red-700 font-semibold" data-i18n="login.registerLink">Jetzt registrieren</a>
             </p>
         </div>
     </div>
@@ -127,7 +136,7 @@
 
             errBox.classList.add("hidden");
             btn.disabled = true;
-            btn.innerText = "Bitte warten...";
+            btn.innerText = t("login.submitLoading");
 
             const payload = {
                 email: document.getElementById("email").value,
@@ -150,15 +159,15 @@
                     if (data.detail) sessionStorage.setItem("trial_expired_message", data.detail);
                     window.location.href = "trial-expired.html";
                 } else {
-                    errBox.innerText = data.detail || "E-Mail oder Passwort ist falsch.";
+                    errBox.innerText = data.detail || t("login.invalidCredentials");
                     errBox.classList.remove("hidden");
                 }
             } catch (err) {
-                errBox.innerText = "Server nicht erreichbar. Bitte 30s warten (Render Free Tier) und erneut versuchen.";
+                errBox.innerText = t("login.serverError");
                 errBox.classList.remove("hidden");
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Anmelden";
+                btn.innerText = t("login.submit");
             }
         }
     </script>

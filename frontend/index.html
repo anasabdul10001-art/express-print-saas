@@ -7,6 +7,8 @@
     <title>Konto erstellen — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="site-logo.js"></script>
+    <script src="translations.js"></script>
+    <script src="i18n.js"></script>
 </head>
 <body class="bg-white text-slate-900 min-h-screen flex flex-col">
     <nav class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
@@ -16,13 +18,20 @@
                 <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </a>
-        <a href="pricing.html" class="lg:hidden inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition shadow-sm shadow-red-600/30">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12.01V2h10.01l8.58 8.58a2 2 0 0 1 0 2.82Z"/>
-                <circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/>
-            </svg>
-            Preise ansehen
-        </a>
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1 text-xs font-semibold">
+                <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                <span class="text-slate-300">|</span>
+                <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+            </div>
+            <a href="pricing.html" class="lg:hidden inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition shadow-sm shadow-red-600/30">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12.01V2h10.01l8.58 8.58a2 2 0 0 1 0 2.82Z"/>
+                    <circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
+                <span data-i18n="nav.pricingCta">Preise ansehen</span>
+            </a>
+        </div>
     </nav>
 
     <div class="flex flex-1">
@@ -32,29 +41,29 @@
         <div class="absolute bottom-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl"></div>
 
         <div class="relative max-w-md space-y-6">
-            <h1 class="text-3xl font-bold leading-snug text-white">
+            <h1 class="text-3xl font-bold leading-snug text-white" data-i18n="register.heroTitle">
                 In wenigen Minuten startklar für automatisierten Versand.
             </h1>
-            <p class="text-slate-400">
+            <p class="text-slate-400" data-i18n="register.heroSubtitle">
                 Konto erstellen → eBay verbinden → Drucker einrichten → loslegen.
             </p>
 
             <div class="space-y-4 pt-2">
                 <div class="flex items-center gap-3 text-sm">
                     <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">1</span>
-                    <span class="text-white font-medium">Konto erstellen</span>
+                    <span class="text-white font-medium" data-i18n="register.step1">Konto erstellen</span>
                 </div>
                 <div class="flex items-center gap-3 text-sm">
                     <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold flex items-center justify-center">2</span>
-                    <span class="text-slate-400">eBay-Konto verbinden</span>
+                    <span class="text-slate-400" data-i18n="register.step2">eBay-Konto verbinden</span>
                 </div>
                 <div class="flex items-center gap-3 text-sm">
                     <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold flex items-center justify-center">3</span>
-                    <span class="text-slate-400">Print-Agent einrichten</span>
+                    <span class="text-slate-400" data-i18n="register.step3">Print-Agent einrichten</span>
                 </div>
                 <div class="flex items-center gap-3 text-sm">
                     <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold flex items-center justify-center">4</span>
-                    <span class="text-slate-400">Bestellungen bearbeiten</span>
+                    <span class="text-slate-400" data-i18n="register.step4">Bestellungen bearbeiten</span>
                 </div>
             </div>
 
@@ -64,7 +73,7 @@
                         <path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12.01V2h10.01l8.58 8.58a2 2 0 0 1 0 2.82Z"/>
                         <circle cx="7" cy="7" r="1.5" fill="#E11D48" stroke="none"/>
                     </svg>
-                    Preise ansehen
+                    <span data-i18n="nav.pricingCta">Preise ansehen</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1">
                         <path d="M5 12h14M13 6l6 6-6 6"/>
                     </svg>
@@ -83,34 +92,34 @@
                 </svg>
             </div>
 
-            <h2 class="text-2xl font-bold mb-2 text-center lg:text-left">Konto erstellen</h2>
-            <p class="text-slate-500 text-sm mb-6 text-center lg:text-left">Kostenlos starten, in unter 2 Minuten</p>
+            <h2 class="text-2xl font-bold mb-2 text-center lg:text-left" data-i18n="register.formTitle">Konto erstellen</h2>
+            <p class="text-slate-500 text-sm mb-6 text-center lg:text-left" data-i18n="register.formSubtitle">Kostenlos starten, in unter 2 Minuten</p>
 
             <div id="error-box" class="hidden bg-red-50 text-red-700 border border-red-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
             <div id="success-box" class="hidden bg-emerald-50 text-emerald-700 border border-emerald-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
 
             <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Firmenname</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="register.companyName">Firmenname</label>
                     <input type="text" id="company_name" required class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">E-Mail</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="register.email">E-Mail</label>
                     <input type="email" id="email" required class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Passwort</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="register.password">Passwort</label>
                     <input type="password" id="password" required minlength="8" class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
-                    <p class="text-xs text-slate-400 mt-1">Mindestens 8 Zeichen</p>
+                    <p class="text-xs text-slate-400 mt-1" data-i18n="register.passwordHint">Mindestens 8 Zeichen</p>
                 </div>
                 <button type="submit" id="submit-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg transition shadow-sm shadow-red-600/20">
-                    Konto erstellen
+                    <span data-i18n="register.submit">Konto erstellen</span>
                 </button>
             </form>
 
             <p class="text-slate-500 text-sm text-center mt-6">
-                Schon ein Konto?
-                <a href="login.html" class="text-red-600 hover:text-red-700 font-semibold">Jetzt anmelden</a>
+                <span data-i18n="register.haveAccount">Schon ein Konto?</span>
+                <a href="login.html" class="text-red-600 hover:text-red-700 font-semibold" data-i18n="register.loginLink">Jetzt anmelden</a>
             </p>
         </div>
     </div>
@@ -128,7 +137,7 @@
             errBox.classList.add("hidden");
             succBox.classList.add("hidden");
             btn.disabled = true;
-            btn.innerText = "Bitte warten...";
+            btn.innerText = t("register.submitLoading");
 
             const payload = {
                 company_name: document.getElementById("company_name").value,
@@ -157,20 +166,20 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    succBox.innerText = "Konto erfolgreich erstellt! Du wirst weitergeleitet...";
+                    succBox.innerText = t("register.successMessage");
                     succBox.classList.remove("hidden");
                     localStorage.setItem("access_token", data.access_token);
                     setTimeout(() => { window.location.href = "app/dashboard.html"; }, 1000);
                 } else {
-                    errBox.innerText = data.detail || "Fehler beim Erstellen des Kontos.";
+                    errBox.innerText = data.detail || t("register.genericError");
                     errBox.classList.remove("hidden");
                 }
             } catch (err) {
-                errBox.innerText = "Server nicht erreichbar. Bitte 30s warten (Render Free Tier).";
+                errBox.innerText = t("register.serverError");
                 errBox.classList.remove("hidden");
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Konto erstellen";
+                btn.innerText = t("register.submit");
             }
         }
     </script>
