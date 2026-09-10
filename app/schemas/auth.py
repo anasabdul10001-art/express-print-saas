@@ -48,3 +48,12 @@ class UserMeOut(BaseModel):
 class UpdateEmailRequest(BaseModel):
     email: EmailStr
     current_password: str = Field(..., description="Confirms it's really you before changing your login email")
+
+
+class UpdateProfileRequest(BaseModel):
+    full_name: str | None = None
+
+
+class UpdatePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8)
