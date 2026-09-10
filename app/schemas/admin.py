@@ -57,6 +57,11 @@ class PlanOut(BaseModel):
 
 class SiteSettingsOut(BaseModel):
     logo_url: str | None
+    logo_height: int | None
 
     class Config:
         from_attributes = True
+
+
+class SiteSettingsUpdate(BaseModel):
+    logo_height: int | None = Field(None, ge=12, le=200)
