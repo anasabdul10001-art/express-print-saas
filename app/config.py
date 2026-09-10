@@ -24,5 +24,10 @@ class Settings(BaseSettings):
     # delivers to the Resend account's own verified email until a real
     # domain is verified).
     resend_from_email: str = "Express Print <onboarding@resend.dev>"
+    # --- Scheduled market-research snapshots ---
+    # Shared secret checked on POST /market-research/tracked/run-snapshots,
+    # so only our own daily scheduler (not the public internet) can trigger
+    # it - it fans out to many eBay API calls and writes to the database.
+    cron_secret: str = ""
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 settings = Settings()

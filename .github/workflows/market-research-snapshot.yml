@@ -1,0 +1,18 @@
+name: Market research daily snapshot
+
+on:
+  schedule:
+    # 06:00 UTC every day. GitHub Actions cron can run a few minutes late
+    # under load - that's fine here, this job isn't time-critical.
+    - cron: "0 6 * * *"
+  workflow_dispatch: {} # lets you trigger a run manually from the Actions tab
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the snapshot endpoint
+        run: |
+          curl -sf -X POST "https://express-print-saas.onrender.com/market-research/tracked/run-snapshots" \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}" \
+            --max-time 300
