@@ -24,6 +24,18 @@
                 img.style.borderRadius = "6px";
                 svg.replaceWith(img);
             });
+
+            // Browser tab icon - every page ships a default SVG favicon
+            // (inline, so it works with no extra file), overridden here once
+            // a real logo exists.
+            let favicon = document.querySelector('link[rel="icon"]');
+            if (!favicon) {
+                favicon = document.createElement("link");
+                favicon.rel = "icon";
+                document.head.appendChild(favicon);
+            }
+            favicon.type = "";
+            favicon.href = data.logo_url;
         })
         .catch(() => {
             // No custom logo reachable - the default SVG mark already in the
