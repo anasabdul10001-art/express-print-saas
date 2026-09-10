@@ -1,0 +1,6 @@
+requests>=2.31.0
+pywin32>=306
+pystray>=0.19.5
+pillow>=10.3.0
+pypdf>=4.2.0
+pyinstaller>=6.6.0
