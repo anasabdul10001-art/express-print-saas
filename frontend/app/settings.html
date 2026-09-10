@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Einstellungen — Express Print SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+        <h1 class="text-lg font-bold">Versandzentrale</h1>
+        <div class="flex items-center gap-6">
+            <a href="dashboard.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Dashboard</a>
+            <a href="products.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Produkte</a>
+            <a href="orders.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Bestellungen</a>
+            <a href="expenses.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Ausgaben</a>
+            <a href="print-agents.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Print-Agents</a>
+            <a href="settings.html" class="text-yellow-500 text-sm font-semibold">Einstellungen</a>
+            <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
+        </div>
+    </nav>
+
+    <main class="max-w-2xl mx-auto p-6 space-y-6">
+        <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <h2 class="text-2xl font-bold">Einstellungen</h2>
+
+        <!-- Company info -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+            <h3 class="text-lg font-bold">Unternehmen</h3>
+            <div>
+                <label class="block text-sm mb-1">Firmenname</label>
+                <input type="text" id="field-company-name"
+                       class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+            </div>
+            <div>
+                <label class="block text-sm mb-1">Land (Ländercode, z.B. DE, AT, CH)</label>
+                <input type="text" id="field-country" maxlength="2"
+                       class="w-24 p-2 rounded bg-gray-700 border border-gray-600 text-white uppercase">
+            </div>
+            <div id="company-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
+            <button onclick="saveCompany()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                Speichern
+            </button>
+        </div>
+
+        <!-- Print mode -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+            <h3 class="text-lg font-bold">Druckmodus</h3>
+            <p class="text-gray-400 text-sm">
+                Bestimmt, wie Versandetiketten für neue Bestellungen gedruckt werden.
+            </p>
+
+            <label class="flex items-start gap-3 p-3 rounded border border-gray-700 hover:border-gray-600 cursor-pointer">
+                <input type="radio" name="print-mode" value="DASHBOARD_MANUAL" class="mt-1">
+                <span>
+                    <span class="font-semibold">Manuell im Dashboard</span>
+                    <span class="block text-gray-400 text-sm">Du klickst pro Bestellung selbst auf "Etikett drucken" (aktuell die einzige vollständig funktionierende Option).</span>
+                </span>
+            </label>
+
+            <label class="flex items-start gap-3 p-3 rounded border border-gray-700 hover:border-gray-600 cursor-pointer">
+                <input type="radio" name="print-mode" value="INSTANT" class="mt-1">
+                <span>
+                    <span class="font-semibold">Sofort automatisch</span>
+                    <span class="block text-gray-400 text-sm">Etiketten sollen sofort bei Eingang einer Bestellung gedruckt werden.</span>
+                    <span class="block text-yellow-500 text-xs mt-1">⚠ Hinweis: Diese Automatik ist im Backend noch nicht umgesetzt. Bestellungen müssen aktuell auch in diesem Modus manuell über "Etikett drucken" ausgelöst werden.</span>
+                </span>
+            </label>
+
+            <label class="flex items-start gap-3 p-3 rounded border border-gray-700 hover:border-gray-600 cursor-pointer">
+                <input type="radio" name="print-mode" value="INTEGRATED" class="mt-1">
+                <span>
+                    <span class="font-semibold">Kombiniert (Etikett + Kommissionierzettel)</span>
+                    <span class="block text-gray-400 text-sm">Ein PDF aus Versandetikett und Kommissionierzettel (Produktfoto, Name, Lagerplatz).</span>
+                    <span class="block text-yellow-500 text-xs mt-1">⚠ Hinweis: Diese PDF-Zusammenführung ist noch nicht gebaut. Solange dieser Modus aktiv ist, lehnt "Etikett drucken" jeden Druckversuch ab.</span>
+                </span>
+            </label>
+
+            <div id="mode-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
+            <button onclick="savePrintMode()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                Druckmodus speichern
+            </button>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "../login.html";
+        }
+
+        function authHeaders(json = false) {
+            const headers = { "Authorization": `Bearer ${token}` };
+            if (json) headers["Content-Type"] = "application/json";
+            return headers;
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "../login.html";
+        }
+
+        function showBanner(text, isError) {
+            const banner = document.getElementById("banner");
+            banner.innerText = text;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
+            setTimeout(() => banner.classList.add("hidden"), 4000);
+        }
+
+        async function loadTenant() {
+            try {
+                const response = await fetch(`${API_URL}/tenants/me`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+
+                document.getElementById("field-company-name").value = data.company_name || "";
+                document.getElementById("field-country").value = data.country_code || "";
+
+                const radio = document.querySelector(`input[name="print-mode"][value="${data.print_mode}"]`);
+                if (radio) radio.checked = true;
+            } catch (err) {
+                showBanner("Einstellungen konnten nicht geladen werden. Bitte Seite neu laden.", true);
+            }
+        }
+
+        async function saveCompany() {
+            const errorBox = document.getElementById("company-error");
+            errorBox.classList.add("hidden");
+
+            const companyName = document.getElementById("field-company-name").value.trim();
+            const countryCode = document.getElementById("field-country").value.trim().toUpperCase();
+
+            if (!companyName) {
+                errorBox.innerText = "Bitte einen Firmennamen eingeben.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+            if (countryCode.length !== 2) {
+                errorBox.innerText = "Bitte einen zweistelligen Ländercode eingeben (z.B. DE).";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/tenants/me`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ company_name: companyName, country_code: countryCode }),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                showBanner("Unternehmensdaten gespeichert.", false);
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function savePrintMode() {
+            const errorBox = document.getElementById("mode-error");
+            errorBox.classList.add("hidden");
+
+            const selected = document.querySelector('input[name="print-mode"]:checked');
+            if (!selected) {
+                errorBox.innerText = "Bitte einen Druckmodus auswählen.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/tenants/me/print-mode`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ print_mode: selected.value }),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                showBanner("Druckmodus gespeichert.", false);
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        loadTenant();
+    </script>
+</body>
+</html>
