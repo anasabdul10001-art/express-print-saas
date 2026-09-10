@@ -6,8 +6,9 @@ from app.models.product import Product
 from app.models.order import Order, OrderItem
 from app.models.ebay_account import EbayAccount, EbayOAuthState
 from app.models.stock_movement import StockMovement
+from app.models.expense import Expense
 
 __all__ = [
     "Tenant", "User", "PrintAgent", "PrintJob", "Product", "Order", "OrderItem",
-    "EbayAccount", "EbayOAuthState", "StockMovement",
+    "EbayAccount", "EbayOAuthState", "StockMovement", "Expense",
 ]

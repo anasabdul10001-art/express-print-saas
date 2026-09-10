@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ausgaben — Express Print SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+        <h1 class="text-lg font-bold">Versandzentrale</h1>
+        <div class="flex items-center gap-6">
+            <a href="dashboard.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Dashboard</a>
+            <a href="products.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Produkte</a>
+            <a href="orders.html" class="text-gray-300 hover:text-yellow-500 text-sm font-semibold">Bestellungen</a>
+            <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">Abmelden</button>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto p-6 space-y-6">
+        <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <h2 class="text-2xl font-bold">Ausgaben</h2>
+
+        <!-- Net profit summary -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <p class="text-gray-400 text-sm">Bruttogewinn (Monat)</p>
+                <p id="gross-profit" class="text-xl font-bold text-green-400">—</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <p class="text-gray-400 text-sm">Ausgaben (Monat)</p>
+                <p id="total-expenses" class="text-xl font-bold text-red-400">—</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-yellow-600">
+                <p class="text-gray-400 text-sm">Nettogewinn (Monat)</p>
+                <p id="net-profit" class="text-xl font-bold text-yellow-400">—</p>
+            </div>
+        </div>
+
+        <!-- Add expense form -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+            <h3 class="text-lg font-bold">Neue Ausgabe</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="sm:col-span-1">
+                    <label class="block text-sm mb-1">Beschreibung *</label>
+                    <input type="text" id="field-description" placeholder="z.B. Versandetiketten"
+                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Betrag (€) *</label>
+                    <input type="number" step="0.01" min="0.01" id="field-amount"
+                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Datum *</label>
+                    <input type="date" id="field-date"
+                           class="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white">
+                </div>
+            </div>
+            <div id="form-error" class="hidden bg-red-600 text-white p-2 rounded text-sm"></div>
+            <button onclick="saveExpense()"
+                    class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded transition">
+                Ausgabe hinzufügen
+            </button>
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="hidden bg-gray-800 p-8 rounded-lg text-center">
+            <p class="text-gray-400">Noch keine Ausgaben erfasst.</p>
+        </div>
+
+        <!-- Expenses table -->
+        <div id="table-wrap" class="hidden bg-gray-800 rounded-lg shadow-lg overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-gray-400 border-b border-gray-700">
+                        <th class="p-3">Datum</th>
+                        <th class="p-3">Beschreibung</th>
+                        <th class="p-3">Betrag</th>
+                        <th class="p-3">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody id="expenses-tbody"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "../login.html";
+        }
+
+        function authHeaders(json = false) {
+            const headers = { "Authorization": `Bearer ${token}` };
+            if (json) headers["Content-Type"] = "application/json";
+            return headers;
+        }
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "../login.html";
+        }
+
+        function showBanner(text, isError) {
+            const banner = document.getElementById("banner");
+            banner.innerText = text;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-600" : "bg-green-600"}`;
+            setTimeout(() => banner.classList.add("hidden"), 4000);
+        }
+
+        function euro(value) {
+            return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)} €`;
+        }
+
+        // Default the date field to today, so the common case needs no typing.
+        document.getElementById("field-date").value = new Date().toISOString().split("T")[0];
+
+        async function loadSummary() {
+            try {
+                const [ordersResp, expensesResp] = await Promise.all([
+                    fetch(`${API_URL}/orders/summary`, { headers: authHeaders() }),
+                    fetch(`${API_URL}/expenses/summary`, { headers: authHeaders() }),
+                ]);
+
+                if (ordersResp.status === 401 || expensesResp.status === 401) { logout(); return; }
+
+                const orderData = await ordersResp.json();
+                const expenseData = await expensesResp.json();
+
+                const gross = Number(orderData.profit_month || 0);
+                const expenses = Number(expenseData.expenses_month || 0);
+                const net = gross - expenses;
+
+                document.getElementById("gross-profit").innerText = euro(gross);
+                document.getElementById("total-expenses").innerText = euro(expenses);
+                const netEl = document.getElementById("net-profit");
+                netEl.innerText = euro(net);
+                netEl.className = `text-xl font-bold ${net >= 0 ? "text-green-400" : "text-red-400"}`;
+            } catch (err) {
+                showBanner("Zusammenfassung konnte nicht geladen werden.", true);
+            }
+        }
+
+        async function saveExpense() {
+            const errorBox = document.getElementById("form-error");
+            errorBox.classList.add("hidden");
+
+            const description = document.getElementById("field-description").value.trim();
+            const amountRaw = document.getElementById("field-amount").value;
+            const expenseDate = document.getElementById("field-date").value;
+
+            if (!description || !amountRaw || !expenseDate) {
+                errorBox.innerText = "Bitte alle Pflichtfelder ausfüllen.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            const payload = {
+                description,
+                amount: Number(amountRaw),
+                expense_date: expenseDate,
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/expenses`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify(payload),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                document.getElementById("field-description").value = "";
+                document.getElementById("field-amount").value = "";
+                document.getElementById("field-date").value = new Date().toISOString().split("T")[0];
+
+                showBanner("Ausgabe hinzugefügt.", false);
+                loadExpenses();
+                loadSummary();
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function deleteExpense(id, description) {
+            if (!confirm(`Ausgabe "${description}" wirklich löschen?`)) return;
+
+            try {
+                const response = await fetch(`${API_URL}/expenses/${id}`, {
+                    method: "DELETE",
+                    headers: authHeaders(),
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok && response.status !== 204) {
+                    showBanner("Löschen fehlgeschlagen.", true);
+                    return;
+                }
+                showBanner("Ausgabe gelöscht.", false);
+                loadExpenses();
+                loadSummary();
+            } catch (err) {
+                showBanner("Server nicht erreichbar.", true);
+            }
+        }
+
+        function renderExpenses(expenses) {
+            const tbody = document.getElementById("expenses-tbody");
+            const emptyState = document.getElementById("empty-state");
+            const tableWrap = document.getElementById("table-wrap");
+
+            if (expenses.length === 0) {
+                emptyState.classList.remove("hidden");
+                tableWrap.classList.add("hidden");
+                return;
+            }
+            emptyState.classList.add("hidden");
+            tableWrap.classList.remove("hidden");
+
+            tbody.innerHTML = expenses.map(e => `
+                <tr class="border-b border-gray-700">
+                    <td class="p-3 text-gray-400">${e.expense_date}</td>
+                    <td class="p-3">${e.description}</td>
+                    <td class="p-3 text-red-400">${euro(e.amount)}</td>
+                    <td class="p-3">
+                        <button onclick="deleteExpense('${e.id}', ${JSON.stringify(e.description)})"
+                                class="text-red-400 hover:text-red-300 text-xs">Löschen</button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        async function loadExpenses() {
+            try {
+                const response = await fetch(`${API_URL}/expenses`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                renderExpenses(data);
+            } catch (err) {
+                showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
+            }
+        }
+
+        loadExpenses();
+        loadSummary();
+    </script>
+</body>
+</html>
