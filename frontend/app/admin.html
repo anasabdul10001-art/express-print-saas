@@ -175,6 +175,32 @@
             </div>
         </div>
 
+        <!-- Billing / invoice details -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="admin.billingTitle">Rechnungsdaten</h3>
+            <p class="text-slate-500 text-sm" data-i18n="admin.billingDesc">Wird auf jeder Rechnung angezeigt, die an Kunden gesendet wird. Muss ausgefüllt sein, bevor du eine Zahlung bestätigen kannst.</p>
+            <div>
+                <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.billingLegalName">Firmenname (rechtlich) *</label>
+                <input type="text" id="billing-legal-name" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.billingAddress">Adresse *</label>
+                <textarea id="billing-address" rows="3" data-i18n-placeholder="admin.billingAddressPlaceholder" placeholder="Straße Hausnummer&#10;PLZ Ort&#10;Land" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"></textarea>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.billingTaxId">USt-IdNr. / Steuernummer</label>
+                    <input type="text" id="billing-tax-id" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.billingEmail">Kontakt-E-Mail für Rechnungen</label>
+                    <input type="email" id="billing-email" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+            </div>
+            <div id="billing-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <button onclick="saveBillingSettings()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.save">Speichern</span></button>
+        </div>
+
         <!-- Plans -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <div class="flex items-center justify-between">
@@ -282,6 +308,42 @@
             <div id="payment-methods-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.paymentMethodsEmpty">Noch keine Zahlungsarten angelegt.</div>
             <div id="payment-methods-list" class="space-y-3"></div>
         </div>
+
+        <!-- Confirm payment / send invoice -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="admin.confirmPaymentTitle">Zahlung bestätigen & Rechnung senden</h3>
+            <p class="text-slate-500 text-sm" data-i18n="admin.confirmPaymentDesc">Wähle den Kunden aus, der bezahlt hat. Die Rechnung wird automatisch erstellt und per E-Mail gesendet.</p>
+
+            <div>
+                <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.confirmPaymentTenant">Kunde *</label>
+                <select id="payment-tenant-select" onchange="onTenantSelectChange()" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    <option value="" data-i18n="admin.confirmPaymentSelectPlaceholder">Kunde auswählen...</option>
+                </select>
+            </div>
+            <p id="payment-tenant-plan-info" class="hidden text-slate-500 text-sm"></p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.confirmPaymentAmount">Betrag (€) - leer = Plan-Preis</label>
+                    <input type="number" step="0.01" id="payment-amount" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.confirmPaymentDescription">Beschreibung - leer = Plan-Name</label>
+                    <input type="text" id="payment-description" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+            </div>
+
+            <div id="confirm-payment-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <div id="confirm-payment-success" class="hidden bg-emerald-50 text-emerald-700 border border-emerald-200 p-2 rounded-lg text-sm"></div>
+            <button id="confirm-payment-btn" onclick="confirmPayment()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.confirmPaymentButton">Zahlung bestätigen & Rechnung senden</span></button>
+        </div>
+
+        <!-- Invoices -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="admin.invoicesTitle">Rechnungen</h3>
+            <div id="invoices-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.invoicesEmpty">Noch keine Rechnungen erstellt.</div>
+            <div id="invoices-list" class="space-y-2"></div>
+        </div>
     </main>
     </div>
     </div>
@@ -318,8 +380,10 @@
             setTimeout(() => banner.classList.add("hidden"), 4000);
         }
 
-        function euro(value) {
-            return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)} €`;
+        function euro(value, currency) {
+            if (value === null || value === undefined) return "—";
+            const symbol = !currency || currency === "EUR" ? "€" : currency;
+            return `${Number(value).toFixed(2)} ${symbol}`;
         }
 
         function applySidebarProfile(me) {
@@ -351,6 +415,8 @@
                 loadSettings();
                 loadPlans();
                 loadPaymentMethods();
+                loadTenantsForPaymentPicker();
+                loadInvoices();
             } catch (err) {
                 showBanner(t("admin.loadError"), true);
             }
@@ -408,12 +474,54 @@
             patchLogoHeight(null);
         }
 
+        function applyBillingSettings(data) {
+            document.getElementById("billing-legal-name").value = data.company_legal_name || "";
+            document.getElementById("billing-address").value = data.company_address || "";
+            document.getElementById("billing-tax-id").value = data.company_tax_id || "";
+            document.getElementById("billing-email").value = data.company_email || "";
+        }
+
+        async function saveBillingSettings() {
+            const errorBox = document.getElementById("billing-error");
+            errorBox.classList.add("hidden");
+
+            const payload = {
+                company_legal_name: document.getElementById("billing-legal-name").value.trim() || null,
+                company_address: document.getElementById("billing-address").value.trim() || null,
+                company_tax_id: document.getElementById("billing-tax-id").value.trim() || null,
+                company_email: document.getElementById("billing-email").value.trim() || null,
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/admin/settings`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify(payload),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("admin.saveFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                applyBillingSettings(data);
+                showBanner(t("admin.billingSaved"), false);
+            } catch (err) {
+                errorBox.innerText = t("admin.serverError");
+                errorBox.classList.remove("hidden");
+            }
+        }
+
         async function loadSettings() {
             try {
                 const response = await fetch(`${API_URL}/admin/settings`, { headers: authHeaders() });
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
                 applyLogoSettings(data);
+                applyBillingSettings(data);
             } catch (err) {
                 // Non-critical - the upload button still works without a preview.
             }
@@ -725,10 +833,179 @@
             }
         }
 
+        let allTenants = [];
+
+        async function loadTenantsForPaymentPicker() {
+            try {
+                const response = await fetch(`${API_URL}/admin/tenants`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                allTenants = await response.json();
+
+                const select = document.getElementById("payment-tenant-select");
+                select.innerHTML = `<option value="" data-i18n="admin.confirmPaymentSelectPlaceholder">${t("admin.confirmPaymentSelectPlaceholder")}</option>` +
+                    allTenants.map(tn => `<option value="${tn.id}">${tn.company_name} (${tn.owner_email || "—"})</option>`).join("");
+            } catch (err) {
+                // Non-critical - the admin can still fill in a tenant later once this loads.
+            }
+        }
+
+        function onTenantSelectChange() {
+            const tenantId = document.getElementById("payment-tenant-select").value;
+            const infoEl = document.getElementById("payment-tenant-plan-info");
+            const tenant = allTenants.find(tn => tn.id === tenantId);
+
+            if (!tenant) {
+                infoEl.classList.add("hidden");
+                return;
+            }
+
+            infoEl.classList.remove("hidden");
+            if (tenant.plan_name) {
+                infoEl.innerText = `${t("admin.confirmPaymentCurrentPlan")}: ${tenant.plan_name} — ${euro(tenant.plan_price, tenant.plan_currency)}`;
+            } else {
+                infoEl.innerText = t("admin.confirmPaymentNoPlan");
+            }
+        }
+
+        async function confirmPayment() {
+            const errorBox = document.getElementById("confirm-payment-error");
+            const successBox = document.getElementById("confirm-payment-success");
+            errorBox.classList.add("hidden");
+            successBox.classList.add("hidden");
+
+            const tenantId = document.getElementById("payment-tenant-select").value;
+            if (!tenantId) {
+                errorBox.innerText = t("admin.confirmPaymentNoTenant");
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            const amountRaw = document.getElementById("payment-amount").value;
+            const description = document.getElementById("payment-description").value.trim();
+
+            const payload = {
+                amount: amountRaw === "" ? null : Number(amountRaw),
+                description: description || null,
+            };
+
+            const btn = document.getElementById("confirm-payment-btn");
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/admin/tenants/${tenantId}/confirm-payment`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify(payload),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("admin.saveFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                successBox.innerText = t("admin.confirmPaymentSuccess").replace("{number}", data.invoice_number);
+                successBox.classList.remove("hidden");
+                document.getElementById("payment-amount").value = "";
+                document.getElementById("payment-description").value = "";
+                loadInvoices();
+            } catch (err) {
+                errorBox.innerText = t("admin.serverError");
+                errorBox.classList.remove("hidden");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function renderInvoices(invoices) {
+            const list = document.getElementById("invoices-list");
+            const emptyState = document.getElementById("invoices-empty");
+
+            if (invoices.length === 0) {
+                emptyState.classList.remove("hidden");
+                list.innerHTML = "";
+                return;
+            }
+            emptyState.classList.add("hidden");
+
+            list.innerHTML = invoices.map(inv => `
+                <div class="border border-slate-200 rounded-lg p-3 flex items-center justify-between gap-4">
+                    <div>
+                        <span class="font-semibold text-sm">${inv.invoice_number}</span>
+                        <span class="text-slate-400 text-xs ml-2">${inv.issue_date}</span>
+                        <p class="text-slate-500 text-sm">${inv.customer_name} — ${inv.description} — ${euro(inv.gross_amount, inv.currency)}</p>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <button onclick='downloadInvoicePdf(${JSON.stringify(inv.id)})' class="text-blue-600 hover:text-blue-700 text-xs font-semibold">${t("admin.invoicePdf")}</button>
+                        <button onclick="resendInvoice(${JSON.stringify(inv.id)})" class="text-slate-600 hover:text-slate-900 text-xs font-semibold">${t("admin.invoiceResend")}</button>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        async function downloadInvoicePdf(invoiceId) {
+            // Opens a blank tab synchronously (so it isn't blocked as a
+            // popup once the async fetch below resolves), then points it
+            // at the PDF once fetched - invoices aren't public files like
+            // product images/logos, so this has to go through fetch() with
+            // an Authorization header rather than a plain <a href>.
+            const win = window.open("", "_blank");
+            try {
+                const response = await fetch(`${API_URL}/admin/invoices/${invoiceId}/pdf`, { headers: authHeaders() });
+                if (response.status === 401) { if (win) win.close(); logout(); return; }
+                if (!response.ok) {
+                    if (win) win.close();
+                    showBanner(t("admin.saveFailed"), true);
+                    return;
+                }
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                if (win) win.location.href = url;
+            } catch (err) {
+                if (win) win.close();
+                showBanner(t("admin.serverError"), true);
+            }
+        }
+
+        let lastInvoices = null;
+
+        async function loadInvoices() {
+            try {
+                const response = await fetch(`${API_URL}/admin/invoices`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                lastInvoices = data;
+                renderInvoices(data);
+            } catch (err) {
+                // Non-critical - the confirm-payment form above still works without this list.
+            }
+        }
+
+        async function resendInvoice(invoiceId) {
+            try {
+                const response = await fetch(`${API_URL}/admin/invoices/${invoiceId}/resend`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) {
+                    showBanner(data.detail || t("admin.saveFailed"), true);
+                    return;
+                }
+                showBanner(t("admin.invoiceResent"), false);
+            } catch (err) {
+                showBanner(t("admin.serverError"), true);
+            }
+        }
+
         verifyAccess();
         document.addEventListener("langchange", () => {
             if (lastPlans) renderPlans(lastPlans);
             if (lastPaymentMethods) renderPaymentMethods(lastPaymentMethods);
+            if (lastInvoices) renderInvoices(lastInvoices);
         });
     </script>
 </body>

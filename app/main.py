@@ -24,6 +24,11 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ"))
     connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS logo_height INTEGER"))
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_legal_name VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_address VARCHAR(1000)"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_tax_id VARCHAR(100)"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_email VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS last_invoice_number INTEGER NOT NULL DEFAULT 0"))
 
 app.add_middleware(
     CORSMiddleware,

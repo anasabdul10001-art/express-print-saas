@@ -49,7 +49,7 @@ class Plan(Base):
 class SiteSettings(Base):
     """
     Single-row table (one platform, one logo) rather than a key/value store
-    - simplest thing that works for the one setting that currently exists.
+    - simplest thing that works for the settings that currently exist.
     """
 
     __tablename__ = "site_settings"
@@ -59,4 +59,17 @@ class SiteSettings(Base):
     # Rendered height in px on every page that shows the logo (frontend/site-logo.js).
     # Null = default size (32px, same as the icon mark it replaces).
     logo_height = Column(Integer, nullable=True)
+
+    # Seller details printed on every invoice (see app/services/invoice_service.py).
+    # Must be filled in before the first invoice can be issued - see the
+    # check in routers/admin.py::confirm_payment.
+    company_legal_name = Column(String(255), nullable=True)
+    company_address = Column(String(1000), nullable=True)  # multi-line, newline-separated
+    company_tax_id = Column(String(100), nullable=True)  # Steuernummer or USt-IdNr
+    company_email = Column(String(255), nullable=True)
+
+    # Sequential, gapless per calendar year (invoice numbers look like
+    # "2026-0007") - required by §14 UStG. Never decremented or reused.
+    last_invoice_number = Column(Integer, nullable=False, default=0)
+
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

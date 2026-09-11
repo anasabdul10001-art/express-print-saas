@@ -1,15 +1,22 @@
 import uuid
+from datetime import datetime, timezone
+from decimal import Decimal
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.deps import get_current_superadmin, get_db
+from app.models.invoice import Invoice
 from app.models.payment_method import PaymentMethod
 from app.models.plan import Plan, SiteSettings
+from app.models.tenant import Tenant
 from app.models.user import User
 from app.schemas.admin import (
+    ConfirmPaymentRequest,
+    InvoiceOut,
     PaymentMethodCreate,
     PaymentMethodOut,
     PaymentMethodUpdate,
@@ -18,9 +25,14 @@ from app.schemas.admin import (
     PlanUpdate,
     SiteSettingsOut,
     SiteSettingsUpdate,
+    TenantAdminOut,
 )
+from app.services.email_service import send_invoice_email
+from app.services.invoice_service import generate_invoice_pdf
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+INVOICE_VAT_RATE = Decimal("19.00")
 
 # Reuses the same Supabase bucket product images already go into (see
 # app/routers/uploads.py) rather than requiring a second bucket to be
@@ -213,3 +225,186 @@ def delete_payment_method(
         raise HTTPException(status_code=404, detail="Zahlungsart nicht gefunden")
     db.delete(method)
     db.commit()
+
+
+@router.get("/tenants", response_model=list[TenantAdminOut])
+def list_all_tenants(
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    """
+    Feeds the "confirm payment" picker in admin.html. Owner email and plan
+    name/price are looked up per tenant rather than joined - this list is
+    small (Super Admin only, not paginated anywhere in the UI yet) and the
+    extra queries keep this readable; revisit if the tenant count ever
+    makes that noticeable.
+    """
+    tenants = db.query(Tenant).order_by(Tenant.created_at.desc()).all()
+    result = []
+    for tenant in tenants:
+        owner = (
+            db.query(User)
+            .filter(User.tenant_id == tenant.id)
+            .order_by(User.created_at.asc())
+            .first()
+        )
+        plan = db.query(Plan).filter(Plan.id == tenant.plan_id).first() if tenant.plan_id else None
+        result.append(TenantAdminOut(
+            id=tenant.id,
+            company_name=tenant.company_name,
+            country_code=tenant.country_code,
+            status=tenant.status,
+            plan_id=tenant.plan_id,
+            plan_name=plan.name if plan else None,
+            plan_price=plan.price_monthly if plan else None,
+            plan_currency=plan.currency if plan else None,
+            owner_email=owner.email if owner else None,
+            created_at=tenant.created_at,
+        ))
+    return result
+
+
+@router.post("/tenants/{tenant_id}/confirm-payment", response_model=InvoiceOut, status_code=201)
+def confirm_payment(
+    tenant_id: str,
+    payload: ConfirmPaymentRequest,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    """
+    Manually confirming that a tenant's payment (bank transfer, PayPal, ...
+    - see the Payment Methods section) has arrived. Issues a German
+    §14-UStG-compliant invoice (sequential number, seller/customer details,
+    19% USt) as a PDF, and emails it to the tenant's account owner - this
+    is the ONLY way an invoice gets created; there is no automatic billing
+    yet (see app/models/plan.py's module docstring).
+    """
+    tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant nicht gefunden")
+
+    owner = (
+        db.query(User)
+        .filter(User.tenant_id == tenant.id)
+        .order_by(User.created_at.asc())
+        .first()
+    )
+    if not owner:
+        raise HTTPException(status_code=400, detail="Kein Benutzer für diesen Tenant gefunden.")
+
+    plan = db.query(Plan).filter(Plan.id == tenant.plan_id).first() if tenant.plan_id else None
+
+    net_amount = payload.amount if payload.amount is not None else (plan.price_monthly if plan else None)
+    if net_amount is None:
+        raise HTTPException(status_code=400, detail="Kein Betrag verfügbar - bitte einen Betrag angeben.")
+
+    description = payload.description or (plan.name if plan else "Abonnement")
+    currency = plan.currency if plan else "EUR"
+
+    settings_row = _get_or_create_settings(db)
+    if not settings_row.company_legal_name or not settings_row.company_address:
+        raise HTTPException(
+            status_code=400,
+            detail="Bitte zuerst die Rechnungsdaten (Firmenname, Adresse) in den Einstellungen ausfüllen.",
+        )
+
+    vat_amount = (net_amount * INVOICE_VAT_RATE / 100).quantize(Decimal("0.01"))
+    gross_amount = net_amount + vat_amount
+
+    # Sequential + gapless per §14 UStG: reserved by incrementing the
+    # counter in the SAME transaction as creating the invoice row below,
+    # so a failed commit rolls back both together rather than burning a
+    # number with no invoice behind it.
+    settings_row.last_invoice_number = (settings_row.last_invoice_number or 0) + 1
+    invoice_number = f"{datetime.now(timezone.utc).year}-{settings_row.last_invoice_number:04d}"
+
+    invoice = Invoice(
+        tenant_id=tenant.id,
+        invoice_number=invoice_number,
+        issue_date=datetime.now(timezone.utc).date(),
+        description=description,
+        net_amount=net_amount,
+        vat_rate=INVOICE_VAT_RATE,
+        vat_amount=vat_amount,
+        gross_amount=gross_amount,
+        currency=currency,
+        customer_name=tenant.company_name,
+        customer_email=owner.email,
+    )
+    db.add(invoice)
+    db.commit()
+    db.refresh(invoice)
+
+    pdf_bytes = generate_invoice_pdf(invoice, settings_row)
+
+    try:
+        send_invoice_email(owner.email, invoice.invoice_number, pdf_bytes, settings_row.company_legal_name)
+    except RuntimeError as err:
+        # The invoice itself is already committed (its number must never be
+        # reused) - only the email failed, so say so distinctly rather than
+        # a generic 500, and let the admin retry via the resend endpoint.
+        raise HTTPException(
+            status_code=502,
+            detail=f"Rechnung {invoice.invoice_number} wurde erstellt, aber der E-Mail-Versand ist fehlgeschlagen: {err}",
+        )
+
+    return invoice
+
+
+@router.get("/invoices", response_model=list[InvoiceOut])
+def list_invoices(
+    tenant_id: str | None = None,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Invoice)
+    if tenant_id:
+        query = query.filter(Invoice.tenant_id == tenant_id)
+    return query.order_by(Invoice.issue_date.desc(), Invoice.invoice_number.desc()).all()
+
+
+@router.get("/invoices/{invoice_id}/pdf")
+def download_invoice_pdf(
+    invoice_id: str,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    """
+    Regenerates the PDF on demand from the stored invoice + current seller
+    settings, rather than persisting the file anywhere - an invoice PDF
+    contains a customer's name, email and billing amounts, so it never gets
+    a public URL the way product images/logos/avatars do.
+    """
+    invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
+
+    settings_row = _get_or_create_settings(db)
+    pdf_bytes = generate_invoice_pdf(invoice, settings_row)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="Rechnung-{invoice.invoice_number}.pdf"'},
+    )
+
+
+@router.post("/invoices/{invoice_id}/resend")
+def resend_invoice(
+    invoice_id: str,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
+
+    settings_row = _get_or_create_settings(db)
+    pdf_bytes = generate_invoice_pdf(invoice, settings_row)
+
+    try:
+        send_invoice_email(invoice.customer_email, invoice.invoice_number, pdf_bytes, settings_row.company_legal_name)
+    except RuntimeError as err:
+        raise HTTPException(status_code=502, detail=f"E-Mail-Versand fehlgeschlagen: {err}")
+
+    return {"message": "Rechnung erneut gesendet."}
