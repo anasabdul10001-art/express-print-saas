@@ -17,6 +17,19 @@ class Order(Base):
     external_order_ref = Column(String(100))  # e.g. eBay order ID, once that integration exists
     status = Column(String(20), nullable=False, default="new")
 
+    # Recipient shipping address - needed to actually create a DHL shipment
+    # label later (see app/routers/dhl.py). Null for orders created manually
+    # in the dashboard (no address to capture); populated from eBay's
+    # Fulfillment API shipTo data for orders imported via ebay_order_service.
+    recipient_name = Column(String(255))
+    recipient_street1 = Column(String(255))
+    recipient_street2 = Column(String(255))
+    recipient_city = Column(String(100))
+    recipient_state = Column(String(100))
+    recipient_zip = Column(String(20))
+    recipient_country_code = Column(String(2))
+    recipient_phone = Column(String(50))
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (

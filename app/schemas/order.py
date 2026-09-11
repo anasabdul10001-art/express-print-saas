@@ -25,6 +25,15 @@ class OrderItemOut(BaseModel):
     profit: Decimal | None = None
     class Config:
         from_attributes = True
+class RecipientAddressOut(BaseModel):
+    name: str | None
+    street1: str | None
+    street2: str | None
+    city: str | None
+    state: str | None
+    zip: str | None
+    country_code: str | None
+    phone: str | None
 class OrderOut(BaseModel):
     id: uuid.UUID
     external_order_ref: str | None
@@ -33,6 +42,10 @@ class OrderOut(BaseModel):
     # Sum of all items' profit. None if any item is missing cost data
     # (can't claim a total profit that's silently partial).
     total_profit: Decimal | None = None
+    # None for manually-created orders (nothing to ship to on file) or if
+    # eBay didn't return address data (e.g. very old orders - see
+    # ebay_order_service.py).
+    recipient_address: RecipientAddressOut | None = None
     class Config:
         from_attributes = True
 class OrderSummaryOut(BaseModel):

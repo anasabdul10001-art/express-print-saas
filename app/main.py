@@ -37,6 +37,14 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_length_cm INTEGER NOT NULL DEFAULT 20"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_width_cm INTEGER NOT NULL DEFAULT 15"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_height_cm INTEGER NOT NULL DEFAULT 10"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_name VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_street1 VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_street2 VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_city VARCHAR(100)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_state VARCHAR(100)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_zip VARCHAR(20)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_country_code VARCHAR(2)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_phone VARCHAR(50)"))
 
 app.add_middleware(
     CORSMiddleware,

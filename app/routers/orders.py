@@ -9,7 +9,7 @@ from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
 from app.models.user import User
-from app.schemas.order import OrderCreate, OrderItemOut, OrderOut, OrderSummaryOut, ProfitHistoryPoint
+from app.schemas.order import OrderCreate, OrderItemOut, OrderOut, OrderSummaryOut, ProfitHistoryPoint, RecipientAddressOut
 router = APIRouter(prefix="/orders", tags=["orders"])
 def _serialize_order(order: Order) -> OrderOut:
     """
@@ -49,12 +49,26 @@ def _serialize_order(order: Order) -> OrderOut:
                 profit=profit,
             )
         )
+    recipient_address = None
+    if order.recipient_name or order.recipient_street1:
+        recipient_address = RecipientAddressOut(
+            name=order.recipient_name,
+            street1=order.recipient_street1,
+            street2=order.recipient_street2,
+            city=order.recipient_city,
+            state=order.recipient_state,
+            zip=order.recipient_zip,
+            country_code=order.recipient_country_code,
+            phone=order.recipient_phone,
+        )
+
     return OrderOut(
         id=order.id,
         external_order_ref=order.external_order_ref,
         status=order.status,
         items=items_out,
         total_profit=total_profit if profit_known else None,
+        recipient_address=recipient_address,
     )
 @router.get("", response_model=list[OrderOut])
 def list_orders(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
