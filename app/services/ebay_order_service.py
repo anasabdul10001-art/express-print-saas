@@ -18,6 +18,14 @@ Design choices worth knowing:
       go negative here as a visible signal to restock, rather than an
       import failure). Each decrement is logged as a StockMovement row,
       same as manual orders, so the audit trail covers both sources.
+    - Recipient address: read from the order's
+      fulfillmentStartInstructions[].shippingStep.shipTo (eBay's Fulfillment
+      API - see the Order/ExtendedContact type reference), needed later to
+      actually create a DHL shipment label. Missing entirely for orders
+      older than ~90 days (eBay stops returning buyer PII by then) or if
+      eBay simply didn't include a shipping instruction - in both cases the
+      order still imports, just without an address, same as a manually
+      created order.
 """
 
 from datetime import datetime, timezone
@@ -36,6 +44,33 @@ EBAY_API_BASE = {
     "SANDBOX": "https://api.sandbox.ebay.com",
     "PRODUCTION": "https://api.ebay.com",
 }
+
+
+def _extract_ship_to(ebay_order: dict) -> dict:
+    """
+    Pulls the recipient address out of the first SHIP_TO fulfillment
+    instruction, if there is one. Every field is optional in eBay's
+    response, so this always returns plain Nones rather than raising -
+    a partially-missing address is still worth storing (e.g. no phone
+    number shouldn't discard the street address too).
+    """
+    for instruction in ebay_order.get("fulfillmentStartInstructions") or []:
+        ship_to = (instruction.get("shippingStep") or {}).get("shipTo")
+        if not ship_to:
+            continue
+        contact_address = ship_to.get("contactAddress") or {}
+        primary_phone = ship_to.get("primaryPhone") or {}
+        return {
+            "recipient_name": ship_to.get("fullName"),
+            "recipient_street1": contact_address.get("addressLine1"),
+            "recipient_street2": contact_address.get("addressLine2"),
+            "recipient_city": contact_address.get("city"),
+            "recipient_state": contact_address.get("stateOrProvince"),
+            "recipient_zip": contact_address.get("postalCode"),
+            "recipient_country_code": contact_address.get("countryCode"),
+            "recipient_phone": primary_phone.get("phoneNumber"),
+        }
+    return {}
 
 
 def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
@@ -100,7 +135,12 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             skipped_count += 1
             continue
 
-        order = Order(tenant_id=tenant_id, external_order_ref=ebay_order_id, status="new")
+        order = Order(
+            tenant_id=tenant_id,
+            external_order_ref=ebay_order_id,
+            status="new",
+            **_extract_ship_to(ebay_order),
+        )
         db.add(order)
         db.flush()
 

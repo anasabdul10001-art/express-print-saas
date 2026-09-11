@@ -452,6 +452,14 @@
             }
         }
 
+        function formatRecipientAddress(addr) {
+            const line1 = [addr.name].filter(Boolean).join(", ");
+            const line2 = [addr.street1, addr.street2].filter(Boolean).join(" ");
+            const line3 = [addr.zip, addr.city].filter(Boolean).join(" ");
+            const line4 = addr.country_code || "";
+            return [line1, line2, line3, line4].filter(Boolean).join(", ");
+        }
+
         function renderOrders(orders) {
             const list = document.getElementById("orders-list");
             const emptyState = document.getElementById("empty-state");
@@ -498,6 +506,11 @@
                                 <div class="text-xs ${order.total_profit >= 0 ? "text-emerald-600" : "text-red-600"}">${t("orders.profit")} ${euro(order.total_profit)}</div>
                             </div>
                         </div>
+                        ${order.recipient_address ? `
+                            <div class="px-4 py-2 text-xs text-slate-500 border-b border-slate-200 bg-slate-50/50">
+                                ${t("orders.shipTo")} ${formatRecipientAddress(order.recipient_address)}
+                            </div>
+                        ` : ""}
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="text-left text-slate-400 text-xs border-b border-slate-200">
