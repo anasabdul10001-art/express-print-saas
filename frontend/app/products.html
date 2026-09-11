@@ -196,6 +196,31 @@
                 </div>
             </div>
 
+            <h4 class="text-sm font-semibold text-slate-600 pt-2" data-i18n="products.packageTitle">Paketgröße (für Versandetiketten)</h4>
+            <p class="text-xs text-slate-400" data-i18n="products.packageHint">Optional. Wenn leer, wird beim Etikettendruck die Standard-Paketgröße aus den Einstellungen verwendet.</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="products.weight">Gewicht (kg)</label>
+                    <input type="number" step="0.001" min="0" id="field-weight"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="products.length">Länge (cm)</label>
+                    <input type="number" step="1" min="0" id="field-length"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="products.width">Breite (cm)</label>
+                    <input type="number" step="1" min="0" id="field-width"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="products.height">Höhe (cm)</label>
+                    <input type="number" step="1" min="0" id="field-height"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+            </div>
+
             <div id="form-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
 
             <div class="flex gap-3">
@@ -353,6 +378,10 @@
             document.getElementById("field-purchase").value = product ? (product.purchase_price ?? "") : "";
             document.getElementById("field-selling").value = product ? (product.selling_price ?? "") : "";
             document.getElementById("field-stock").value = product ? (product.stock_quantity ?? 0) : 0;
+            document.getElementById("field-weight").value = product && product.weight_kg != null ? Number(product.weight_kg) : "";
+            document.getElementById("field-length").value = product ? (product.length_cm ?? "") : "";
+            document.getElementById("field-width").value = product ? (product.width_cm ?? "") : "";
+            document.getElementById("field-height").value = product ? (product.height_cm ?? "") : "";
             document.getElementById("field-image-file").value = "";
             const preview = document.getElementById("image-preview");
             if (product && product.image_url) {
@@ -428,6 +457,10 @@
             const purchaseRaw = document.getElementById("field-purchase").value;
             const sellingRaw = document.getElementById("field-selling").value;
             const stockRaw = document.getElementById("field-stock").value;
+            const weightRaw = document.getElementById("field-weight").value;
+            const lengthRaw = document.getElementById("field-length").value;
+            const widthRaw = document.getElementById("field-width").value;
+            const heightRaw = document.getElementById("field-height").value;
 
             const payload = {
                 sku,
@@ -437,6 +470,10 @@
                 purchase_price: purchaseRaw === "" ? null : Number(purchaseRaw),
                 selling_price: sellingRaw === "" ? null : Number(sellingRaw),
                 stock_quantity: stockRaw === "" ? 0 : Number(stockRaw),
+                weight_kg: weightRaw === "" ? null : Number(weightRaw),
+                length_cm: lengthRaw === "" ? null : Number(lengthRaw),
+                width_cm: widthRaw === "" ? null : Number(widthRaw),
+                height_cm: heightRaw === "" ? null : Number(heightRaw),
             };
 
             try {

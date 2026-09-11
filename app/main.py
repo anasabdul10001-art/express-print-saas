@@ -29,6 +29,14 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_tax_id VARCHAR(100)"))
     connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_email VARCHAR(255)"))
     connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS last_invoice_number INTEGER NOT NULL DEFAULT 0"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS weight_kg DECIMAL(6,3)"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS length_cm INTEGER"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS width_cm INTEGER"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS height_cm INTEGER"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_weight_kg DECIMAL(6,3) NOT NULL DEFAULT 1.0"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_length_cm INTEGER NOT NULL DEFAULT 20"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_width_cm INTEGER NOT NULL DEFAULT 15"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_height_cm INTEGER NOT NULL DEFAULT 10"))
 
 app.add_middleware(
     CORSMiddleware,
