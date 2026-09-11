@@ -91,10 +91,34 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
+    # Super Admins have their own dedicated sign-in (see /auth/admin-login)
+    # and are deliberately not allowed through the regular, publicly linked
+    # login page at all.
+    if user.is_superadmin:
+        raise HTTPException(status_code=403, detail="Bitte nutze die Admin-Anmeldung, um dich einzuloggen.")
+
+    tenant = db.query(Tenant).filter(Tenant.id == user.tenant_id).first()
+    if trial_expired(tenant):
+        raise HTTPException(status_code=402, detail=TRIAL_EXPIRED_DETAIL)
+
+    token = create_access_token({"sub": str(user.id), "tenant_id": str(user.tenant_id)})
+    return TokenResponse(access_token=token)
+
+
+@router.post("/admin-login", response_model=TokenResponse)
+def admin_login(payload: LoginRequest, db: Session = Depends(get_db)):
+    """
+    Separate sign-in for the Super Admin panel, deliberately not reachable
+    from the regular /auth/login used by tenant users (see there) or linked
+    from anywhere in the public site - only whoever has the direct URL to
+    admin-login.html can reach this.
+    """
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
     if not user.is_superadmin:
-        tenant = db.query(Tenant).filter(Tenant.id == user.tenant_id).first()
-        if trial_expired(tenant):
-            raise HTTPException(status_code=402, detail=TRIAL_EXPIRED_DETAIL)
+        raise HTTPException(status_code=403, detail="Kein Zugriff auf die Admin-Anmeldung.")
 
     token = create_access_token({"sub": str(user.id), "tenant_id": str(user.tenant_id)})
     return TokenResponse(access_token=token)

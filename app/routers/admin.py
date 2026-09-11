@@ -6,9 +6,19 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.deps import get_current_superadmin, get_db
+from app.models.payment_method import PaymentMethod
 from app.models.plan import Plan, SiteSettings
 from app.models.user import User
-from app.schemas.admin import PlanCreate, PlanOut, PlanUpdate, SiteSettingsOut, SiteSettingsUpdate
+from app.schemas.admin import (
+    PaymentMethodCreate,
+    PaymentMethodOut,
+    PaymentMethodUpdate,
+    PlanCreate,
+    PlanOut,
+    PlanUpdate,
+    SiteSettingsOut,
+    SiteSettingsUpdate,
+)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -149,3 +159,57 @@ async def upload_logo(
     db.commit()
     db.refresh(settings_row)
     return settings_row
+
+
+@router.get("/payment-methods", response_model=list[PaymentMethodOut])
+def list_all_payment_methods(
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    """Includes inactive methods too - unlike GET /payment-methods, which is what the public pricing page uses."""
+    return db.query(PaymentMethod).order_by(PaymentMethod.display_order.asc(), PaymentMethod.created_at.asc()).all()
+
+
+@router.post("/payment-methods", response_model=PaymentMethodOut, status_code=201)
+def create_payment_method(
+    payload: PaymentMethodCreate,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    method = PaymentMethod(**payload.model_dump())
+    db.add(method)
+    db.commit()
+    db.refresh(method)
+    return method
+
+
+@router.patch("/payment-methods/{method_id}", response_model=PaymentMethodOut)
+def update_payment_method(
+    method_id: str,
+    payload: PaymentMethodUpdate,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    method = db.query(PaymentMethod).filter(PaymentMethod.id == method_id).first()
+    if not method:
+        raise HTTPException(status_code=404, detail="Zahlungsart nicht gefunden")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(method, field, value)
+
+    db.commit()
+    db.refresh(method)
+    return method
+
+
+@router.delete("/payment-methods/{method_id}", status_code=204)
+def delete_payment_method(
+    method_id: str,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    method = db.query(PaymentMethod).filter(PaymentMethod.id == method_id).first()
+    if not method:
+        raise HTTPException(status_code=404, detail="Zahlungsart nicht gefunden")
+    db.delete(method)
+    db.commit()

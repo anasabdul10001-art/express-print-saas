@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db
+from app.models.payment_method import PaymentMethod
 from app.models.plan import Plan, SiteSettings
-from app.schemas.admin import PlanOut, SiteSettingsOut
+from app.schemas.admin import PaymentMethodOut, PlanOut, SiteSettingsOut
 
 router = APIRouter(tags=["public"])
 
@@ -18,6 +19,17 @@ def list_active_plans(db: Session = Depends(get_db)):
         db.query(Plan)
         .filter(Plan.is_active == True)  # noqa: E712 - SQLAlchemy needs `== True`, not `is True`
         .order_by(Plan.display_order.asc(), Plan.created_at.asc())
+        .all()
+    )
+
+
+@router.get("/payment-methods", response_model=list[PaymentMethodOut])
+def list_active_payment_methods(db: Session = Depends(get_db)):
+    """Deliberately no auth dependency - shown on the public pricing page."""
+    return (
+        db.query(PaymentMethod)
+        .filter(PaymentMethod.is_active == True)  # noqa: E712
+        .order_by(PaymentMethod.display_order.asc(), PaymentMethod.created_at.asc())
         .all()
     )
 

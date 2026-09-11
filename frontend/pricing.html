@@ -47,6 +47,11 @@
 
         <div id="plans-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"></div>
 
+        <div id="payment-methods-section" class="hidden mt-16 max-w-2xl mx-auto">
+            <h2 class="text-xl font-bold text-center" data-i18n="pricing.paymentMethodsTitle">Zahlungsarten</h2>
+            <div id="payment-methods-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6"></div>
+        </div>
+
         <p class="text-center text-slate-400 text-xs mt-14">
             <span data-i18n="pricing.footNote">Alle Preise zzgl. MwSt. Fragen?</span>
             <a href="mailto:hallo@expressprint.example" class="text-red-600 font-semibold" data-i18n="pricing.contactUs">Kontaktiere uns</a>.
@@ -155,8 +160,39 @@
             }
         }
 
-        document.addEventListener("langchange", renderPlansGrid);
+        let loadedPaymentMethods = null;
+
+        function renderPaymentMethodsGrid() {
+            if (!loadedPaymentMethods) return;
+            document.getElementById("payment-methods-grid").innerHTML = loadedPaymentMethods.map(m => `
+                <div class="bg-white border border-slate-200 rounded-xl p-5">
+                    <p class="font-semibold">${m.name}</p>
+                    <p class="text-slate-500 text-sm mt-1 whitespace-pre-line">${m.details}</p>
+                </div>
+            `).join("");
+        }
+
+        async function loadPaymentMethods() {
+            try {
+                const response = await fetch(`${API_URL}/payment-methods`);
+                if (!response.ok) return;
+                const methods = await response.json();
+                if (!methods || methods.length === 0) return;
+
+                loadedPaymentMethods = methods;
+                renderPaymentMethodsGrid();
+                document.getElementById("payment-methods-section").classList.remove("hidden");
+            } catch (err) {
+                // Non-critical - the pricing cards above are the important part of this page.
+            }
+        }
+
+        document.addEventListener("langchange", () => {
+            renderPlansGrid();
+            renderPaymentMethodsGrid();
+        });
         loadPlans();
+        loadPaymentMethods();
     </script>
 </body>
 </html>
