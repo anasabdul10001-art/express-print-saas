@@ -129,10 +129,10 @@
             <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
         </div>
 
-    <main class="max-w-2xl mx-auto p-6 space-y-6">
+    <main class="max-w-4xl mx-auto p-6 space-y-6">
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div class="bg-red-50 p-4 rounded-xl">
                 <p class="text-slate-500 text-xs mb-1" data-i18n="dashboard.ordersToday">Bestellungen heute</p>
                 <p class="text-2xl font-bold text-red-600" id="summary-orders-today">—</p>
@@ -149,6 +149,11 @@
                 <p class="text-slate-500 text-xs mb-1" data-i18n="dashboard.profitMonth">Gewinn diesen Monat</p>
                 <p class="text-2xl font-bold text-emerald-600" id="summary-profit-month">—</p>
             </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+            <h2 class="text-lg font-bold mb-4" data-i18n="dashboard.chartTitle">Gewinnverlauf (letzte 14 Tage)</h2>
+            <div id="profit-chart"></div>
         </div>
 
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
@@ -323,8 +328,74 @@
             }
         }
 
+        let profitHistory = null;
+
+        function renderProfitChart() {
+            if (!profitHistory) return;
+            const container = document.getElementById("profit-chart");
+
+            const svgWidth = 600;
+            const svgHeight = 180;
+            const padding = { top: 10, right: 10, bottom: 24, left: 12 };
+            const chartWidth = svgWidth - padding.left - padding.right;
+            const chartHeight = svgHeight - padding.top - padding.bottom;
+
+            const values = profitHistory.map(p => Number(p.profit));
+            const maxValue = Math.max(...values, 1);
+            const minValue = Math.min(...values, 0);
+            const range = maxValue - minValue || 1;
+
+            const stepX = profitHistory.length > 1 ? chartWidth / (profitHistory.length - 1) : 0;
+            const coords = profitHistory.map((p, i) => ({
+                x: padding.left + i * stepX,
+                y: padding.top + chartHeight - ((Number(p.profit) - minValue) / range) * chartHeight,
+                value: Number(p.profit),
+                date: p.date,
+            }));
+
+            const linePath = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ");
+            const floorY = (padding.top + chartHeight).toFixed(1);
+            const areaPath = `${linePath} L ${coords[coords.length - 1].x.toFixed(1)} ${floorY} L ${coords[0].x.toFixed(1)} ${floorY} Z`;
+            const zeroY = (padding.top + chartHeight - ((0 - minValue) / range) * chartHeight).toFixed(1);
+
+            const labelEvery = Math.max(1, Math.ceil(profitHistory.length / 6));
+            const locale = getLang() === "de" ? "de-DE" : "en-US";
+            const labels = coords.map((c, i) => {
+                if (i % labelEvery !== 0 && i !== coords.length - 1) return "";
+                const d = new Date(c.date + "T00:00:00");
+                const label = d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit" });
+                return `<text x="${c.x.toFixed(1)}" y="${svgHeight - 4}" font-size="10" fill="#94a3b8" text-anchor="middle">${label}</text>`;
+            }).join("");
+
+            const dots = coords.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3" fill="#dc2626"/>`).join("");
+
+            container.innerHTML = `
+                <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full">
+                    <line x1="${padding.left}" y1="${zeroY}" x2="${svgWidth - padding.right}" y2="${zeroY}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 3"/>
+                    <path d="${areaPath}" fill="#fee2e2" stroke="none"/>
+                    <path d="${linePath}" fill="none" stroke="#dc2626" stroke-width="2"/>
+                    ${dots}
+                    ${labels}
+                </svg>
+            `;
+        }
+
+        async function loadProfitHistory() {
+            try {
+                const response = await fetch(`${API_URL}/orders/profit-history?days=14`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                profitHistory = await response.json();
+                renderProfitChart();
+            } catch (err) {
+                // Non-critical - the stat cards and eBay section above are the important part of this page.
+            }
+        }
+
+        document.addEventListener("langchange", renderProfitChart);
+
         loadEbayStatus();
         loadSummary();
+        loadProfitHistory();
     </script>
 </body>
 </html>

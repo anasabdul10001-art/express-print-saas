@@ -65,3 +65,29 @@ class SiteSettingsOut(BaseModel):
 
 class SiteSettingsUpdate(BaseModel):
     logo_height: int | None = Field(None, ge=12, le=200)
+
+
+class PaymentMethodCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    details: str = Field(..., min_length=1)
+    is_active: bool = True
+    display_order: int = 0
+
+
+class PaymentMethodUpdate(BaseModel):
+    name: str | None = None
+    details: str | None = None
+    is_active: bool | None = None
+    display_order: int | None = None
+
+
+class PaymentMethodOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    details: str
+    is_active: bool
+    display_order: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

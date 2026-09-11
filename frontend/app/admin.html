@@ -243,6 +243,45 @@
             <div id="plans-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.plansEmpty">Noch keine Pläne angelegt.</div>
             <div id="plans-list" class="space-y-3"></div>
         </div>
+
+        <!-- Payment methods -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold" data-i18n="admin.paymentMethodsTitle">Zahlungsarten</h3>
+                <button onclick="openPaymentMethodForm()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.newPaymentMethod">+ Neue Zahlungsart</span></button>
+            </div>
+            <p class="text-slate-500 text-sm" data-i18n="admin.paymentMethodsDesc">Wird auf der Preisseite angezeigt, damit Kunden wissen, wie sie bezahlen können.</p>
+
+            <div id="payment-method-form" class="hidden border border-slate-200 rounded-lg p-4 space-y-3">
+                <h4 id="payment-method-form-title" class="font-semibold" data-i18n="admin.paymentMethodFormTitleNew">Neue Zahlungsart</h4>
+                <input type="hidden" id="payment-method-id">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.paymentMethodName">Name *</label>
+                    <input type="text" id="payment-method-name" data-i18n-placeholder="admin.paymentMethodNamePlaceholder" placeholder="z.B. Banküberweisung, PayPal" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.paymentMethodDetails">Details *</label>
+                    <textarea id="payment-method-details" rows="4" data-i18n-placeholder="admin.paymentMethodDetailsPlaceholder" placeholder="z.B. IBAN, BIC, Kontoinhaber oder ein PayPal.me-Link" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"></textarea>
+                </div>
+                <div class="flex items-center gap-6">
+                    <label class="flex items-center gap-2 text-sm text-slate-700">
+                        <input type="checkbox" id="payment-method-active" checked> <span data-i18n="admin.paymentMethodActive">Aktiv (auf Preisseite sichtbar)</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-slate-700" data-i18n="admin.planOrder">Reihenfolge</label>
+                        <input type="number" id="payment-method-order" value="0" class="w-16 px-2 py-1 rounded-lg bg-white border border-slate-300 text-sm">
+                    </div>
+                </div>
+                <div id="payment-method-form-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+                <div class="flex gap-3">
+                    <button onclick="savePaymentMethod()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.save">Speichern</span></button>
+                    <button onclick="closePaymentMethodForm()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.cancel">Abbrechen</span></button>
+                </div>
+            </div>
+
+            <div id="payment-methods-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.paymentMethodsEmpty">Noch keine Zahlungsarten angelegt.</div>
+            <div id="payment-methods-list" class="space-y-3"></div>
+        </div>
     </main>
     </div>
     </div>
@@ -311,6 +350,7 @@
                 applySidebarProfile(me);
                 loadSettings();
                 loadPlans();
+                loadPaymentMethods();
             } catch (err) {
                 showBanner(t("admin.loadError"), true);
             }
@@ -562,8 +602,134 @@
             }
         }
 
+        function openPaymentMethodForm(method = null) {
+            document.getElementById("payment-method-form").classList.remove("hidden");
+            document.getElementById("payment-method-form-error").classList.add("hidden");
+            document.getElementById("payment-method-form-title").setAttribute("data-i18n", method ? "admin.paymentMethodFormTitleEdit" : "admin.paymentMethodFormTitleNew");
+            document.getElementById("payment-method-form-title").innerText = method ? t("admin.paymentMethodFormTitleEdit") : t("admin.paymentMethodFormTitleNew");
+            document.getElementById("payment-method-id").value = method ? method.id : "";
+            document.getElementById("payment-method-name").value = method ? method.name : "";
+            document.getElementById("payment-method-details").value = method ? method.details : "";
+            document.getElementById("payment-method-active").checked = method ? method.is_active : true;
+            document.getElementById("payment-method-order").value = method ? method.display_order : 0;
+            document.getElementById("payment-method-form").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function closePaymentMethodForm() {
+            document.getElementById("payment-method-form").classList.add("hidden");
+        }
+
+        async function savePaymentMethod() {
+            const errorBox = document.getElementById("payment-method-form-error");
+            errorBox.classList.add("hidden");
+
+            const id = document.getElementById("payment-method-id").value;
+            const name = document.getElementById("payment-method-name").value.trim();
+            const details = document.getElementById("payment-method-details").value.trim();
+            if (!name || !details) {
+                errorBox.innerText = t("admin.paymentMethodRequired");
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            const payload = {
+                name,
+                details,
+                is_active: document.getElementById("payment-method-active").checked,
+                display_order: Number(document.getElementById("payment-method-order").value) || 0,
+            };
+
+            try {
+                const response = await fetch(
+                    id ? `${API_URL}/admin/payment-methods/${id}` : `${API_URL}/admin/payment-methods`,
+                    {
+                        method: id ? "PATCH" : "POST",
+                        headers: authHeaders(true),
+                        body: JSON.stringify(payload),
+                    }
+                );
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("admin.saveFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                closePaymentMethodForm();
+                showBanner(id ? t("admin.paymentMethodUpdated") : t("admin.paymentMethodCreated"), false);
+                loadPaymentMethods();
+            } catch (err) {
+                errorBox.innerText = t("admin.serverError");
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function deletePaymentMethod(id, name) {
+            if (!confirm(t("admin.confirmDeletePaymentMethod").replace("{name}", name))) return;
+
+            try {
+                const response = await fetch(`${API_URL}/admin/payment-methods/${id}`, {
+                    method: "DELETE",
+                    headers: authHeaders(),
+                });
+                if (response.status === 401) { logout(); return; }
+                showBanner(t("admin.paymentMethodDeleted"), false);
+                loadPaymentMethods();
+            } catch (err) {
+                showBanner(t("admin.serverError"), true);
+            }
+        }
+
+        function renderPaymentMethods(methods) {
+            const list = document.getElementById("payment-methods-list");
+            const emptyState = document.getElementById("payment-methods-empty");
+
+            if (methods.length === 0) {
+                emptyState.classList.remove("hidden");
+                list.innerHTML = "";
+                return;
+            }
+            emptyState.classList.add("hidden");
+
+            list.innerHTML = methods.map(m => `
+                <div class="border border-slate-200 rounded-lg p-4 flex items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold">${m.name}</span>
+                            ${!m.is_active ? `<span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-500">${t("admin.inactiveBadge")}</span>` : ""}
+                        </div>
+                        <p class="text-sm text-slate-500 mt-1 whitespace-pre-line">${m.details}</p>
+                    </div>
+                    <div class="flex flex-col gap-2 flex-shrink-0">
+                        <button onclick='openPaymentMethodForm(${JSON.stringify(m)})' class="text-blue-600 hover:text-blue-700 text-xs font-semibold">${t("admin.edit")}</button>
+                        <button onclick='deletePaymentMethod(${JSON.stringify(m.id)}, ${JSON.stringify(m.name)})' class="text-red-600 hover:text-red-700 text-xs font-semibold">${t("admin.delete")}</button>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        let lastPaymentMethods = null;
+
+        async function loadPaymentMethods() {
+            try {
+                const response = await fetch(`${API_URL}/admin/payment-methods`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                if (response.status === 403) { window.location.href = "dashboard.html"; return; }
+                const data = await response.json();
+                lastPaymentMethods = data;
+                renderPaymentMethods(data);
+            } catch (err) {
+                showBanner(t("admin.loadError"), true);
+            }
+        }
+
         verifyAccess();
-        document.addEventListener("langchange", () => { if (lastPlans) renderPlans(lastPlans); });
+        document.addEventListener("langchange", () => {
+            if (lastPlans) renderPlans(lastPlans);
+            if (lastPaymentMethods) renderPaymentMethods(lastPaymentMethods);
+        });
     </script>
 </body>
 </html>
