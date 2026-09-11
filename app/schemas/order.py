@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 from decimal import Decimal
 from pydantic import BaseModel, Field
 class OrderItemCreate(BaseModel):
@@ -39,3 +40,8 @@ class OrderSummaryOut(BaseModel):
     profit_today: Decimal
     orders_month: int
     profit_month: Decimal
+
+
+class ProfitHistoryPoint(BaseModel):
+    date: date
+    profit: Decimal
