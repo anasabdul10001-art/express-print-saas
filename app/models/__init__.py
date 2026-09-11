@@ -13,10 +13,11 @@ from app.models.plan import Plan, SiteSettings
 from app.models.payment_method import PaymentMethod
 from app.models.invoice import Invoice
 from app.models.dhl_account import DhlAccount
+from app.models.affiliate import Affiliate, AffiliateReferral, AffiliateCommission, AffiliatePayout
 
 __all__ = [
     "Tenant", "User", "PrintAgent", "PrintJob", "Product", "Order", "OrderItem",
     "EbayAccount", "EbayOAuthState", "StockMovement", "Expense", "PasswordResetToken",
     "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings", "PaymentMethod", "Invoice",
-    "DhlAccount",
+    "DhlAccount", "Affiliate", "AffiliateReferral", "AffiliateCommission", "AffiliatePayout",
 ]
