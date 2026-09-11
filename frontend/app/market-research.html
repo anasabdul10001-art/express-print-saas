@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="trial-guard.js"></script>
     <script src="../site-logo.js"></script>
+    <script src="../translations.js"></script>
+    <script src="../i18n.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div class="flex min-h-screen">
@@ -21,37 +23,42 @@
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
                 <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-                    Dashboard
+                    <span data-i18n="nav.dashboard">Dashboard</span>
                 </a>
                 <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
-                    Produkte
+                    <span data-i18n="nav.products">Produkte</span>
                 </a>
                 <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
-                    Bestellungen
+                    <span data-i18n="nav.orders">Bestellungen</span>
                 </a>
                 <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
-                    Ausgaben
+                    <span data-i18n="nav.expenses">Ausgaben</span>
                 </a>
                 <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    Marktrecherche
+                    <span data-i18n="nav.marketResearch">Marktrecherche</span>
                 </a>
                 <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    Print-Agents
+                    <span data-i18n="nav.printAgents">Print-Agents</span>
                 </a>
                 <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    Einstellungen
+                    <span data-i18n="nav.settings">Einstellungen</span>
                 </a>
         </nav>
+        <div class="px-3 pb-3 flex items-center gap-1 text-xs font-semibold">
+            <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+        </div>
         <div class="p-3 border-t border-slate-100">
             <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Abmelden
+                <span data-i18n="nav.logout">Abmelden</span>
             </button>
         </div>
     </aside>
@@ -72,35 +79,35 @@
         <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 p-3 space-y-1">
             <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-                Dashboard
+                <span data-i18n="nav.dashboard">Dashboard</span>
             </a>
             <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
-                Produkte
+                <span data-i18n="nav.products">Produkte</span>
             </a>
             <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
-                Bestellungen
+                <span data-i18n="nav.orders">Bestellungen</span>
             </a>
             <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
-                Ausgaben
+                <span data-i18n="nav.expenses">Ausgaben</span>
             </a>
             <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                Marktrecherche
+                <span data-i18n="nav.marketResearch">Marktrecherche</span>
             </a>
             <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Print-Agents
+                <span data-i18n="nav.printAgents">Print-Agents</span>
             </a>
             <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                Einstellungen
+                <span data-i18n="nav.settings">Einstellungen</span>
             </a>
             <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Abmelden
+                <span data-i18n="nav.logout">Abmelden</span>
             </button>
         </div>
 
@@ -108,38 +115,38 @@
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
         <div>
-            <h2 class="text-2xl font-bold">Marktrecherche</h2>
-            <p class="text-slate-500 text-sm mt-1">
+            <h2 class="text-2xl font-bold" data-i18n="market.title">Marktrecherche</h2>
+            <p class="text-slate-500 text-sm mt-1" data-i18n="market.subtitle">
                 Durchsuche aktuelle eBay-Angebote: Preise, Verkäufer und geschätzte Verkaufszahlen.
                 Basiert auf eBays öffentlicher Browse-API (keine eBay-Verbindung nötig).
             </p>
         </div>
 
         <form onsubmit="handleSearch(event)" class="flex gap-3">
-            <input type="text" id="query-input" required placeholder="z.B. USB-C Kabel, Handyhülle iPhone 15..."
+            <input type="text" id="query-input" required data-i18n-placeholder="market.searchPlaceholder" placeholder="z.B. USB-C Kabel, Handyhülle iPhone 15..."
                    class="flex-1 px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             <button type="submit" id="search-btn"
                     class="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 rounded-lg transition">
-                Suchen
+                <span data-i18n="market.searchButton">Suchen</span>
             </button>
         </form>
 
-        <p class="text-slate-400 text-xs">
+        <p class="text-slate-400 text-xs" data-i18n="market.hint">
             Hinweis: "Verkauft (geschätzt)" ist eine von eBay berechnete Schätzung, keine exakte Zahl,
             und wird nur für die ersten 15 Ergebnisse geladen (deshalb dauert eine Suche einige Sekunden).
         </p>
 
-        <div id="loading-state" class="hidden text-center text-slate-500 py-12">Suche läuft...</div>
+        <div id="loading-state" class="hidden text-center text-slate-500 py-12" data-i18n="market.searching">Suche läuft...</div>
 
         <div id="empty-state" class="hidden bg-white border border-slate-200 p-8 rounded-xl text-center">
-            <p class="text-slate-500">Keine Ergebnisse für diese Suche.</p>
+            <p class="text-slate-500" data-i18n="market.emptyResults">Keine Ergebnisse für diese Suche.</p>
         </div>
 
         <div id="track-row" class="hidden flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3">
-            <p class="text-sm text-slate-600">Diesen Suchbegriff dauerhaft beobachten und täglich einen Datenpunkt sammeln?</p>
+            <p class="text-sm text-slate-600" data-i18n="market.trackPrompt">Diesen Suchbegriff dauerhaft beobachten und täglich einen Datenpunkt sammeln?</p>
             <button onclick="trackCurrentQuery()" id="track-btn"
                     class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-1.5 px-4 rounded-lg transition whitespace-nowrap">
-                + Verfolgen
+                <span data-i18n="market.trackButton">+ Verfolgen</span>
             </button>
         </div>
 
@@ -147,13 +154,13 @@
 
         <!-- Tracked searches -->
         <div class="pt-4 border-t border-slate-200">
-            <h3 class="text-lg font-bold mb-1">Verfolgte Suchbegriffe</h3>
-            <p class="text-slate-500 text-sm mb-4">
+            <h3 class="text-lg font-bold mb-1" data-i18n="market.trackedTitle">Verfolgte Suchbegriffe</h3>
+            <p class="text-slate-500 text-sm mb-4" data-i18n="market.trackedDesc">
                 Für jeden verfolgten Begriff wird einmal täglich automatisch ein Datenpunkt gespeichert
                 (Gesamtzahl geschätzter Verkäufe, Durchschnittspreis). Der Verlauf beginnt ab dem Tag,
                 an dem du "Verfolgen" gedrückt hast - keine rückwirkenden Daten möglich.
             </p>
-            <div id="tracked-empty" class="hidden text-slate-500 text-sm">Noch keine Suchbegriffe werden verfolgt.</div>
+            <div id="tracked-empty" class="hidden text-slate-500 text-sm" data-i18n="market.trackedEmpty">Noch keine Suchbegriffe werden verfolgt.</div>
             <div id="tracked-list" class="space-y-3"></div>
         </div>
     </main>
@@ -189,8 +196,8 @@
 
                 const desktopLogout = document.querySelector('aside button[onclick="logout()"]');
                 const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
-                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> Admin </a>');
-                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> Admin </a>');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
+                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
             } catch (err) {
                 // Non-critical - regular tenants simply never see this link.
             }
@@ -232,17 +239,17 @@
                     <div class="aspect-square bg-slate-100 flex items-center justify-center overflow-hidden">
                         ${item.image_url
                             ? `<img src="${item.image_url}" class="w-full h-full object-cover" onerror="this.style.display='none'">`
-                            : `<span class="text-slate-300 text-xs">Kein Bild</span>`}
+                            : `<span class="text-slate-300 text-xs">${t("market.noImage")}</span>`}
                     </div>
                     <div class="p-4 flex-1 flex flex-col gap-2">
-                        <p class="text-sm font-medium leading-snug line-clamp-2">${item.title || "Ohne Titel"}</p>
+                        <p class="text-sm font-medium leading-snug line-clamp-2">${item.title || t("market.noTitle")}</p>
                         <p class="text-lg font-bold text-red-600">${money(item.price, item.currency)}</p>
                         <div class="text-xs text-slate-500 space-y-1 mt-auto pt-2 border-t border-slate-100">
-                            <p>Verkäufer: <span class="font-medium text-slate-700">${item.seller_username || "—"}</span>
+                            <p>${t("market.seller")} <span class="font-medium text-slate-700">${item.seller_username || "—"}</span>
                                ${item.seller_feedback_percentage ? `<span class="text-emerald-600">(${item.seller_feedback_percentage}% / ${item.seller_feedback_score ?? "—"})</span>` : ""}
                             </p>
-                            <p>Verkauft (geschätzt): <span class="font-semibold ${item.estimated_sold_quantity ? "text-emerald-600" : "text-slate-400"}">${item.estimated_sold_quantity ?? "—"}</span></p>
-                            <p>Verfügbar (geschätzt): <span class="font-medium text-slate-700">${item.estimated_available_quantity ?? "—"}</span></p>
+                            <p>${t("market.estimatedSold")} <span class="font-semibold ${item.estimated_sold_quantity ? "text-emerald-600" : "text-slate-400"}">${item.estimated_sold_quantity ?? "—"}</span></p>
+                            <p>${t("market.estimatedAvailable")} <span class="font-medium text-slate-700">${item.estimated_available_quantity ?? "—"}</span></p>
                         </div>
                     </div>
                 </a>
@@ -250,6 +257,7 @@
         }
 
         let currentQuery = "";
+        let lastResults = null;
 
         async function handleSearch(event) {
             event.preventDefault();
@@ -258,13 +266,15 @@
             currentQuery = query;
 
             const btn = document.getElementById("search-btn");
+            const btnLabel = btn.querySelector("span");
             const loading = document.getElementById("loading-state");
             const emptyState = document.getElementById("empty-state");
             const grid = document.getElementById("results-grid");
             const trackRow = document.getElementById("track-row");
 
             btn.disabled = true;
-            btn.innerText = "Suche läuft...";
+            btnLabel.removeAttribute("data-i18n");
+            btnLabel.innerText = t("market.searching");
             loading.classList.remove("hidden");
             emptyState.classList.add("hidden");
             grid.classList.add("hidden");
@@ -281,20 +291,23 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    showBanner(data.detail || "Suche fehlgeschlagen.", true);
+                    showBanner(data.detail || t("market.searchFailed"), true);
                     return;
                 }
 
+                lastResults = data;
                 renderResults(data);
                 trackRow.classList.remove("hidden");
             } catch (err) {
-                showBanner("Server nicht erreichbar. Bitte erneut versuchen.", true);
+                showBanner(t("market.serverErrorRetry"), true);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Suchen";
+                btnLabel.setAttribute("data-i18n", "market.searchButton");
+                btnLabel.innerText = t("market.searchButton");
                 loading.classList.add("hidden");
             }
         }
+        document.addEventListener("langchange", () => { if (lastResults) renderResults(lastResults); });
 
         async function trackCurrentQuery() {
             if (!currentQuery) return;
@@ -310,13 +323,13 @@
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
                 if (!response.ok) {
-                    showBanner(data.detail || "Verfolgen fehlgeschlagen.", true);
+                    showBanner(data.detail || t("market.trackFailed"), true);
                     return;
                 }
-                showBanner(`"${currentQuery}" wird jetzt täglich verfolgt.`, false);
+                showBanner(t("market.trackedNow").replace("{query}", currentQuery), false);
                 loadTrackedSearches();
             } catch (err) {
-                showBanner("Server nicht erreichbar.", true);
+                showBanner(t("market.serverError"), true);
             } finally {
                 btn.disabled = false;
             }
@@ -335,7 +348,7 @@
             }
 
             panel.classList.remove("hidden");
-            panel.innerHTML = `<p class="text-slate-400 text-xs p-3">Lädt...</p>`;
+            panel.innerHTML = `<p class="text-slate-400 text-xs p-3">${t("market.loadingHistory")}</p>`;
 
             try {
                 const response = await fetch(`${API_URL}/market-research/tracked/${trackedId}/history`, { headers: authHeaders() });
@@ -343,7 +356,7 @@
                 const snapshots = await response.json();
 
                 if (snapshots.length === 0) {
-                    panel.innerHTML = `<p class="text-slate-400 text-xs p-3">Noch keine Datenpunkte - der erste folgt beim nächsten täglichen Durchlauf.</p>`;
+                    panel.innerHTML = `<p class="text-slate-400 text-xs p-3">${t("market.noHistoryYet")}</p>`;
                     return;
                 }
 
@@ -351,10 +364,10 @@
                     <table class="w-full text-xs">
                         <thead>
                             <tr class="text-left text-slate-400 border-b border-slate-100">
-                                <th class="py-2">Datum</th>
-                                <th class="py-2">Verkauft gesamt (geschätzt)</th>
-                                <th class="py-2">Ø Preis</th>
-                                <th class="py-2">Angebote</th>
+                                <th class="py-2">${t("market.colDate")}</th>
+                                <th class="py-2">${t("market.colTotalSold")}</th>
+                                <th class="py-2">${t("market.colAvgPrice")}</th>
+                                <th class="py-2">${t("market.colListings")}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -370,12 +383,12 @@
                     </table>
                 `;
             } catch (err) {
-                panel.innerHTML = `<p class="text-red-600 text-xs p-3">Verlauf konnte nicht geladen werden.</p>`;
+                panel.innerHTML = `<p class="text-red-600 text-xs p-3">${t("market.historyLoadError")}</p>`;
             }
         }
 
         async function deleteTracked(trackedId, query) {
-            if (!confirm(`"${query}" nicht mehr verfolgen? Der bisherige Verlauf geht dabei verloren.`)) return;
+            if (!confirm(t("market.confirmUntrack").replace("{query}", query))) return;
 
             try {
                 const response = await fetch(`${API_URL}/market-research/tracked/${trackedId}`, {
@@ -385,9 +398,11 @@
                 if (response.status === 401) { logout(); return; }
                 loadTrackedSearches();
             } catch (err) {
-                showBanner("Server nicht erreichbar.", true);
+                showBanner(t("market.serverError"), true);
             }
         }
+
+        let lastTracked = null;
 
         function renderTrackedList(tracked) {
             const list = document.getElementById("tracked-list");
@@ -400,16 +415,16 @@
             }
             emptyEl.classList.add("hidden");
 
-            list.innerHTML = tracked.map(t => `
+            list.innerHTML = tracked.map(item => `
                 <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
                     <div class="p-3 flex items-center justify-between">
-                        <span class="font-medium text-sm">${t.query}</span>
+                        <span class="font-medium text-sm">${item.query}</span>
                         <div class="flex items-center gap-3">
-                            <button onclick="toggleHistory('${t.id}')" class="text-blue-600 hover:text-blue-700 text-xs font-semibold">Verlauf anzeigen</button>
-                            <button onclick="deleteTracked('${t.id}', ${JSON.stringify(t.query)})" class="text-red-600 hover:text-red-700 text-xs font-semibold">Entfernen</button>
+                            <button onclick="toggleHistory('${item.id}')" class="text-blue-600 hover:text-blue-700 text-xs font-semibold">${t("market.showHistory")}</button>
+                            <button onclick="deleteTracked('${item.id}', ${JSON.stringify(item.query)})" class="text-red-600 hover:text-red-700 text-xs font-semibold">${t("market.remove")}</button>
                         </div>
                     </div>
-                    <div id="history-${t.id}" class="hidden px-3 pb-3"></div>
+                    <div id="history-${item.id}" class="hidden px-3 pb-3"></div>
                 </div>
             `).join("");
         }
@@ -419,6 +434,7 @@
                 const response = await fetch(`${API_URL}/market-research/tracked`, { headers: authHeaders() });
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
+                lastTracked = data;
                 renderTrackedList(data);
             } catch (err) {
                 // Non-critical on page load - just leave the empty state.
@@ -426,6 +442,7 @@
         }
 
         loadTrackedSearches();
+        document.addEventListener("langchange", () => { if (lastTracked) renderTrackedList(lastTracked); });
     </script>
 </body>
 </html>

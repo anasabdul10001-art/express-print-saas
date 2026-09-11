@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="trial-guard.js"></script>
     <script src="../site-logo.js"></script>
+    <script src="../translations.js"></script>
+    <script src="../i18n.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div class="flex min-h-screen">
@@ -21,37 +23,42 @@
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
                 <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-                    Dashboard
+                    <span data-i18n="nav.dashboard">Dashboard</span>
                 </a>
                 <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
-                    Produkte
+                    <span data-i18n="nav.products">Produkte</span>
                 </a>
                 <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
-                    Bestellungen
+                    <span data-i18n="nav.orders">Bestellungen</span>
                 </a>
                 <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
-                    Ausgaben
+                    <span data-i18n="nav.expenses">Ausgaben</span>
                 </a>
                 <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    Marktrecherche
+                    <span data-i18n="nav.marketResearch">Marktrecherche</span>
                 </a>
                 <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    Print-Agents
+                    <span data-i18n="nav.printAgents">Print-Agents</span>
                 </a>
                 <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    Einstellungen
+                    <span data-i18n="nav.settings">Einstellungen</span>
                 </a>
         </nav>
+        <div class="px-3 pb-3 flex items-center gap-1 text-xs font-semibold">
+            <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+        </div>
         <div class="p-3 border-t border-slate-100">
             <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Abmelden
+                <span data-i18n="nav.logout">Abmelden</span>
             </button>
         </div>
     </aside>
@@ -72,161 +79,161 @@
         <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 p-3 space-y-1">
             <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-                Dashboard
+                <span data-i18n="nav.dashboard">Dashboard</span>
             </a>
             <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
-                Produkte
+                <span data-i18n="nav.products">Produkte</span>
             </a>
             <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
-                Bestellungen
+                <span data-i18n="nav.orders">Bestellungen</span>
             </a>
             <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
-                Ausgaben
+                <span data-i18n="nav.expenses">Ausgaben</span>
             </a>
             <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                Marktrecherche
+                <span data-i18n="nav.marketResearch">Marktrecherche</span>
             </a>
             <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Print-Agents
+                <span data-i18n="nav.printAgents">Print-Agents</span>
             </a>
             <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                Einstellungen
+                <span data-i18n="nav.settings">Einstellungen</span>
             </a>
             <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Abmelden
+                <span data-i18n="nav.logout">Abmelden</span>
             </button>
         </div>
 
     <main class="max-w-2xl mx-auto p-6 space-y-6">
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
-        <h2 class="text-2xl font-bold">Einstellungen</h2>
+        <h2 class="text-2xl font-bold" data-i18n="settings.title">Einstellungen</h2>
 
         <!-- Company info -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Unternehmen</h3>
+            <h3 class="text-lg font-bold" data-i18n="settings.companyTitle">Unternehmen</h3>
             <div>
-                <label class="block text-sm mb-1">Firmenname</label>
+                <label class="block text-sm mb-1" data-i18n="settings.companyName">Firmenname</label>
                 <input type="text" id="field-company-name"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div>
-                <label class="block text-sm mb-1">Land (Ländercode, z.B. DE, AT, CH)</label>
+                <label class="block text-sm mb-1" data-i18n="settings.country">Land (Ländercode, z.B. DE, AT, CH)</label>
                 <input type="text" id="field-country" maxlength="2"
                        class="w-24 p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none uppercase">
             </div>
             <div id="company-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="saveCompany()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                Speichern
+                <span data-i18n="settings.save">Speichern</span>
             </button>
         </div>
 
         <!-- Profile: name -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Profil</h3>
+            <h3 class="text-lg font-bold" data-i18n="settings.profileTitle">Profil</h3>
             <div>
-                <label class="block text-sm mb-1">Name</label>
+                <label class="block text-sm mb-1" data-i18n="settings.name">Name</label>
                 <input type="text" id="field-full-name"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div id="profile-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="saveProfile()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                Name speichern
+                <span data-i18n="settings.saveName">Name speichern</span>
             </button>
         </div>
 
         <!-- Account / login email -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Konto</h3>
+            <h3 class="text-lg font-bold" data-i18n="settings.accountTitle">Konto</h3>
             <div>
-                <label class="block text-sm mb-1">E-Mail (zum Anmelden)</label>
+                <label class="block text-sm mb-1" data-i18n="settings.email">E-Mail (zum Anmelden)</label>
                 <input type="email" id="field-email"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div>
-                <label class="block text-sm mb-1">Aktuelles Passwort (zur Bestätigung)</label>
+                <label class="block text-sm mb-1" data-i18n="settings.currentPasswordConfirm">Aktuelles Passwort (zur Bestätigung)</label>
                 <input type="password" id="field-email-password" autocomplete="current-password"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div id="email-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="saveEmail()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                E-Mail ändern
+                <span data-i18n="settings.changeEmail">E-Mail ändern</span>
             </button>
         </div>
 
         <!-- Password change -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Passwort ändern</h3>
+            <h3 class="text-lg font-bold" data-i18n="settings.passwordTitle">Passwort ändern</h3>
             <div>
-                <label class="block text-sm mb-1">Aktuelles Passwort</label>
+                <label class="block text-sm mb-1" data-i18n="settings.currentPassword">Aktuelles Passwort</label>
                 <input type="password" id="field-current-password" autocomplete="current-password"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div>
-                <label class="block text-sm mb-1">Neues Passwort</label>
+                <label class="block text-sm mb-1" data-i18n="settings.newPassword">Neues Passwort</label>
                 <input type="password" id="field-new-password" autocomplete="new-password" minlength="8"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
-                <p class="text-xs text-slate-400 mt-1">Mindestens 8 Zeichen</p>
+                <p class="text-xs text-slate-400 mt-1" data-i18n="settings.minChars">Mindestens 8 Zeichen</p>
             </div>
             <div>
-                <label class="block text-sm mb-1">Neues Passwort bestätigen</label>
+                <label class="block text-sm mb-1" data-i18n="settings.confirmNewPassword">Neues Passwort bestätigen</label>
                 <input type="password" id="field-new-password-confirm" autocomplete="new-password"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div id="password-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="savePassword()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                Passwort ändern
+                <span data-i18n="settings.changePassword">Passwort ändern</span>
             </button>
         </div>
 
         <!-- Print mode -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Druckmodus</h3>
-            <p class="text-slate-500 text-sm">
+            <h3 class="text-lg font-bold" data-i18n="settings.printModeTitle">Druckmodus</h3>
+            <p class="text-slate-500 text-sm" data-i18n="settings.printModeDesc">
                 Bestimmt, wie Versandetiketten für neue Bestellungen gedruckt werden.
             </p>
 
             <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="DASHBOARD_MANUAL" class="mt-1">
                 <span>
-                    <span class="font-semibold">Manuell im Dashboard</span>
-                    <span class="block text-slate-500 text-sm">Du klickst pro Bestellung selbst auf "Etikett drucken" (aktuell die einzige vollständig funktionierende Option).</span>
+                    <span class="font-semibold" data-i18n="settings.modeManualTitle">Manuell im Dashboard</span>
+                    <span class="block text-slate-500 text-sm" data-i18n="settings.modeManualDesc">Du klickst pro Bestellung selbst auf "Etikett drucken" (aktuell die einzige vollständig funktionierende Option).</span>
                 </span>
             </label>
 
             <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="INSTANT" class="mt-1">
                 <span>
-                    <span class="font-semibold">Sofort automatisch</span>
-                    <span class="block text-slate-500 text-sm">Etiketten sollen sofort bei Eingang einer Bestellung gedruckt werden.</span>
-                    <span class="block text-amber-600 text-xs mt-1">⚠ Hinweis: Diese Automatik ist im Backend noch nicht umgesetzt. Bestellungen müssen aktuell auch in diesem Modus manuell über "Etikett drucken" ausgelöst werden.</span>
+                    <span class="font-semibold" data-i18n="settings.modeInstantTitle">Sofort automatisch</span>
+                    <span class="block text-slate-500 text-sm" data-i18n="settings.modeInstantDesc">Etiketten sollen sofort bei Eingang einer Bestellung gedruckt werden.</span>
+                    <span class="block text-amber-600 text-xs mt-1" data-i18n="settings.modeInstantWarning">⚠ Hinweis: Diese Automatik ist im Backend noch nicht umgesetzt. Bestellungen müssen aktuell auch in diesem Modus manuell über "Etikett drucken" ausgelöst werden.</span>
                 </span>
             </label>
 
             <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="INTEGRATED" class="mt-1">
                 <span>
-                    <span class="font-semibold">Kombiniert (Etikett + Kommissionierzettel)</span>
-                    <span class="block text-slate-500 text-sm">Ein PDF aus Versandetikett und Kommissionierzettel (Produktfoto, Name, Lagerplatz).</span>
-                    <span class="block text-amber-600 text-xs mt-1">⚠ Hinweis: Diese PDF-Zusammenführung ist noch nicht gebaut. Solange dieser Modus aktiv ist, lehnt "Etikett drucken" jeden Druckversuch ab.</span>
+                    <span class="font-semibold" data-i18n="settings.modeIntegratedTitle">Kombiniert (Etikett + Kommissionierzettel)</span>
+                    <span class="block text-slate-500 text-sm" data-i18n="settings.modeIntegratedDesc">Ein PDF aus Versandetikett und Kommissionierzettel (Produktfoto, Name, Lagerplatz).</span>
+                    <span class="block text-amber-600 text-xs mt-1" data-i18n="settings.modeIntegratedWarning">⚠ Hinweis: Diese PDF-Zusammenführung ist noch nicht gebaut. Solange dieser Modus aktiv ist, lehnt "Etikett drucken" jeden Druckversuch ab.</span>
                 </span>
             </label>
 
             <div id="mode-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="savePrintMode()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                Druckmodus speichern
+                <span data-i18n="settings.savePrintMode">Druckmodus speichern</span>
             </button>
         </div>
     </main>
@@ -264,8 +271,8 @@
 
                 const desktopLogout = document.querySelector('aside button[onclick="logout()"]');
                 const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
-                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> Admin </a>');
-                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> Admin </a>');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
+                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
             } catch (err) {
                 // Non-critical - regular tenants simply never see this link.
             }
@@ -296,7 +303,7 @@
                 const radio = document.querySelector(`input[name="print-mode"][value="${data.print_mode}"]`);
                 if (radio) radio.checked = true;
             } catch (err) {
-                showBanner("Einstellungen konnten nicht geladen werden. Bitte Seite neu laden.", true);
+                showBanner(t("settings.loadError"), true);
             }
         }
 
@@ -330,14 +337,14 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.innerText = data.detail || t("settings.saveFailed");
                     errorBox.classList.remove("hidden");
                     return;
                 }
 
-                showBanner("Name gespeichert.", false);
+                showBanner(t("settings.nameSaved"), false);
             } catch (err) {
-                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.innerText = t("settings.serverErrorRetry");
                 errorBox.classList.remove("hidden");
             }
         }
@@ -351,17 +358,17 @@
             const confirmPassword = document.getElementById("field-new-password-confirm").value;
 
             if (!currentPassword || !newPassword) {
-                errorBox.innerText = "Bitte aktuelles und neues Passwort eingeben.";
+                errorBox.innerText = t("settings.passwordRequired");
                 errorBox.classList.remove("hidden");
                 return;
             }
             if (newPassword.length < 8) {
-                errorBox.innerText = "Das neue Passwort muss mindestens 8 Zeichen lang sein.";
+                errorBox.innerText = t("settings.passwordTooShort");
                 errorBox.classList.remove("hidden");
                 return;
             }
             if (newPassword !== confirmPassword) {
-                errorBox.innerText = "Die Passwörter stimmen nicht überein.";
+                errorBox.innerText = t("settings.passwordMismatch");
                 errorBox.classList.remove("hidden");
                 return;
             }
@@ -374,7 +381,7 @@
                 });
 
                 if (response.status === 401) {
-                    errorBox.innerText = "Aktuelles Passwort ist falsch.";
+                    errorBox.innerText = t("settings.currentPasswordWrong");
                     errorBox.classList.remove("hidden");
                     return;
                 }
@@ -382,7 +389,7 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.innerText = data.detail || "Ändern fehlgeschlagen.";
+                    errorBox.innerText = data.detail || t("settings.changeFailed");
                     errorBox.classList.remove("hidden");
                     return;
                 }
@@ -390,9 +397,9 @@
                 document.getElementById("field-current-password").value = "";
                 document.getElementById("field-new-password").value = "";
                 document.getElementById("field-new-password-confirm").value = "";
-                showBanner("Passwort erfolgreich geändert.", false);
+                showBanner(t("settings.passwordChanged"), false);
             } catch (err) {
-                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.innerText = t("settings.serverErrorRetry");
                 errorBox.classList.remove("hidden");
             }
         }
@@ -405,7 +412,7 @@
             const password = document.getElementById("field-email-password").value;
 
             if (!email || !password) {
-                errorBox.innerText = "Bitte E-Mail und aktuelles Passwort eingeben.";
+                errorBox.innerText = t("settings.emailPasswordRequired");
                 errorBox.classList.remove("hidden");
                 return;
             }
@@ -418,7 +425,7 @@
                 });
 
                 if (response.status === 401) {
-                    errorBox.innerText = "Passwort ist falsch.";
+                    errorBox.innerText = t("settings.passwordWrong");
                     errorBox.classList.remove("hidden");
                     return;
                 }
@@ -426,15 +433,15 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.innerText = data.detail || "Ändern fehlgeschlagen.";
+                    errorBox.innerText = data.detail || t("settings.changeFailed");
                     errorBox.classList.remove("hidden");
                     return;
                 }
 
                 document.getElementById("field-email-password").value = "";
-                showBanner("E-Mail-Adresse geändert. Bitte merke sie dir für die nächste Anmeldung.", false);
+                showBanner(t("settings.emailChanged"), false);
             } catch (err) {
-                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.innerText = t("settings.serverErrorRetry");
                 errorBox.classList.remove("hidden");
             }
         }
@@ -447,12 +454,12 @@
             const countryCode = document.getElementById("field-country").value.trim().toUpperCase();
 
             if (!companyName) {
-                errorBox.innerText = "Bitte einen Firmennamen eingeben.";
+                errorBox.innerText = t("settings.companyNameRequired");
                 errorBox.classList.remove("hidden");
                 return;
             }
             if (countryCode.length !== 2) {
-                errorBox.innerText = "Bitte einen zweistelligen Ländercode eingeben (z.B. DE).";
+                errorBox.innerText = t("settings.countryCodeInvalid");
                 errorBox.classList.remove("hidden");
                 return;
             }
@@ -469,14 +476,14 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.innerText = data.detail || t("settings.saveFailed");
                     errorBox.classList.remove("hidden");
                     return;
                 }
 
-                showBanner("Unternehmensdaten gespeichert.", false);
+                showBanner(t("settings.companySaved"), false);
             } catch (err) {
-                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.innerText = t("settings.serverErrorRetry");
                 errorBox.classList.remove("hidden");
             }
         }
@@ -487,7 +494,7 @@
 
             const selected = document.querySelector('input[name="print-mode"]:checked');
             if (!selected) {
-                errorBox.innerText = "Bitte einen Druckmodus auswählen.";
+                errorBox.innerText = t("settings.printModeRequired");
                 errorBox.classList.remove("hidden");
                 return;
             }
@@ -504,14 +511,14 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.innerText = data.detail || t("settings.saveFailed");
                     errorBox.classList.remove("hidden");
                     return;
                 }
 
-                showBanner("Druckmodus gespeichert.", false);
+                showBanner(t("settings.printModeSaved"), false);
             } catch (err) {
-                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.innerText = t("settings.serverErrorRetry");
                 errorBox.classList.remove("hidden");
             }
         }
