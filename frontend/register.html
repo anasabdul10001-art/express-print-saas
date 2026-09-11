@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-    <title>Anmelden — ShipSync</title>
+    <title>Konto erstellen — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="site-logo.js"></script>
     <script src="translations.js"></script>
@@ -41,27 +41,31 @@
         <div class="absolute bottom-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl"></div>
 
         <div class="relative max-w-md space-y-6">
-            <h1 class="text-3xl font-bold leading-snug text-white" data-i18n="login.heroTitle">
-                Versand und Etikettendruck für eBay-Verkäufer, automatisiert.
+            <h1 class="text-3xl font-bold leading-snug text-white" data-i18n="register.heroTitle">
+                In wenigen Minuten startklar für automatisierten Versand.
             </h1>
-            <p class="text-slate-400" data-i18n="login.heroSubtitle">
-                Verbinde dein eBay-Konto, verwalte Bestellungen und Lagerbestand, und drucke Versandetiketten automatisch — ohne manuelle Umwege.
+            <p class="text-slate-400" data-i18n="register.heroSubtitle">
+                Konto erstellen → eBay verbinden → Drucker einrichten → loslegen.
             </p>
 
-            <ul class="space-y-4 text-sm text-slate-300">
-                <li class="flex items-start gap-3">
-                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs">✓</span>
-                    <span data-i18n="login.checklist1">eBay-Bestellungen automatisch synchronisieren</span>
-                </li>
-                <li class="flex items-start gap-3">
-                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs">✓</span>
-                    <span data-i18n="login.checklist2">Versandetiketten drucken, ohne den Computer anzufassen</span>
-                </li>
-                <li class="flex items-start gap-3">
-                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs">✓</span>
-                    <span data-i18n="login.checklist3">Lagerbestand und Gewinn immer im Blick</span>
-                </li>
-            </ul>
+            <div class="space-y-4 pt-2">
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+                    <span class="text-white font-medium" data-i18n="register.step1">Konto erstellen</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold flex items-center justify-center">2</span>
+                    <span class="text-slate-400" data-i18n="register.step2">eBay-Konto verbinden</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold flex items-center justify-center">3</span>
+                    <span class="text-slate-400" data-i18n="register.step3">Print-Agent einrichten</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold flex items-center justify-center">4</span>
+                    <span class="text-slate-400" data-i18n="register.step4">Bestellungen bearbeiten</span>
+                </div>
+            </div>
 
             <div class="flex justify-end pt-2">
                 <a href="pricing.html" class="group inline-flex items-center gap-2.5 bg-white hover:bg-slate-100 text-slate-900 text-base font-bold px-6 py-3.5 rounded-xl transition-all hover:scale-105 shadow-2xl shadow-black/40">
@@ -88,34 +92,34 @@
                 </svg>
             </div>
 
-            <h2 class="text-2xl font-bold mb-2 text-center lg:text-left" data-i18n="login.formTitle">Willkommen zurück</h2>
-            <p class="text-slate-500 text-sm mb-6 text-center lg:text-left" data-i18n="login.formSubtitle">Melde dich bei deinem Konto an</p>
+            <h2 class="text-2xl font-bold mb-2 text-center lg:text-left" data-i18n="register.formTitle">Konto erstellen</h2>
+            <p class="text-slate-500 text-sm mb-6 text-center lg:text-left" data-i18n="register.formSubtitle">Kostenlos starten, in unter 2 Minuten</p>
 
             <div id="error-box" class="hidden bg-red-50 text-red-700 border border-red-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
+            <div id="success-box" class="hidden bg-emerald-50 text-emerald-700 border border-emerald-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
 
-            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+            <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="login.email">E-Mail</label>
-                    <input type="email" id="email" required autocomplete="email"
-                           class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="register.companyName">Firmenname</label>
+                    <input type="text" id="company_name" required class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
                 </div>
                 <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label class="block text-sm font-medium text-slate-700" data-i18n="login.password">Passwort</label>
-                        <a href="forgot-password.html" class="text-xs text-red-600 hover:text-red-700 font-medium" data-i18n="login.forgotPassword">Passwort vergessen?</a>
-                    </div>
-                    <input type="password" id="password" required autocomplete="current-password"
-                           class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="register.email">E-Mail</label>
+                    <input type="email" id="email" required class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
                 </div>
-                <button type="submit" id="submit-btn"
-                        class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg transition shadow-sm shadow-red-600/20">
-                    <span data-i18n="login.submit">Anmelden</span>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="register.password">Passwort</label>
+                    <input type="password" id="password" required minlength="8" class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
+                    <p class="text-xs text-slate-400 mt-1" data-i18n="register.passwordHint">Mindestens 8 Zeichen</p>
+                </div>
+                <button type="submit" id="submit-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg transition shadow-sm shadow-red-600/20">
+                    <span data-i18n="register.submit">Konto erstellen</span>
                 </button>
             </form>
 
             <p class="text-slate-500 text-sm text-center mt-6">
-                <span data-i18n="login.noAccount">Noch kein Konto?</span>
-                <a href="register.html" class="text-red-600 hover:text-red-700 font-semibold" data-i18n="login.registerLink">Jetzt registrieren</a>
+                <span data-i18n="register.haveAccount">Schon ein Konto?</span>
+                <a href="login.html" class="text-red-600 hover:text-red-700 font-semibold" data-i18n="register.loginLink">Jetzt anmelden</a>
             </p>
         </div>
     </div>
@@ -124,50 +128,58 @@
     <script>
         const API_URL = "https://express-print-saas.onrender.com";
 
-        // Already logged in? Skip straight to the dashboard.
-        if (localStorage.getItem("access_token")) {
-            window.location.href = "app/dashboard.html";
-        }
-
-        async function handleLogin(event) {
+        async function handleAuth(event) {
             event.preventDefault();
             const errBox = document.getElementById("error-box");
+            const succBox = document.getElementById("success-box");
             const btn = document.getElementById("submit-btn");
 
             errBox.classList.add("hidden");
+            succBox.classList.add("hidden");
             btn.disabled = true;
-            btn.innerText = t("login.submitLoading");
+            btn.innerText = t("register.submitLoading");
 
             const payload = {
+                company_name: document.getElementById("company_name").value,
                 email: document.getElementById("email").value,
-                password: document.getElementById("password").value
+                password: document.getElementById("password").value,
+                plan_name: new URLSearchParams(window.location.search).get("plan") || null
             };
 
             try {
-                const response = await fetch(`${API_URL}/auth/login`, {
+                // تجربة مسار التسجيل الأساسي
+                let response = await fetch(`${API_URL}/auth/register`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
 
+                // إذا كان المسار /register بدون /auth
+                if (response.status === 404) {
+                    response = await fetch(`${API_URL}/register`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
                 const data = await response.json();
 
                 if (response.ok) {
+                    succBox.innerText = t("register.successMessage");
+                    succBox.classList.remove("hidden");
                     localStorage.setItem("access_token", data.access_token);
-                    window.location.href = "app/dashboard.html";
-                } else if (response.status === 402) {
-                    if (data.detail) sessionStorage.setItem("trial_expired_message", data.detail);
-                    window.location.href = "trial-expired.html";
+                    setTimeout(() => { window.location.href = "app/dashboard.html"; }, 1000);
                 } else {
-                    errBox.innerText = data.detail || t("login.invalidCredentials");
+                    errBox.innerText = data.detail || t("register.genericError");
                     errBox.classList.remove("hidden");
                 }
             } catch (err) {
-                errBox.innerText = t("login.serverError");
+                errBox.innerText = t("register.serverError");
                 errBox.classList.remove("hidden");
             } finally {
                 btn.disabled = false;
-                btn.innerText = t("login.submit");
+                btn.innerText = t("register.submit");
             }
         }
     </script>
