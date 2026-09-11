@@ -32,6 +32,9 @@
         document.querySelectorAll("[data-i18n]").forEach((el) => {
             el.textContent = t(el.getAttribute("data-i18n"));
         });
+        document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+            el.innerHTML = t(el.getAttribute("data-i18n-html"));
+        });
         document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
             el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
         });

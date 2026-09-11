@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="trial-guard.js"></script>
     <script src="../site-logo.js"></script>
+    <script src="../translations.js"></script>
+    <script src="../i18n.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div class="flex min-h-screen">
@@ -21,41 +23,46 @@
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
                 <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-                    Dashboard
+                    <span data-i18n="nav.dashboard">Dashboard</span>
                 </a>
                 <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
-                    Produkte
+                    <span data-i18n="nav.products">Produkte</span>
                 </a>
                 <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
-                    Bestellungen
+                    <span data-i18n="nav.orders">Bestellungen</span>
                 </a>
                 <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
-                    Ausgaben
+                    <span data-i18n="nav.expenses">Ausgaben</span>
                 </a>
                 <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    Marktrecherche
+                    <span data-i18n="nav.marketResearch">Marktrecherche</span>
                 </a>
                 <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    Print-Agents
+                    <span data-i18n="nav.printAgents">Print-Agents</span>
                 </a>
                 <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    Einstellungen
+                    <span data-i18n="nav.settings">Einstellungen</span>
                 </a>
                 <a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
-                    Admin
+                    <span data-i18n="nav.admin">Admin</span>
                 </a>
         </nav>
+        <div class="px-3 pb-3 flex items-center gap-1 text-xs font-semibold">
+            <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+        </div>
         <div class="p-3 border-t border-slate-100">
             <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Abmelden
+                <span data-i18n="nav.logout">Abmelden</span>
             </button>
         </div>
     </aside>
@@ -76,39 +83,39 @@
         <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 p-3 space-y-1">
             <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-                Dashboard
+                <span data-i18n="nav.dashboard">Dashboard</span>
             </a>
             <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
-                Produkte
+                <span data-i18n="nav.products">Produkte</span>
             </a>
             <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
-                Bestellungen
+                <span data-i18n="nav.orders">Bestellungen</span>
             </a>
             <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
-                Ausgaben
+                <span data-i18n="nav.expenses">Ausgaben</span>
             </a>
             <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                Marktrecherche
+                <span data-i18n="nav.marketResearch">Marktrecherche</span>
             </a>
             <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Print-Agents
+                <span data-i18n="nav.printAgents">Print-Agents</span>
             </a>
             <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                Einstellungen
+                <span data-i18n="nav.settings">Einstellungen</span>
             </a>
             <a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
-                Admin
+                <span data-i18n="nav.admin">Admin</span>
             </a>
             <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Abmelden
+                <span data-i18n="nav.logout">Abmelden</span>
             </button>
         </div>
 
@@ -116,26 +123,26 @@
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
         <div>
-            <h2 class="text-2xl font-bold">Plattform-Administration</h2>
-            <p class="text-slate-500 text-sm mt-1">Nur für dich als Plattform-Betreiber sichtbar - nicht für deine Händler.</p>
+            <h2 class="text-2xl font-bold" data-i18n="admin.title">Plattform-Administration</h2>
+            <p class="text-slate-500 text-sm mt-1" data-i18n="admin.subtitle">Nur für dich als Plattform-Betreiber sichtbar - nicht für deine Händler.</p>
         </div>
 
         <!-- Logo -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Logo</h3>
-            <p class="text-slate-500 text-sm">Wird auf der Login-/Registrierungsseite und im Dashboard verwendet.</p>
+            <h3 class="text-lg font-bold" data-i18n="admin.logoTitle">Logo</h3>
+            <p class="text-slate-500 text-sm" data-i18n="admin.logoDesc">Wird auf der Login-/Registrierungsseite und im Dashboard verwendet.</p>
             <div class="flex items-center gap-4">
                 <div id="logo-preview-wrap" class="hidden w-16 h-16 rounded-lg border border-slate-200 overflow-hidden flex items-center justify-center bg-slate-50">
                     <img id="logo-preview" class="max-w-full max-h-full object-contain">
                 </div>
                 <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-lg transition">
-                    <span id="logo-upload-label">Logo hochladen</span>
+                    <span id="logo-upload-label" data-i18n="admin.uploadLogo">Logo hochladen</span>
                     <input type="file" id="logo-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" onchange="uploadLogo()">
                 </label>
             </div>
 
             <div id="logo-size-section" class="hidden pt-4 border-t border-slate-100 space-y-3">
-                <label class="block text-xs text-slate-500">Logo-Größe auf der Seite (Höhe in Pixel)</label>
+                <label class="block text-xs text-slate-500" data-i18n="admin.logoSizeLabel">Logo-Größe auf der Seite (Höhe in Pixel)</label>
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 rounded-lg border border-slate-200 overflow-hidden flex items-center justify-center bg-slate-50 flex-shrink-0">
                         <img id="logo-size-preview" class="max-w-full" style="border-radius:4px;">
@@ -144,8 +151,8 @@
                     <span id="logo-size-value" class="text-sm font-semibold w-12 text-right">32px</span>
                 </div>
                 <div class="flex gap-3">
-                    <button onclick="saveLogoSize()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition">Größe speichern</button>
-                    <button onclick="resetLogoSize()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2 px-4 rounded-lg transition">Zurücksetzen (32px)</button>
+                    <button onclick="saveLogoSize()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.saveLogoSize">Größe speichern</span></button>
+                    <button onclick="resetLogoSize()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.resetLogoSize">Zurücksetzen (32px)</span></button>
                 </div>
             </div>
         </div>
@@ -153,69 +160,69 @@
         <!-- Plans -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold">Preispläne</h3>
-                <button onclick="openPlanForm()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition">+ Neuer Plan</button>
+                <h3 class="text-lg font-bold" data-i18n="admin.plansTitle">Preispläne</h3>
+                <button onclick="openPlanForm()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.newPlan">+ Neuer Plan</span></button>
             </div>
 
             <div id="plan-form" class="hidden border border-slate-200 rounded-lg p-4 space-y-3">
-                <h4 id="plan-form-title" class="font-semibold">Neuer Plan</h4>
+                <h4 id="plan-form-title" class="font-semibold" data-i18n="admin.planFormTitleNew">Neuer Plan</h4>
                 <input type="hidden" id="plan-id">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs text-slate-500 mb-1">Name *</label>
+                        <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.planName">Name *</label>
                         <input type="text" id="plan-name" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-500 mb-1">Preis pro Monat (€)</label>
+                        <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.planPriceMonth">Preis pro Monat (€)</label>
                         <input type="number" step="0.01" id="plan-price" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-500 mb-1">Beschreibung</label>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.planDescription">Beschreibung</label>
                     <input type="text" id="plan-description" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                        <label class="block text-xs text-slate-500 mb-1">Max. Bestellungen/Monat</label>
-                        <input type="number" id="plan-order-limit" placeholder="leer = unbegrenzt" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                        <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.planOrderLimit">Max. Bestellungen/Monat</label>
+                        <input type="number" id="plan-order-limit" data-i18n-placeholder="admin.unlimitedPlaceholder" placeholder="leer = unbegrenzt" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-500 mb-1">Max. Print-Agents</label>
-                        <input type="number" id="plan-printer-limit" placeholder="leer = unbegrenzt" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                        <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.planPrinterLimit">Max. Print-Agents</label>
+                        <input type="number" id="plan-printer-limit" data-i18n-placeholder="admin.unlimitedPlaceholder" placeholder="leer = unbegrenzt" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-500 mb-1">Max. Benutzer</label>
-                        <input type="number" id="plan-user-limit" placeholder="leer = unbegrenzt" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                        <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.planUserLimit">Max. Benutzer</label>
+                        <input type="number" id="plan-user-limit" data-i18n-placeholder="admin.unlimitedPlaceholder" placeholder="leer = unbegrenzt" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-500 mb-1">Kostenlose Testphase (Tage)</label>
-                    <input type="number" id="plan-trial-days" placeholder="leer = keine Testphase" class="w-full sm:w-1/3 px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.planTrialDays">Kostenlose Testphase (Tage)</label>
+                    <input type="number" id="plan-trial-days" data-i18n-placeholder="admin.noTrialPlaceholder" placeholder="leer = keine Testphase" class="w-full sm:w-1/3 px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-500 mb-1">Funktionen (eine pro Zeile)</label>
-                    <textarea id="plan-features" rows="4" placeholder="eBay-Synchronisierung&#10;Automatisches Drucken&#10;Marktrecherche" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"></textarea>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.planFeatures">Funktionen (eine pro Zeile)</label>
+                    <textarea id="plan-features" rows="4" data-i18n-placeholder="admin.planFeaturesPlaceholder" placeholder="eBay-Synchronisierung&#10;Automatisches Drucken&#10;Marktrecherche" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"></textarea>
                 </div>
                 <div class="flex items-center gap-6">
                     <label class="flex items-center gap-2 text-sm text-slate-700">
-                        <input type="checkbox" id="plan-active" checked> Aktiv (auf Preisseite sichtbar)
+                        <input type="checkbox" id="plan-active" checked> <span data-i18n="admin.planActive">Aktiv (auf Preisseite sichtbar)</span>
                     </label>
                     <label class="flex items-center gap-2 text-sm text-slate-700">
-                        <input type="checkbox" id="plan-recommended"> Empfohlen
+                        <input type="checkbox" id="plan-recommended"> <span data-i18n="admin.planRecommended">Empfohlen</span>
                     </label>
                     <div class="flex items-center gap-2">
-                        <label class="text-sm text-slate-700">Reihenfolge</label>
+                        <label class="text-sm text-slate-700" data-i18n="admin.planOrder">Reihenfolge</label>
                         <input type="number" id="plan-order" value="0" class="w-16 px-2 py-1 rounded-lg bg-white border border-slate-300 text-sm">
                     </div>
                 </div>
                 <div id="plan-form-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
                 <div class="flex gap-3">
-                    <button onclick="savePlan()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition">Speichern</button>
-                    <button onclick="closePlanForm()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2 px-4 rounded-lg transition">Abbrechen</button>
+                    <button onclick="savePlan()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.save">Speichern</span></button>
+                    <button onclick="closePlanForm()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.cancel">Abbrechen</span></button>
                 </div>
             </div>
 
-            <div id="plans-empty" class="hidden text-slate-500 text-sm">Noch keine Pläne angelegt.</div>
+            <div id="plans-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.plansEmpty">Noch keine Pläne angelegt.</div>
             <div id="plans-list" class="space-y-3"></div>
         </div>
     </main>
@@ -270,7 +277,7 @@
                 loadSettings();
                 loadPlans();
             } catch (err) {
-                showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
+                showBanner(t("admin.loadError"), true);
             }
         }
 
@@ -308,13 +315,13 @@
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
                 if (!response.ok) {
-                    showBanner(data.detail || "Speichern fehlgeschlagen.", true);
+                    showBanner(data.detail || t("admin.saveFailed"), true);
                     return;
                 }
                 applyLogoSettings(data);
-                showBanner("Logo-Größe gespeichert.", false);
+                showBanner(t("admin.logoSizeSaved"), false);
             } catch (err) {
-                showBanner("Server nicht erreichbar.", true);
+                showBanner(t("admin.serverError"), true);
             }
         }
 
@@ -343,8 +350,8 @@
             if (!file) return;
 
             const label = document.getElementById("logo-upload-label");
-            const originalLabel = label.innerText;
-            label.innerText = "Wird hochgeladen...";
+            label.removeAttribute("data-i18n");
+            label.innerText = t("admin.uploading");
 
             const formData = new FormData();
             formData.append("file", file);
@@ -359,23 +366,25 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    showBanner(data.detail || "Logo-Upload fehlgeschlagen.", true);
+                    showBanner(data.detail || t("admin.logoUploadFailed"), true);
                     return;
                 }
 
                 applyLogoSettings(data);
-                showBanner("Logo aktualisiert.", false);
+                showBanner(t("admin.logoUpdated"), false);
             } catch (err) {
-                showBanner("Server nicht erreichbar.", true);
+                showBanner(t("admin.serverError"), true);
             } finally {
-                label.innerText = originalLabel;
+                label.setAttribute("data-i18n", "admin.uploadLogo");
+                label.innerText = t("admin.uploadLogo");
             }
         }
 
         function openPlanForm(plan = null) {
             document.getElementById("plan-form").classList.remove("hidden");
             document.getElementById("plan-form-error").classList.add("hidden");
-            document.getElementById("plan-form-title").innerText = plan ? "Plan bearbeiten" : "Neuer Plan";
+            document.getElementById("plan-form-title").setAttribute("data-i18n", plan ? "admin.planFormTitleEdit" : "admin.planFormTitleNew");
+            document.getElementById("plan-form-title").innerText = plan ? t("admin.planFormTitleEdit") : t("admin.planFormTitleNew");
             document.getElementById("plan-id").value = plan ? plan.id : "";
             document.getElementById("plan-name").value = plan ? plan.name : "";
             document.getElementById("plan-description").value = plan ? (plan.description || "") : "";
@@ -402,7 +411,7 @@
             const id = document.getElementById("plan-id").value;
             const name = document.getElementById("plan-name").value.trim();
             if (!name) {
-                errorBox.innerText = "Bitte einen Namen eingeben.";
+                errorBox.innerText = t("admin.nameRequired");
                 errorBox.classList.remove("hidden");
                 return;
             }
@@ -441,22 +450,22 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.innerText = data.detail || t("admin.saveFailed");
                     errorBox.classList.remove("hidden");
                     return;
                 }
 
                 closePlanForm();
-                showBanner(id ? "Plan aktualisiert." : "Plan angelegt.", false);
+                showBanner(id ? t("admin.planUpdated") : t("admin.planCreated"), false);
                 loadPlans();
             } catch (err) {
-                errorBox.innerText = "Server nicht erreichbar.";
+                errorBox.innerText = t("admin.serverError");
                 errorBox.classList.remove("hidden");
             }
         }
 
         async function deletePlan(id, name) {
-            if (!confirm(`Plan "${name}" wirklich löschen?`)) return;
+            if (!confirm(t("admin.confirmDeletePlan").replace("{name}", name))) return;
 
             try {
                 const response = await fetch(`${API_URL}/admin/plans/${id}`, {
@@ -464,10 +473,10 @@
                     headers: authHeaders(),
                 });
                 if (response.status === 401) { logout(); return; }
-                showBanner("Plan gelöscht.", false);
+                showBanner(t("admin.planDeleted"), false);
                 loadPlans();
             } catch (err) {
-                showBanner("Server nicht erreichbar.", true);
+                showBanner(t("admin.serverError"), true);
             }
         }
 
@@ -487,21 +496,23 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="font-semibold">${p.name}</span>
-                            ${p.is_recommended ? '<span class="px-2 py-0.5 rounded-full text-xs bg-red-50 text-red-600">Empfohlen</span>' : ""}
-                            ${!p.is_active ? '<span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-500">Inaktiv</span>' : ""}
-                            ${p.trial_days ? `<span class="px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-600">${p.trial_days} Tage Testphase</span>` : ""}
+                            ${p.is_recommended ? `<span class="px-2 py-0.5 rounded-full text-xs bg-red-50 text-red-600">${t("admin.recommendedBadge")}</span>` : ""}
+                            ${!p.is_active ? `<span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-500">${t("admin.inactiveBadge")}</span>` : ""}
+                            ${p.trial_days ? `<span class="px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-600">${t("admin.trialDaysBadge").replace("{days}", p.trial_days)}</span>` : ""}
                         </div>
                         <p class="text-sm text-slate-500 mt-1">${p.description || ""}</p>
-                        <p class="text-lg font-bold text-red-600 mt-1">${euro(p.price_monthly)} <span class="text-xs font-normal text-slate-400">/ Monat</span></p>
+                        <p class="text-lg font-bold text-red-600 mt-1">${euro(p.price_monthly)} <span class="text-xs font-normal text-slate-400">${t("admin.perMonth")}</span></p>
                         ${p.features.length > 0 ? `<ul class="text-xs text-slate-500 mt-2 list-disc list-inside">${p.features.map(f => `<li>${f}</li>`).join("")}</ul>` : ""}
                     </div>
                     <div class="flex flex-col gap-2 flex-shrink-0">
-                        <button onclick='openPlanForm(${JSON.stringify(p)})' class="text-blue-600 hover:text-blue-700 text-xs font-semibold">Bearbeiten</button>
-                        <button onclick='deletePlan(${JSON.stringify(p.id)}, ${JSON.stringify(p.name)})' class="text-red-600 hover:text-red-700 text-xs font-semibold">Löschen</button>
+                        <button onclick='openPlanForm(${JSON.stringify(p)})' class="text-blue-600 hover:text-blue-700 text-xs font-semibold">${t("admin.edit")}</button>
+                        <button onclick='deletePlan(${JSON.stringify(p.id)}, ${JSON.stringify(p.name)})' class="text-red-600 hover:text-red-700 text-xs font-semibold">${t("admin.delete")}</button>
                     </div>
                 </div>
             `).join("");
         }
+
+        let lastPlans = null;
 
         async function loadPlans() {
             try {
@@ -509,13 +520,15 @@
                 if (response.status === 401) { logout(); return; }
                 if (response.status === 403) { window.location.href = "dashboard.html"; return; }
                 const data = await response.json();
+                lastPlans = data;
                 renderPlans(data);
             } catch (err) {
-                showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
+                showBanner(t("admin.loadError"), true);
             }
         }
 
         verifyAccess();
+        document.addEventListener("langchange", () => { if (lastPlans) renderPlans(lastPlans); });
     </script>
 </body>
 </html>
