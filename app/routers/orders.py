@@ -69,6 +69,7 @@ def _serialize_order(order: Order) -> OrderOut:
         items=items_out,
         total_profit=total_profit if profit_known else None,
         recipient_address=recipient_address,
+        tracking_number=order.tracking_number,
     )
 @router.get("", response_model=list[OrderOut])
 def list_orders(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

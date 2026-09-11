@@ -46,6 +46,9 @@ class OrderOut(BaseModel):
     # eBay didn't return address data (e.g. very old orders - see
     # ebay_order_service.py).
     recipient_address: RecipientAddressOut | None = None
+    # Set once a real DHL shipment has been created for this order (see
+    # app/services/dhl_service.py) - null otherwise.
+    tracking_number: str | None = None
     class Config:
         from_attributes = True
 class OrderSummaryOut(BaseModel):

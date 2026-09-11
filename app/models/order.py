@@ -30,6 +30,11 @@ class Order(Base):
     recipient_country_code = Column(String(2))
     recipient_phone = Column(String(50))
 
+    # Set once a DHL shipment is actually created for this order (see
+    # app/services/dhl_service.py) - null until then, and for orders never
+    # shipped through the DHL integration at all.
+    tracking_number = Column(String(50), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (

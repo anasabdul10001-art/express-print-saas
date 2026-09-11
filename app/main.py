@@ -45,6 +45,8 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_zip VARCHAR(20)"))
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_country_code VARCHAR(2)"))
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_phone VARCHAR(50)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number VARCHAR(50)"))
+    connection.execute(text("ALTER TABLE print_jobs ADD COLUMN IF NOT EXISTS label_pdf_data BYTEA"))
 
 app.add_middleware(
     CORSMiddleware,
