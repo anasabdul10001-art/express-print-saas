@@ -37,6 +37,7 @@ class UserMeOut(BaseModel):
     id: uuid.UUID
     email: EmailStr
     full_name: str | None
+    avatar_url: str | None
     tenant_id: uuid.UUID
     role: str
     is_superadmin: bool

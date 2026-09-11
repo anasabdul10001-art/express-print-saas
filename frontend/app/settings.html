@@ -50,6 +50,16 @@
                     <span data-i18n="nav.settings">Einstellungen</span>
                 </a>
         </nav>
+        <a href="settings.html" class="flex items-center gap-3 mx-3 mb-1 p-2 rounded-lg hover:bg-slate-50 transition">
+            <span class="flex-shrink-0 w-9 h-9 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
+                <img id="sidebar-avatar-img" class="hidden w-full h-full object-cover" alt="">
+                <span id="sidebar-avatar-initial" class="text-slate-400 text-sm font-bold">?</span>
+            </span>
+            <span class="min-w-0 flex-1">
+                <span id="sidebar-user-name" class="block text-sm font-semibold text-slate-900 truncate">—</span>
+                <span id="sidebar-user-email" class="block text-xs text-slate-400 truncate">—</span>
+            </span>
+        </a>
         <div class="p-3 border-t border-slate-100">
             <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -144,9 +154,22 @@
             </button>
         </div>
 
-        <!-- Profile: name -->
+        <!-- Profile: picture + name -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 class="text-lg font-bold" data-i18n="settings.profileTitle">Profil</h3>
+
+            <div class="flex items-center gap-4">
+                <div id="avatar-preview-wrap" class="w-16 h-16 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    <img id="avatar-preview" class="hidden w-full h-full object-cover" alt="">
+                    <span id="avatar-preview-initial" class="text-slate-400 text-xl font-bold">?</span>
+                </div>
+                <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-lg transition">
+                    <span id="avatar-upload-label" data-i18n="settings.uploadAvatar">Profilbild hochladen</span>
+                    <input type="file" id="avatar-file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="uploadAvatar()">
+                </label>
+            </div>
+            <div id="avatar-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+
             <div>
                 <label class="block text-sm mb-1" data-i18n="settings.name">Name</label>
                 <input type="text" id="field-full-name"
@@ -270,11 +293,28 @@
         }
 
 
-        async function injectAdminLink() {
+        function applySidebarProfile(me) {
+            const nameEl = document.getElementById("sidebar-user-name");
+            const emailEl = document.getElementById("sidebar-user-email");
+            const avatarImg = document.getElementById("sidebar-avatar-img");
+            const avatarInitial = document.getElementById("sidebar-avatar-initial");
+            if (nameEl) nameEl.innerText = me.full_name || me.email;
+            if (emailEl) emailEl.innerText = me.email;
+            if (me.avatar_url) {
+                avatarImg.src = me.avatar_url;
+                avatarImg.classList.remove("hidden");
+                avatarInitial.classList.add("hidden");
+            } else {
+                avatarInitial.innerText = (me.full_name || me.email || "?").trim().charAt(0).toUpperCase();
+            }
+        }
+
+        async function loadSidebarProfile() {
             try {
                 const response = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
                 if (!response.ok) return;
                 const me = await response.json();
+                applySidebarProfile(me);
                 if (!me.is_superadmin) return;
 
                 const desktopLogout = document.querySelector('aside button[onclick="logout()"]');
@@ -282,10 +322,10 @@
                 if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
                 if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
             } catch (err) {
-                // Non-critical - regular tenants simply never see this link.
+                // Non-critical - sidebar profile info and the admin link just don't show.
             }
         }
-        injectAdminLink();
+        loadSidebarProfile();
 
         function logout() {
             localStorage.removeItem("access_token");
@@ -315,6 +355,20 @@
             }
         }
 
+        function applyAvatar(data) {
+            const img = document.getElementById("avatar-preview");
+            const initial = document.getElementById("avatar-preview-initial");
+            if (data.avatar_url) {
+                img.src = data.avatar_url;
+                img.classList.remove("hidden");
+                initial.classList.add("hidden");
+            } else {
+                img.classList.add("hidden");
+                initial.classList.remove("hidden");
+                initial.innerText = (data.full_name || data.email || "?").trim().charAt(0).toUpperCase();
+            }
+        }
+
         async function loadAccount() {
             try {
                 const response = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
@@ -322,8 +376,51 @@
                 const data = await response.json();
                 document.getElementById("field-email").value = data.email || "";
                 document.getElementById("field-full-name").value = data.full_name || "";
+                applyAvatar(data);
             } catch (err) {
                 // Non-critical - the fields just start empty if this fails.
+            }
+        }
+
+        async function uploadAvatar() {
+            const fileInput = document.getElementById("avatar-file");
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const errorBox = document.getElementById("avatar-error");
+            errorBox.classList.add("hidden");
+
+            const label = document.getElementById("avatar-upload-label");
+            label.removeAttribute("data-i18n");
+            label.innerText = t("settings.uploadingAvatar");
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me/avatar`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: formData,
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("settings.avatarUploadFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                applyAvatar(data);
+                showBanner(t("settings.avatarUpdated"), false);
+            } catch (err) {
+                errorBox.innerText = t("settings.serverErrorRetry");
+                errorBox.classList.remove("hidden");
+            } finally {
+                label.setAttribute("data-i18n", "settings.uploadAvatar");
+                label.innerText = t("settings.uploadAvatar");
+                fileInput.value = "";
             }
         }
 

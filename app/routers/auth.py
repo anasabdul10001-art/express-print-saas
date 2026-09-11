@@ -1,6 +1,8 @@
+import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -26,6 +28,12 @@ from app.services.email_service import send_password_reset_email
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 RESET_TOKEN_TTL_HOURS = 1
+
+# Reuses the same Supabase bucket product images and the site logo already
+# go into (see app/routers/uploads.py, app/routers/admin.py) rather than
+# requiring a separate bucket just for avatars.
+AVATAR_BUCKET = "product-images"
+ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -166,6 +174,51 @@ def update_profile(
     db: Session = Depends(get_db),
 ):
     current_user.full_name = payload.full_name
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/me/avatar", response_model=UserMeOut)
+async def upload_avatar(
+    file: UploadFile,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if file.content_type not in ALLOWED_AVATAR_TYPES:
+        raise HTTPException(status_code=400, detail="Nur JPEG, PNG, WEBP oder GIF erlaubt.")
+
+    contents = await file.read()
+    if len(contents) > 2 * 1024 * 1024:  # 2 MB - a profile picture has no reason to be bigger
+        raise HTTPException(status_code=400, detail="Datei zu groß (max. 2 MB).")
+
+    extension = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
+    # Fixed path (not a random uuid) so re-uploading simply overwrites the
+    # previous picture instead of accumulating old files per user.
+    path = f"avatars/{current_user.id}.{extension}"
+
+    upload_url = f"{settings.supabase_url}/storage/v1/object/{AVATAR_BUCKET}/{path}"
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            upload_url,
+            content=contents,
+            headers={
+                "Authorization": f"Bearer {settings.supabase_service_key}",
+                "apikey": settings.supabase_service_key,
+                "Content-Type": file.content_type,
+                "x-upsert": "true",  # overwrite if an avatar was already uploaded at this path
+            },
+        )
+
+    if response.status_code not in (200, 201):
+        raise HTTPException(status_code=502, detail="Profilbild-Upload fehlgeschlagen.")
+
+    # Cache-bust: without a changing query string, browsers/CDNs would keep
+    # showing the old picture at the same URL after a re-upload.
+    public_url = f"{settings.supabase_url}/storage/v1/object/public/{AVATAR_BUCKET}/{path}?v={uuid.uuid4().hex[:8]}"
+
+    current_user.avatar_url = public_url
     db.commit()
     db.refresh(current_user)
     return current_user

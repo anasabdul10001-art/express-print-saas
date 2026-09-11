@@ -15,6 +15,7 @@ class User(Base):
     email = Column(String(255), nullable=False, unique=True, index=True)
     password_hash = Column(String, nullable=False)
     full_name = Column(String(255))
+    avatar_url = Column(String)
     role = Column(String(20), nullable=False, default="owner")
     is_active = Column(Boolean, nullable=False, default=True)
     # Platform-level flag, separate from `role` (which describes standing
