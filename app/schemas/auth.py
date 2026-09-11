@@ -12,6 +12,11 @@ class RegisterRequest(BaseModel):
     # a direct registration with no plan selected falls back to a default
     # plan in the register endpoint.
     plan_name: str | None = None
+    # An affiliate's referral_code, e.g. from a ?ref=CODE link (see
+    # register.html and app/models/affiliate.py). Optional - a bad or
+    # unknown code is silently ignored rather than blocking signup, same
+    # spirit as plan_name above.
+    referral_code: str | None = None
 
 
 class LoginRequest(BaseModel):

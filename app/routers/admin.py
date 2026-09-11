@@ -1,3 +1,5 @@
+import re
+import secrets
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -5,10 +7,12 @@ from decimal import Decimal
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.responses import Response
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.deps import get_current_superadmin, get_db
+from app.models.affiliate import Affiliate, AffiliateCommission, AffiliatePayout, AffiliateReferral
 from app.models.invoice import Invoice
 from app.models.payment_method import PaymentMethod
 from app.models.plan import Plan, SiteSettings
@@ -26,6 +30,14 @@ from app.schemas.admin import (
     SiteSettingsOut,
     SiteSettingsUpdate,
     TenantAdminOut,
+)
+from app.schemas.affiliate import (
+    AffiliateCommissionOut,
+    AffiliateCreate,
+    AffiliateOut,
+    AffiliatePayoutCreate,
+    AffiliatePayoutOut,
+    AffiliateUpdate,
 )
 from app.services.email_service import send_invoice_email
 from app.services.invoice_service import generate_invoice_pdf
@@ -103,6 +115,67 @@ def _get_or_create_settings(db: Session) -> SiteSettings:
         db.commit()
         db.refresh(settings_row)
     return settings_row
+
+
+def _generate_referral_code(db: Session, name: str) -> str:
+    """
+    A short, readable, URL-friendly code (e.g. "MAXMUSTER4f2a") rather than
+    a random unguessable token - referral codes are meant to be shared
+    publicly in links, not kept secret. Retries on the (very unlikely)
+    chance of a collision.
+    """
+    base = re.sub(r"[^A-Z0-9]", "", name.upper())[:12] or "AFFILIATE"
+    for _ in range(10):
+        code = f"{base}{secrets.token_hex(2)}"
+        if not db.query(Affiliate).filter(Affiliate.referral_code == code).first():
+            return code
+    raise HTTPException(status_code=500, detail="Konnte keinen eindeutigen Referral-Code erzeugen.")
+
+
+def _award_affiliate_commission(db: Session, tenant: Tenant, invoice: Invoice) -> None:
+    """
+    Called right after a payment is confirmed (invoice already committed -
+    see confirm_payment below). Best-effort and isolated in its own
+    try/except at the call site: a bug here must never take down billing,
+    which already succeeded by the time this runs.
+
+    FLAT_ONE_TIME affiliates are paid exactly once per referred tenant
+    (guarded by AffiliateReferral.bonus_awarded); PERCENTAGE_RECURRING
+    affiliates earn a cut of every confirmed payment, for as long as the
+    referral relationship exists.
+    """
+    referral = db.query(AffiliateReferral).filter(AffiliateReferral.referred_tenant_id == tenant.id).first()
+    if not referral:
+        return
+
+    affiliate = db.query(Affiliate).filter(Affiliate.id == referral.affiliate_id).first()
+    if not affiliate or affiliate.status != "ACTIVE":
+        return
+
+    if affiliate.commission_type == "FLAT_ONE_TIME":
+        if referral.bonus_awarded:
+            return
+        amount = affiliate.commission_value
+        description = f"Einmalige Provision für Empfehlung von {tenant.company_name}"
+        referral.bonus_awarded = True
+    else:  # PERCENTAGE_RECURRING
+        amount = (invoice.gross_amount * affiliate.commission_value / 100).quantize(Decimal("0.01"))
+        description = f"{affiliate.commission_value}% Provision auf Rechnung {invoice.invoice_number}"
+
+    if amount <= 0:
+        return
+
+    db.add(AffiliateCommission(
+        affiliate_id=affiliate.id,
+        referral_id=referral.id,
+        invoice_id=invoice.id,
+        amount=amount,
+        commission_type=affiliate.commission_type,
+        description=description,
+    ))
+    affiliate.balance_owed = (affiliate.balance_owed or Decimal("0")) + amount
+    affiliate.total_earned = (affiliate.total_earned or Decimal("0")) + amount
+    db.commit()
 
 
 @router.get("/settings", response_model=SiteSettingsOut)
@@ -335,6 +408,11 @@ def confirm_payment(
     db.commit()
     db.refresh(invoice)
 
+    try:
+        _award_affiliate_commission(db, tenant, invoice)
+    except Exception:  # noqa: BLE001 - the invoice already succeeded and must never roll back over an affiliate bug
+        db.rollback()
+
     pdf_bytes = generate_invoice_pdf(invoice, settings_row)
 
     try:
@@ -408,3 +486,115 @@ def resend_invoice(
         raise HTTPException(status_code=502, detail=f"E-Mail-Versand fehlgeschlagen: {err}")
 
     return {"message": "Rechnung erneut gesendet."}
+
+
+def _with_referral_count(db: Session, affiliate: Affiliate) -> AffiliateOut:
+    out = AffiliateOut.model_validate(affiliate)
+    out.referral_count = (
+        db.query(func.count(AffiliateReferral.id))
+        .filter(AffiliateReferral.affiliate_id == affiliate.id)
+        .scalar()
+    ) or 0
+    return out
+
+
+@router.post("/affiliates", response_model=AffiliateOut, status_code=201)
+def create_affiliate(
+    payload: AffiliateCreate,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    if payload.tenant_id:
+        tenant = db.query(Tenant).filter(Tenant.id == payload.tenant_id).first()
+        if not tenant:
+            raise HTTPException(status_code=404, detail="Tenant nicht gefunden")
+
+    affiliate = Affiliate(
+        tenant_id=payload.tenant_id,
+        name=payload.name,
+        email=payload.email,
+        referral_code=_generate_referral_code(db, payload.name),
+        commission_type=payload.commission_type,
+        commission_value=payload.commission_value,
+    )
+    db.add(affiliate)
+    db.commit()
+    db.refresh(affiliate)
+    return _with_referral_count(db, affiliate)
+
+
+@router.get("/affiliates", response_model=list[AffiliateOut])
+def list_affiliates(
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    affiliates = db.query(Affiliate).order_by(Affiliate.created_at.desc()).all()
+    return [_with_referral_count(db, a) for a in affiliates]
+
+
+@router.patch("/affiliates/{affiliate_id}", response_model=AffiliateOut)
+def update_affiliate(
+    affiliate_id: str,
+    payload: AffiliateUpdate,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    affiliate = db.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
+    if not affiliate:
+        raise HTTPException(status_code=404, detail="Affiliate nicht gefunden")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(affiliate, field, value)
+
+    db.commit()
+    db.refresh(affiliate)
+    return _with_referral_count(db, affiliate)
+
+
+@router.get("/affiliates/{affiliate_id}/commissions", response_model=list[AffiliateCommissionOut])
+def list_affiliate_commissions(
+    affiliate_id: str,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    affiliate = db.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
+    if not affiliate:
+        raise HTTPException(status_code=404, detail="Affiliate nicht gefunden")
+
+    return (
+        db.query(AffiliateCommission)
+        .filter(AffiliateCommission.affiliate_id == affiliate_id)
+        .order_by(AffiliateCommission.created_at.desc())
+        .all()
+    )
+
+
+@router.post("/affiliates/{affiliate_id}/payout", response_model=AffiliateOut)
+def record_affiliate_payout(
+    affiliate_id: str,
+    payload: AffiliatePayoutCreate,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    """
+    Records a manual payout (bank transfer, PayPal, ...) and reduces the
+    balance owed - there's no automated payout yet, same as every other
+    piece of billing in this app (see confirm_payment above). total_earned
+    is a lifetime figure and is deliberately NOT reduced here.
+    """
+    affiliate = db.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
+    if not affiliate:
+        raise HTTPException(status_code=404, detail="Affiliate nicht gefunden")
+
+    if payload.amount > affiliate.balance_owed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Betrag ({payload.amount} €) übersteigt den offenen Saldo ({affiliate.balance_owed} €).",
+        )
+
+    db.add(AffiliatePayout(affiliate_id=affiliate.id, amount=payload.amount, note=payload.note))
+    affiliate.balance_owed -= payload.amount
+    db.commit()
+    db.refresh(affiliate)
+    return _with_referral_count(db, affiliate)

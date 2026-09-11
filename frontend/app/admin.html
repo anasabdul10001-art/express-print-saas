@@ -344,6 +344,40 @@
             <div id="invoices-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.invoicesEmpty">Noch keine Rechnungen erstellt.</div>
             <div id="invoices-list" class="space-y-2"></div>
         </div>
+
+        <!-- Affiliates -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="admin.affiliatesTitle">Partnerprogramm (Affiliates)</h3>
+            <p class="text-slate-500 text-sm" data-i18n="admin.affiliatesDesc">Jeder Affiliate bekommt einen Referral-Link. Provision wird nur bei einer bestätigten Zahlung gutgeschrieben (siehe oben).</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.affiliateName">Name *</label>
+                    <input type="text" id="affiliate-name" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.affiliateEmail">E-Mail (optional)</label>
+                    <input type="email" id="affiliate-email" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.affiliateCommissionType">Provisionsart *</label>
+                    <select id="affiliate-commission-type" onchange="onAffiliateCommissionTypeChange()" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                        <option value="PERCENTAGE_RECURRING" data-i18n="admin.affiliateTypePercentage">Prozent, wiederkehrend</option>
+                        <option value="FLAT_ONE_TIME" data-i18n="admin.affiliateTypeFlat">Fester Betrag, einmalig</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1" id="affiliate-value-label" data-i18n="admin.affiliateCommissionValuePercent">Provision (%) *</label>
+                    <input type="number" step="0.01" min="0" id="affiliate-commission-value" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+            </div>
+
+            <div id="affiliate-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <button onclick="createAffiliate()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.affiliateCreate">Affiliate anlegen</span></button>
+
+            <div id="affiliates-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.affiliatesEmpty">Noch keine Affiliates angelegt.</div>
+            <div id="affiliates-list" class="space-y-3 pt-2"></div>
+        </div>
     </main>
     </div>
     </div>
@@ -1001,11 +1035,213 @@
             }
         }
 
+        function onAffiliateCommissionTypeChange() {
+            const type = document.getElementById("affiliate-commission-type").value;
+            const label = document.getElementById("affiliate-value-label");
+            label.removeAttribute("data-i18n");
+            label.innerText = type === "FLAT_ONE_TIME" ? t("admin.affiliateCommissionValueFlat") : t("admin.affiliateCommissionValuePercent");
+        }
+
+        async function createAffiliate() {
+            const errorBox = document.getElementById("affiliate-error");
+            errorBox.classList.add("hidden");
+
+            const name = document.getElementById("affiliate-name").value.trim();
+            const email = document.getElementById("affiliate-email").value.trim();
+            const commissionType = document.getElementById("affiliate-commission-type").value;
+            const commissionValue = document.getElementById("affiliate-commission-value").value;
+
+            if (!name || !commissionValue || Number(commissionValue) <= 0) {
+                errorBox.innerText = t("admin.affiliateFieldsRequired");
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/admin/affiliates`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({
+                        name,
+                        email: email || null,
+                        commission_type: commissionType,
+                        commission_value: Number(commissionValue),
+                    }),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("admin.saveFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                document.getElementById("affiliate-name").value = "";
+                document.getElementById("affiliate-email").value = "";
+                document.getElementById("affiliate-commission-value").value = "";
+                showBanner(t("admin.affiliateCreated"), false);
+                loadAffiliates();
+            } catch (err) {
+                errorBox.innerText = t("admin.serverError");
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        function referralLink(code) {
+            return `${window.location.origin}/register.html?ref=${code}`;
+        }
+
+        async function copyReferralLink(code) {
+            const link = referralLink(code);
+            try {
+                await navigator.clipboard.writeText(link);
+                showBanner(t("admin.affiliateLinkCopied"), false);
+            } catch (err) {
+                prompt(t("admin.affiliateLinkCopyManual"), link);
+            }
+        }
+
+        function commissionLabel(affiliate) {
+            return affiliate.commission_type === "FLAT_ONE_TIME"
+                ? `${euro(affiliate.commission_value)} ${t("admin.affiliateTypeFlatSuffix")}`
+                : `${affiliate.commission_value}% ${t("admin.affiliateTypePercentageSuffix")}`;
+        }
+
+        function renderAffiliates(affiliates) {
+            const list = document.getElementById("affiliates-list");
+            const emptyState = document.getElementById("affiliates-empty");
+
+            if (affiliates.length === 0) {
+                emptyState.classList.remove("hidden");
+                list.innerHTML = "";
+                return;
+            }
+            emptyState.classList.add("hidden");
+
+            list.innerHTML = affiliates.map(a => `
+                <div class="border border-slate-200 rounded-lg p-3 space-y-2">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <span class="font-semibold text-sm">${a.name}</span>
+                            <span class="px-2 py-0.5 rounded text-xs ml-2 ${a.status === "ACTIVE" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}">${a.status === "ACTIVE" ? t("admin.affiliateStatusActive") : t("admin.affiliateStatusDisabled")}</span>
+                            ${a.email ? `<p class="text-slate-400 text-xs">${a.email}</p>` : ""}
+                            <p class="text-slate-500 text-sm">${commissionLabel(a)} · ${a.referral_count} ${t("admin.affiliateReferrals")}</p>
+                            <button onclick='copyReferralLink(${JSON.stringify(a.referral_code)})' class="text-blue-600 hover:text-blue-700 text-xs font-mono mt-1">${a.referral_code} (${t("admin.affiliateCopyLink")})</button>
+                        </div>
+                        <div class="text-right flex-shrink-0">
+                            <div class="text-sm"><span class="text-slate-400">${t("admin.affiliateBalance")}</span> <span class="font-semibold ${a.balance_owed > 0 ? "text-red-600" : ""}">${euro(a.balance_owed)}</span></div>
+                            <div class="text-xs text-slate-400">${t("admin.affiliateTotalEarned")} ${euro(a.total_earned)}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <button onclick='toggleAffiliateStatus(${JSON.stringify(a.id)}, ${JSON.stringify(a.status)})' class="text-slate-600 hover:text-slate-900 font-semibold">${a.status === "ACTIVE" ? t("admin.affiliateDisable") : t("admin.affiliateEnable")}</button>
+                        <button onclick='recordAffiliatePayout(${JSON.stringify(a.id)}, ${JSON.stringify(String(a.balance_owed))})' class="text-blue-600 hover:text-blue-700 font-semibold">${t("admin.affiliateRecordPayout")}</button>
+                        <button onclick='showAffiliateCommissions(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)})' class="text-slate-600 hover:text-slate-900 font-semibold">${t("admin.affiliateViewLedger")}</button>
+                    </div>
+                    <div id="affiliate-ledger-${a.id}" class="hidden border-t border-slate-100 pt-2 text-xs space-y-1"></div>
+                </div>
+            `).join("");
+        }
+
+        let lastAffiliates = null;
+
+        async function loadAffiliates() {
+            try {
+                const response = await fetch(`${API_URL}/admin/affiliates`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                lastAffiliates = data;
+                renderAffiliates(data);
+            } catch (err) {
+                // Non-critical - the create form above still works without this list.
+            }
+        }
+
+        async function toggleAffiliateStatus(affiliateId, currentStatus) {
+            const newStatus = currentStatus === "ACTIVE" ? "DISABLED" : "ACTIVE";
+            try {
+                const response = await fetch(`${API_URL}/admin/affiliates/${affiliateId}`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ status: newStatus }),
+                });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    showBanner(t("admin.saveFailed"), true);
+                    return;
+                }
+                loadAffiliates();
+            } catch (err) {
+                showBanner(t("admin.serverError"), true);
+            }
+        }
+
+        async function recordAffiliatePayout(affiliateId, currentBalance) {
+            const input = prompt(`${t("admin.affiliatePayoutPrompt")} (${t("admin.affiliateBalance")} ${euro(currentBalance)})`, currentBalance);
+            if (input === null) return;
+
+            const amount = Number(input);
+            if (!amount || amount <= 0) {
+                showBanner(t("admin.affiliateInvalidAmount"), true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/admin/affiliates/${affiliateId}/payout`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ amount }),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) {
+                    showBanner(data.detail || t("admin.saveFailed"), true);
+                    return;
+                }
+                showBanner(t("admin.affiliatePayoutRecorded"), false);
+                loadAffiliates();
+            } catch (err) {
+                showBanner(t("admin.serverError"), true);
+            }
+        }
+
+        async function showAffiliateCommissions(affiliateId, name) {
+            const box = document.getElementById(`affiliate-ledger-${affiliateId}`);
+            if (!box.classList.contains("hidden")) {
+                box.classList.add("hidden");
+                return;
+            }
+            box.classList.remove("hidden");
+            box.innerHTML = `<p class="text-slate-400">${t("admin.affiliateLedgerLoading")}</p>`;
+
+            try {
+                const response = await fetch(`${API_URL}/admin/affiliates/${affiliateId}/commissions`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const commissions = await response.json();
+
+                if (commissions.length === 0) {
+                    box.innerHTML = `<p class="text-slate-400">${t("admin.affiliateLedgerEmpty")}</p>`;
+                    return;
+                }
+
+                box.innerHTML = commissions.map(c => `
+                    <div class="flex items-center justify-between border-b border-slate-100 py-1">
+                        <span class="text-slate-600">${c.description || "—"}</span>
+                        <span class="font-semibold text-emerald-600">+${euro(c.amount)}</span>
+                    </div>
+                `).join("");
+            } catch (err) {
+                box.innerHTML = `<p class="text-red-600">${t("admin.serverError")}</p>`;
+            }
+        }
+
         verifyAccess();
+        loadAffiliates();
         document.addEventListener("langchange", () => {
             if (lastPlans) renderPlans(lastPlans);
             if (lastPaymentMethods) renderPaymentMethods(lastPaymentMethods);
             if (lastInvoices) renderInvoices(lastInvoices);
+            if (lastAffiliates) renderAffiliates(lastAffiliates);
         });
     </script>
 </body>

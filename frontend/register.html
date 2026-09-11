@@ -82,7 +82,8 @@
                 company_name: document.getElementById("company_name").value,
                 email: document.getElementById("email").value,
                 password: document.getElementById("password").value,
-                plan_name: new URLSearchParams(window.location.search).get("plan") || null
+                plan_name: new URLSearchParams(window.location.search).get("plan") || null,
+                referral_code: new URLSearchParams(window.location.search).get("ref") || null
             };
 
             try {

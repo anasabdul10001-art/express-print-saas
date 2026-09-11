@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.core.deps import TRIAL_EXPIRED_DETAIL, get_current_user, get_db, trial_expired
 from app.core.security import create_access_token, generate_api_key, hash_api_key, hash_password, verify_password
+from app.models.affiliate import Affiliate, AffiliateReferral
 from app.models.password_reset_token import PasswordResetToken
 from app.models.plan import Plan
 from app.models.tenant import Tenant
@@ -78,6 +79,18 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         role="owner",
     )
     db.add(user)
+
+    if payload.referral_code:
+        affiliate = (
+            db.query(Affiliate)
+            .filter(Affiliate.referral_code == payload.referral_code, Affiliate.status == "ACTIVE")
+            .first()
+        )
+        # Unknown/inactive code: ignore rather than fail the signup - see
+        # RegisterRequest.referral_code's docstring.
+        if affiliate:
+            db.add(AffiliateReferral(affiliate_id=affiliate.id, referred_tenant_id=tenant.id))
+
     db.commit()
     db.refresh(user)
 
