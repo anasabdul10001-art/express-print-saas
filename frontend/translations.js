@@ -274,6 +274,7 @@ window.TRANSLATIONS = {
         "orders.colPrice": "Preis",
         "orders.colProfit": "Gewinn",
         "orders.shipTo": "Versand an:",
+        "orders.tracking": "Sendungsnummer:",
         "orders.serverErrorReload": "Server nicht erreichbar. Bitte Seite neu laden.",
 
         "expenses.title": "Ausgaben",
@@ -829,6 +830,7 @@ window.TRANSLATIONS = {
         "orders.colPrice": "Price",
         "orders.colProfit": "Profit",
         "orders.shipTo": "Ship to:",
+        "orders.tracking": "Tracking number:",
         "orders.serverErrorReload": "Server unreachable. Please reload the page.",
 
         "expenses.title": "Expenses",

@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, DateTime, SmallInteger, Text, ForeignKey, CheckConstraint
+from sqlalchemy import Column, String, DateTime, LargeBinary, SmallInteger, Text, ForeignKey, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -24,6 +24,11 @@ class PrintJob(Base):
     order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=True)
 
     label_pdf_url = Column(Text, nullable=False)
+    # Set only for labels ShipSync generated itself (a real DHL shipment) -
+    # served back out through GET /print-jobs/{id}/label, which label_pdf_url
+    # then points at. Null for the placeholder/test-job URLs, which point
+    # straight at an external URL instead.
+    label_pdf_data = Column(LargeBinary, nullable=True)
     rotation_degrees = Column(SmallInteger, nullable=False, default=0)
     label_format = Column(String(20), nullable=False, default="4x6")
 
