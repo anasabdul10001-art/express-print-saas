@@ -29,5 +29,13 @@ class Settings(BaseSettings):
     # so only our own daily scheduler (not the public internet) can trigger
     # it - it fans out to many eBay API calls and writes to the database.
     cron_secret: str = ""
+    # --- DHL Parcel DE Shipping API ---
+    # App-level key from developer.dhl.com (one per ShipSync, required on
+    # every call regardless of which tenant's own DHL account is billed).
+    # Each tenant's own billing_number/username/password (per
+    # app/models/dhl_account.py) identifies whose shipping contract
+    # actually gets charged - not used yet, label purchase is a later phase.
+    dhl_api_key: str = ""
+    dhl_environment: str = "SANDBOX"  # SANDBOX or PRODUCTION
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 settings = Settings()

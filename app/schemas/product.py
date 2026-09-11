@@ -10,6 +10,10 @@ class ProductCreate(BaseModel):
     purchase_price: Decimal | None = None
     selling_price: Decimal | None = None
     stock_quantity: int = 0
+    weight_kg: Decimal | None = Field(None, gt=0)
+    length_cm: int | None = Field(None, gt=0)
+    width_cm: int | None = Field(None, gt=0)
+    height_cm: int | None = Field(None, gt=0)
 class ProductUpdate(BaseModel):
     """All fields optional - PATCH semantics, only sent fields get changed."""
     sku: str | None = Field(None, min_length=1, max_length=100)
@@ -20,6 +24,10 @@ class ProductUpdate(BaseModel):
     selling_price: Decimal | None = None
     active: bool | None = None
     stock_quantity: int | None = None
+    weight_kg: Decimal | None = Field(None, gt=0)
+    length_cm: int | None = Field(None, gt=0)
+    width_cm: int | None = Field(None, gt=0)
+    height_cm: int | None = Field(None, gt=0)
 class ProductOut(BaseModel):
     id: uuid.UUID
     sku: str
@@ -30,6 +38,10 @@ class ProductOut(BaseModel):
     selling_price: Decimal | None
     active: bool
     stock_quantity: int
+    weight_kg: Decimal | None
+    length_cm: int | None
+    width_cm: int | None
+    height_cm: int | None
     # Computed, not stored - always derived fresh from the two price fields
     # above so it can never drift out of sync with them.
     profit_per_unit: Decimal | None = None
