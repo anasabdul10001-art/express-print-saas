@@ -39,5 +39,8 @@ def get_public_site_settings(db: Session = Depends(get_db)):
     """Public logo URL - used by every page to render the current brand logo."""
     settings_row = db.query(SiteSettings).first()
     if not settings_row:
-        return SiteSettingsOut(logo_url=None)
+        return SiteSettingsOut(
+            logo_url=None, logo_height=None, company_legal_name=None,
+            company_address=None, company_tax_id=None, company_email=None,
+        )
     return settings_row

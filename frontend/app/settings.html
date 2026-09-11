@@ -267,6 +267,73 @@
                 <span data-i18n="settings.savePrintMode">Druckmodus speichern</span>
             </button>
         </div>
+
+        <!-- DHL shipping account connection -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="settings.dhlTitle">DHL-Versand</h3>
+            <p class="text-slate-500 text-sm" id="dhl-desc" data-i18n="settings.dhlLoading">Status wird geladen...</p>
+            <p class="text-amber-600 text-xs" data-i18n="settings.dhlPhase1Notice">Hinweis: Aktuell werden nur die Zugangsdaten gespeichert. Der automatische Etikettenkauf über DHL wird in einem nächsten Schritt freigeschaltet.</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlBillingNumber">Abrechnungsnummer (EKP)</label>
+                    <input type="text" id="dhl-billing-number"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div></div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlUsername">DHL-Benutzername</label>
+                    <input type="text" id="dhl-username" autocomplete="off"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlPassword">DHL-Passwort</label>
+                    <input type="password" id="dhl-password" autocomplete="new-password"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+            </div>
+
+            <h4 class="text-sm font-semibold text-slate-600 pt-2" data-i18n="settings.dhlSenderTitle">Absenderadresse (auf dem Etikett)</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlSenderName">Name / Firma</label>
+                    <input type="text" id="dhl-sender-name"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlSenderStreet">Straße und Hausnummer</label>
+                    <input type="text" id="dhl-sender-street"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlSenderZip">PLZ</label>
+                    <input type="text" id="dhl-sender-zip"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlSenderCity">Ort</label>
+                    <input type="text" id="dhl-sender-city"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlSenderCountry">Land (Ländercode)</label>
+                    <input type="text" id="dhl-sender-country" maxlength="2" value="DE"
+                           class="w-24 p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none uppercase">
+                </div>
+            </div>
+
+            <div id="dhl-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <div class="flex items-center gap-3">
+                <button id="dhl-connect-btn" onclick="connectDhl()"
+                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                    <span data-i18n="settings.dhlConnect">DHL verbinden</span>
+                </button>
+                <button id="dhl-disconnect-btn" onclick="disconnectDhl()" hidden
+                        class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded transition">
+                    <span data-i18n="settings.dhlDisconnect">DHL-Verbindung trennen</span>
+                </button>
+            </div>
+        </div>
     </main>
     </div>
     </div>
@@ -628,8 +695,123 @@
             }
         }
 
+        let dhlStatus = undefined;
+
+        function renderDhlStatus() {
+            if (dhlStatus === undefined) return;
+            const descEl = document.getElementById("dhl-desc");
+            const disconnectBtn = document.getElementById("dhl-disconnect-btn");
+            descEl.removeAttribute("data-i18n");
+
+            if (dhlStatus) {
+                descEl.innerText = `${t("settings.dhlConnected")} ${dhlStatus.billing_number || "—"}`;
+                disconnectBtn.hidden = false;
+            } else {
+                descEl.innerText = t("settings.dhlNotConnected");
+                disconnectBtn.hidden = true;
+            }
+        }
+        document.addEventListener("langchange", renderDhlStatus);
+
+        async function loadDhlStatus() {
+            try {
+                const response = await fetch(`${API_URL}/dhl/status`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                dhlStatus = data;
+                if (data) {
+                    document.getElementById("dhl-billing-number").value = data.billing_number || "";
+                    document.getElementById("dhl-sender-name").value = data.sender_name || "";
+                    document.getElementById("dhl-sender-street").value = data.sender_street || "";
+                    document.getElementById("dhl-sender-zip").value = data.sender_zip || "";
+                    document.getElementById("dhl-sender-city").value = data.sender_city || "";
+                    document.getElementById("dhl-sender-country").value = data.sender_country || "DE";
+                }
+                renderDhlStatus();
+            } catch (err) {
+                const descEl = document.getElementById("dhl-desc");
+                descEl.removeAttribute("data-i18n");
+                descEl.innerText = t("settings.serverErrorRetry");
+            }
+        }
+
+        async function connectDhl() {
+            const errorBox = document.getElementById("dhl-error");
+            errorBox.classList.add("hidden");
+
+            const payload = {
+                billing_number: document.getElementById("dhl-billing-number").value.trim(),
+                api_username: document.getElementById("dhl-username").value.trim(),
+                api_password: document.getElementById("dhl-password").value,
+                sender_name: document.getElementById("dhl-sender-name").value.trim(),
+                sender_street: document.getElementById("dhl-sender-street").value.trim(),
+                sender_zip: document.getElementById("dhl-sender-zip").value.trim(),
+                sender_city: document.getElementById("dhl-sender-city").value.trim(),
+                sender_country: document.getElementById("dhl-sender-country").value.trim().toUpperCase() || "DE",
+            };
+
+            if (!payload.billing_number || !payload.api_username || !payload.api_password
+                || !payload.sender_name || !payload.sender_street || !payload.sender_zip || !payload.sender_city) {
+                errorBox.innerText = t("settings.dhlFieldsRequired");
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/dhl/connect`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify(payload),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("settings.dhlConnectFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                document.getElementById("dhl-password").value = "";
+                dhlStatus = data;
+                renderDhlStatus();
+                showBanner(t("settings.dhlConnectSuccess"), false);
+            } catch (err) {
+                errorBox.innerText = t("settings.serverErrorRetry");
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function disconnectDhl() {
+            const errorBox = document.getElementById("dhl-error");
+            errorBox.classList.add("hidden");
+
+            try {
+                const response = await fetch(`${API_URL}/dhl/disconnect`, { method: "POST", headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+
+                if (!response.ok) {
+                    errorBox.innerText = t("settings.dhlDisconnectFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                document.getElementById("dhl-username").value = "";
+                document.getElementById("dhl-password").value = "";
+                dhlStatus = null;
+                renderDhlStatus();
+                showBanner(t("settings.dhlDisconnectSuccess"), false);
+            } catch (err) {
+                errorBox.innerText = t("settings.serverErrorRetry");
+                errorBox.classList.remove("hidden");
+            }
+        }
+
         loadTenant();
         loadAccount();
+        loadDhlStatus();
     </script>
 </body>
 </html>
