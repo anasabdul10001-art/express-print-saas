@@ -3,9 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
+from app.core.sentry import init_sentry
 from app.database import Base, engine
 from app import models  # noqa: F401 - import registers all models with Base, needed for create_all() below
 from app.routers import admin, auth, dhl, ebay, expenses, market_research, orders, plans, print_agents, print_jobs, products, tenants, uploads
+
+# Before the app is created: a no-op until settings.sentry_dsn is set (see
+# app/core/sentry.py) - safe to always call.
+init_sentry()
 
 app = FastAPI(title="eBay Seller SaaS API", version="0.1.0")
 
