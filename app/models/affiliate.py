@@ -35,6 +35,15 @@ class Affiliate(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=True)  # contact email, especially for affiliates with no tenant_id
 
+    # Null until the affiliate sets a password (via the emailed setup link -
+    # see app/routers/affiliate_portal.py). Deliberately separate from
+    # User.password_hash even when tenant_id is set: an affiliate's portal
+    # login is independent of any ShipSync tenant login they might also have.
+    # An affiliate with no email at all can never set one and simply has no
+    # self-service portal access - the admin panel remains the only way to
+    # manage them.
+    password_hash = Column(String, nullable=True)
+
     referral_code = Column(String(30), nullable=False, unique=True)
 
     # PERCENTAGE_RECURRING: commission_value is a % (0-100) of every

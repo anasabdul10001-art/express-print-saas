@@ -72,3 +72,36 @@ class AffiliatePayoutOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# --- Self-service affiliate portal (see app/routers/affiliate_portal.py) ---
+
+class AffiliateLoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class AffiliateForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class AffiliateSetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8)
+
+
+class AffiliateMeOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    email: str | None
+    referral_code: str
+    commission_type: CommissionType
+    commission_value: Decimal
+    balance_owed: Decimal
+    total_earned: Decimal
+    status: AffiliateStatus
+    created_at: datetime
+    referral_count: int = 0
+
+    class Config:
+        from_attributes = True

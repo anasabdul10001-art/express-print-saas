@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import decode_access_token, hash_api_key
 from app.database import get_db  # noqa: F401 - re-exported so existing `from app.core.deps import get_db` imports keep working
+from app.models.affiliate import Affiliate
 from app.models.print_agent import PrintAgent
 from app.models.tenant import Tenant
 from app.models.user import User
@@ -73,6 +74,41 @@ def get_current_superadmin(current_user: User = Depends(get_current_user)) -> Us
     if not current_user.is_superadmin:
         raise HTTPException(status_code=403, detail="Nur für Plattform-Administratoren")
     return current_user
+
+
+def get_current_affiliate(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> Affiliate:
+    """
+    Authenticates an affiliate in the self-service portal via JWT bearer
+    token - a completely separate identity from `get_current_user`'s tenant
+    users, even for an affiliate who also happens to be a tenant (see
+    Affiliate.password_hash's docstring). The "scope" claim (absent from
+    regular user tokens) keeps the two token kinds from being interchangeable.
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = decode_access_token(token)
+        if payload.get("scope") != "affiliate":
+            raise credentials_exception
+        affiliate_id = payload.get("sub")
+        if affiliate_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    affiliate = db.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
+    if affiliate is None:
+        raise credentials_exception
+    if affiliate.status != "ACTIVE":
+        raise HTTPException(status_code=403, detail="Dieses Partnerkonto wurde deaktiviert.")
+
+    return affiliate
 
 
 def get_print_agent_from_api_key(
