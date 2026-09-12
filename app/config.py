@@ -23,11 +23,29 @@ class Settings(BaseSettings):
     # Resend's own onboarding@resend.dev sandbox address (which only
     # delivers to the Resend account's own verified email until a real
     # domain is verified).
-    resend_from_email: str = "Express Print <onboarding@resend.dev>"
+    resend_from_email: str = "ShipSync <onboarding@resend.dev>"
     # --- Scheduled market-research snapshots ---
     # Shared secret checked on POST /market-research/tracked/run-snapshots,
     # so only our own daily scheduler (not the public internet) can trigger
     # it - it fans out to many eBay API calls and writes to the database.
     cron_secret: str = ""
+    # --- DHL Parcel DE Shipping API ---
+    # App-level key from developer.dhl.com (one per ShipSync, required on
+    # every call regardless of which tenant's own DHL account is billed).
+    # Each tenant's own billing_number/username/password (per
+    # app/models/dhl_account.py) identifies whose shipping contract
+    # actually gets charged - not used yet, label purchase is a later phase.
+    dhl_api_key: str = ""
+    dhl_environment: str = "SANDBOX"  # SANDBOX or PRODUCTION
+    # --- Sentry (error monitoring) ---
+    # Empty by default = Sentry stays completely off (see app/core/sentry.py) -
+    # this app runs fine, exactly as before, with no DSN configured. Set once
+    # a Sentry project exists to start seeing production errors.
+    sentry_dsn: str = ""
+    sentry_environment: str = "production"
+    # 0.0 = no performance/trace sampling overhead, only errors are captured
+    # (error capture is NOT gated by this setting - it's always on once a DSN
+    # is set). Raise this later if request tracing becomes useful.
+    sentry_traces_sample_rate: float = 0.0
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 settings = Settings()

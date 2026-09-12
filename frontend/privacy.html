@@ -3,35 +3,79 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Datenschutzerklärung — Express Print</title>
-    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Datenschutzerklärung — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="site-logo.js"></script>
+    <script src="cookie-notice.js"></script>
 </head>
-<body class="bg-white text-slate-900 min-h-screen flex flex-col">
-    <nav class="border-b border-slate-200">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="index.html" class="flex items-center gap-2">
-                <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="text-lg font-bold">Express Print</span>
-            </a>
-            <div class="flex items-center gap-3">
-                <a href="login.html" class="text-slate-600 hover:text-slate-900 text-sm font-medium px-3 py-2">Anmelden</a>
-                <a href="index.html" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">Kostenlos starten</a>
-            </div>
-        </div>
+<body class="bg-white text-slate-900 min-h-screen">
+    <nav class="bg-white border-b border-slate-200 px-6 py-4">
+        <a href="index.html" class="flex items-center gap-2 w-fit">
+            <svg class="brand-logo" width="26" height="26" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
     </nav>
 
-    <main class="max-w-3xl mx-auto px-6 py-16 flex-1 w-full">
-        <div id="page-loading" class="text-center text-slate-400 py-16">Wird geladen...</div>
-        <div id="page-error" class="hidden max-w-md mx-auto bg-red-50 text-red-700 border border-red-200 p-4 rounded-lg text-center text-sm">Seite konnte nicht geladen werden. Bitte 30s warten und neu laden (Render Free Tier).</div>
-        <div id="page-content" class="hidden prose prose-slate max-w-none"></div>
+    <main class="max-w-3xl mx-auto p-6 py-12 space-y-6 text-slate-600 text-sm leading-relaxed">
+        <h1 class="text-3xl font-bold text-slate-900">Datenschutzerklärung</h1>
+        <p class="text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            Hinweis: Dies ist ein Basis-Entwurf und keine Rechtsberatung. Bitte vor
+            offizieller Nutzung durch einen Anwalt/Datenschutzbeauftragten prüfen
+            und die mit [PLATZHALTER] markierten Angaben ergänzen.
+        </p>
+
+        <section class="space-y-2">
+            <h2 class="text-lg font-bold text-slate-900">1. Verantwortlicher</h2>
+            <p>
+                [PLATZHALTER: Firmenname]<br>
+                [PLATZHALTER: Anschrift]<br>
+                E-Mail: [PLATZHALTER: Kontakt-E-Mail]
+            </p>
+        </section>
+
+        <section class="space-y-2">
+            <h2 class="text-lg font-bold text-slate-900">2. Welche Daten wir verarbeiten</h2>
+            <p><strong class="text-slate-800">Kontodaten:</strong> E-Mail-Adresse, Firmenname, Land, verschlüsseltes Passwort — bei der Registrierung angelegt.</p>
+            <p><strong class="text-slate-800">eBay-Verbindung:</strong> Wenn du dein eBay-Verkäuferkonto verbindest, erhalten wir über eBays offizielle Schnittstelle (OAuth) Zugriffstoken, die verschlüsselt gespeichert werden, sowie Bestelldaten (Artikelnummer, Menge, Preis). Wir speichern aktuell keine persönlichen Käuferdaten (Name, Adresse) aus deinen eBay-Bestellungen.</p>
+            <p><strong class="text-slate-800">Produkt- und Geschäftsdaten:</strong> von dir selbst angelegte Produkte, Lagerbestände, Bestellungen und Ausgaben.</p>
+            <p><strong class="text-slate-800">Druck-Agent-Daten:</strong> ein verschlüsselter API-Schlüssel pro registriertem Print-Agent, zur Authentifizierung des lokalen Druckprogramms.</p>
+        </section>
+
+        <section class="space-y-2">
+            <h2 class="text-lg font-bold text-slate-900">3. Zweck der Verarbeitung</h2>
+            <p>Die Daten werden ausschließlich zur Bereitstellung der Express-Print-Dienste verarbeitet: Verwaltung von Produkten, Bestellungen, Ausgaben und zum Drucken von Versandetiketten.</p>
+        </section>
+
+        <section class="space-y-2">
+            <h2 class="text-lg font-bold text-slate-900">4. Weitergabe an Dritte / Auftragsverarbeiter</h2>
+            <p>Zum Betrieb dieses Dienstes nutzen wir folgende Dienstleister als Auftragsverarbeiter:</p>
+            <ul class="list-disc list-inside">
+                <li><strong class="text-slate-800">Supabase</strong> — Datenbank- und Dateispeicherung</li>
+                <li><strong class="text-slate-800">Render</strong> — Hosting der Anwendung</li>
+                <li><strong class="text-slate-800">eBay</strong> — zur Synchronisierung deiner Verkäuferbestellungen, sofern du dein Konto verbindest</li>
+            </ul>
+            <p>Eine Weitergabe an sonstige Dritte findet nicht statt.</p>
+        </section>
+
+        <section class="space-y-2">
+            <h2 class="text-lg font-bold text-slate-900">5. Speicherdauer</h2>
+            <p>Daten werden gespeichert, solange dein Konto besteht. Bei Kontolöschung werden deine Daten auf Anfrage gelöscht, soweit keine gesetzlichen Aufbewahrungspflichten entgegenstehen.</p>
+        </section>
+
+        <section class="space-y-2">
+            <h2 class="text-lg font-bold text-slate-900">6. Deine Rechte</h2>
+            <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten sowie auf Datenübertragbarkeit. Wende dich dafür an [PLATZHALTER: Kontakt-E-Mail].</p>
+        </section>
+
+        <section class="space-y-2">
+            <h2 class="text-lg font-bold text-slate-900">7. Kontakt</h2>
+            <p>Bei Fragen zum Datenschutz erreichst du uns unter: [PLATZHALTER: Kontakt-E-Mail]</p>
+        </section>
+
+        <p class="text-slate-400 text-xs">Stand: [PLATZHALTER: Datum]</p>
     </main>
-
-    <footer id="site-footer"></footer>
-
-    <script src="js/site.js"></script>
-    <script>loadPage("datenschutz");</script>
 </body>
 </html>

@@ -10,10 +10,16 @@ from app.models.expense import Expense
 from app.models.password_reset_token import PasswordResetToken
 from app.models.market_research import TrackedSearch, MarketSnapshot
 from app.models.plan import Plan, SiteSettings
+from app.models.payment_method import PaymentMethod
+from app.models.invoice import Invoice
+from app.models.dhl_account import DhlAccount
+from app.models.affiliate import Affiliate, AffiliateReferral, AffiliateCommission, AffiliatePayout
 from app.models.site_page import SitePage
 
 __all__ = [
     "Tenant", "User", "PrintAgent", "PrintJob", "Product", "Order", "OrderItem",
     "EbayAccount", "EbayOAuthState", "StockMovement", "Expense", "PasswordResetToken",
-    "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings", "SitePage",
+    "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings", "PaymentMethod", "Invoice",
+    "DhlAccount", "Affiliate", "AffiliateReferral", "AffiliateCommission", "AffiliatePayout",
+    "SitePage",
 ]

@@ -3,159 +3,295 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Konto erstellen — Express Print</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>ShipSync — Automatisierter Versand für eBay-Verkäufer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="site-logo.js"></script>
+    <script src="cookie-notice.js"></script>
+    <script src="translations.js"></script>
+    <script src="i18n.js"></script>
 </head>
-<body class="bg-white text-slate-900 min-h-screen flex flex-col">
-    <div class="flex flex-1">
-    <!-- Left: branding panel (hidden on small screens) -->
-    <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-slate-950 items-center justify-center p-12">
-        <div class="absolute -top-32 -left-20 w-96 h-96 bg-red-600/30 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl"></div>
-
-        <div class="relative max-w-md space-y-8">
-            <div class="flex items-center gap-2">
-                <svg width="34" height="34" viewBox="0 0 32 32" fill="none">
+<body class="bg-white text-slate-900">
+    <!-- Nav -->
+    <nav class="border-b border-slate-100">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2">
+                <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
                     <rect width="32" height="32" rx="9" fill="#E11D48"/>
                     <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <span class="text-xl font-bold text-white">Express Print</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <a href="login.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition" data-i18n="home.ctaLogin">Anmelden</a>
+                <a href="register.html" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition shadow-sm shadow-red-600/20" data-i18n="home.ctaStart">Kostenlos starten</a>
             </div>
+        </div>
+    </nav>
 
-            <h1 class="text-3xl font-bold leading-snug text-white">
-                In wenigen Minuten startklar für automatisierten Versand.
+    <!-- Hero -->
+    <section class="max-w-6xl mx-auto px-6 pt-14 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
+        <div>
+            <span class="inline-block bg-red-50 text-red-600 text-xs font-semibold px-3 py-1.5 rounded-full mb-5" data-i18n="home.badge">Für eBay-Verkäufer gebaut</span>
+            <h1 class="text-4xl sm:text-5xl font-bold leading-tight tracking-tight" data-i18n="home.heroTitle">
+                Versand und Lager für deinen eBay-Shop, an einem Ort.
             </h1>
-            <p class="text-slate-400">
-                Konto erstellen → eBay verbinden → Drucker einrichten → loslegen.
+            <p class="text-slate-500 text-lg mt-5 max-w-lg" data-i18n="home.heroSubtitle">
+                Bestellungen, Etikettendruck, Lagerbestand und Ausgaben — mit automatischer eBay-Synchronisierung, statt Excel-Tabellen und manuellem Copy-Paste.
             </p>
+            <div class="flex flex-wrap items-center gap-4 mt-8">
+                <a href="register.html" class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl transition shadow-lg shadow-red-600/25">
+                    <span data-i18n="home.ctaStart">Kostenlos starten</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+                <a href="login.html" class="text-slate-700 hover:text-red-600 font-semibold transition" data-i18n="home.ctaLogin">Anmelden →</a>
+            </div>
+            <p class="text-slate-400 text-xs mt-4" data-i18n="home.noCreditCard">Keine Kreditkarte nötig</p>
+        </div>
 
-            <div class="space-y-4 pt-2">
-                <div class="flex items-center gap-3 text-sm">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">1</span>
-                    <span class="text-white font-medium">Konto erstellen</span>
+        <!-- Dashboard mockup card -->
+        <div class="relative">
+            <div class="absolute -top-10 -right-10 w-64 h-64 bg-red-50 rounded-full blur-3xl -z-10"></div>
+            <div class="bg-white rounded-2xl shadow-2xl shadow-slate-300/40 border border-slate-100 overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <div class="flex gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-300"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-400" data-i18n="home.mockupDashboard">Dashboard</span>
                 </div>
-                <div class="flex items-center gap-3 text-sm">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold flex items-center justify-center">2</span>
-                    <span class="text-slate-400">eBay-Konto verbinden</span>
-                </div>
-                <div class="flex items-center gap-3 text-sm">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold flex items-center justify-center">3</span>
-                    <span class="text-slate-400">Print-Agent einrichten</span>
-                </div>
-                <div class="flex items-center gap-3 text-sm">
-                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold flex items-center justify-center">4</span>
-                    <span class="text-slate-400">Bestellungen bearbeiten</span>
+                <div class="p-5 space-y-5">
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="bg-red-50 rounded-lg p-3">
+                            <p class="text-lg font-bold text-red-600">12</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5" data-i18n="home.mockupOrdersToday">Bestellungen heute</p>
+                        </div>
+                        <div class="bg-emerald-50 rounded-lg p-3">
+                            <p class="text-lg font-bold text-emerald-600">184 €</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5" data-i18n="home.mockupProfitToday">Gewinn heute</p>
+                        </div>
+                        <div class="bg-amber-50 rounded-lg p-3">
+                            <p class="text-lg font-bold text-amber-600">3</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5" data-i18n="home.mockupOpenOrders">Offene Bestellungen</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <span class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold flex items-center justify-center">#1042</span>
+                            <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full w-full bg-emerald-400"></div></div>
+                            <span class="text-[11px] font-semibold text-emerald-600 w-16 text-right" data-i18n="home.mockupOrderShipped">Versendet</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold flex items-center justify-center">#1041</span>
+                            <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full w-2/3 bg-blue-400"></div></div>
+                            <span class="text-[11px] font-semibold text-blue-600 w-16 text-right" data-i18n="home.mockupOrderPrinted">Gedruckt</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold flex items-center justify-center">#1040</span>
+                            <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full w-1/4 bg-slate-300"></div></div>
+                            <span class="text-[11px] font-semibold text-slate-500 w-16 text-right" data-i18n="home.mockupOrderNew">Neu</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Right: form -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 bg-slate-50 lg:bg-white">
-        <div class="w-full max-w-md">
-            <div class="lg:hidden flex items-center gap-2 justify-center mb-8">
-                <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="text-lg font-bold">Express Print</span>
+    <!-- Features -->
+    <section class="bg-slate-50 border-y border-slate-100 py-20">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center max-w-2xl mx-auto mb-14">
+                <h2 class="text-3xl font-bold" data-i18n="home.featuresTitle">Alles was du für deinen Versand brauchst.</h2>
+                <p class="text-slate-500 mt-3" data-i18n="home.featuresSubtitle">Jedes Modul ist verbunden — Bestellungen, Lager und Ausgaben bleiben synchron.</p>
             </div>
-
-            <h2 class="text-2xl font-bold mb-2 text-center lg:text-left">Konto erstellen</h2>
-            <p class="text-slate-500 text-sm mb-6 text-center lg:text-left">Kostenlos starten, in unter 2 Minuten</p>
-
-            <div id="error-box" class="hidden bg-red-50 text-red-700 border border-red-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
-            <div id="success-box" class="hidden bg-emerald-50 text-emerald-700 border border-emerald-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
-
-            <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Firmenname</label>
-                    <input type="text" id="company_name" required class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                    <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center mb-4">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                    </div>
+                    <h3 class="font-bold" data-i18n="home.feature1Title">eBay-Synchronisierung</h3>
+                    <p class="text-slate-500 text-sm mt-1.5" data-i18n="home.feature1Desc">Bestellungen werden automatisch von eBay importiert — keine manuelle Eingabe mehr.</p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">E-Mail</label>
-                    <input type="email" id="email" required class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
+                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                    <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center mb-4">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    </div>
+                    <h3 class="font-bold" data-i18n="home.feature2Title">Automatisches Etikettendrucken</h3>
+                    <p class="text-slate-500 text-sm mt-1.5" data-i18n="home.feature2Desc">Der Print-Agent druckt Versandetiketten direkt auf deinem Drucker, sobald eine Bestellung reinkommt.</p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Passwort</label>
-                    <input type="password" id="password" required minlength="8" class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
-                    <p class="text-xs text-slate-400 mt-1">Mindestens 8 Zeichen</p>
+                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                    <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center mb-4">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                    </div>
+                    <h3 class="font-bold" data-i18n="home.feature3Title">Lagerverwaltung</h3>
+                    <p class="text-slate-500 text-sm mt-1.5" data-i18n="home.feature3Desc">Behalte Bestand, Regalplatz und Einkaufspreise für jedes Produkt im Blick.</p>
                 </div>
-                <button type="submit" id="submit-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg transition shadow-sm shadow-red-600/20">
-                    Konto erstellen
-                </button>
-            </form>
-
-            <p class="text-slate-500 text-sm text-center mt-6">
-                Schon ein Konto?
-                <a href="login.html" class="text-red-600 hover:text-red-700 font-semibold">Jetzt anmelden</a>
-            </p>
-            <p class="text-slate-400 text-xs text-center mt-3">
-                <a href="pricing.html" class="hover:text-slate-600">Preise ansehen</a>
-            </p>
+                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                    <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center mb-4">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                    </div>
+                    <h3 class="font-bold" data-i18n="home.feature4Title">Ausgaben & Gewinn</h3>
+                    <p class="text-slate-500 text-sm mt-1.5" data-i18n="home.feature4Desc">Automatische Gewinnberechnung pro Bestellung, inklusive deiner laufenden Ausgaben.</p>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                    <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center mb-4">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    </div>
+                    <h3 class="font-bold" data-i18n="home.feature5Title">Marktrecherche</h3>
+                    <p class="text-slate-500 text-sm mt-1.5" data-i18n="home.feature5Desc">Durchsuche eBay-Angebote nach Preisen, Verkäufern und geschätzten Verkaufszahlen.</p>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                    <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center mb-4">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <h3 class="font-bold" data-i18n="home.feature6Title">Mehrere Nutzer & Drucker</h3>
+                    <p class="text-slate-500 text-sm mt-1.5" data-i18n="home.feature6Desc">Mehrere Print-Agents und Team-Mitglieder pro Konto, mit klaren Limits pro Plan.</p>
+                </div>
+            </div>
         </div>
-    </div>
-    </div>
+    </section>
 
-    <footer id="site-footer"></footer>
+    <!-- Pricing teaser -->
+    <section class="max-w-6xl mx-auto px-6 py-20">
+        <div class="text-center max-w-2xl mx-auto mb-12">
+            <h2 class="text-3xl font-bold" data-i18n="home.pricingTitle">Einfache, transparente Preise</h2>
+            <p class="text-slate-500 mt-3" data-i18n="home.pricingSubtitle">Starte kostenlos. Upgrade, wenn dein Business wächst.</p>
+        </div>
 
-    <script src="js/site.js"></script>
+        <div id="pricing-loading" class="text-center text-slate-400 py-8" data-i18n="home.pricingLoading">Preise werden geladen...</div>
+        <div id="pricing-error" class="hidden text-center text-red-600 py-8" data-i18n="home.pricingError">Preise konnten nicht geladen werden.</div>
+        <div id="pricing-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"></div>
+
+        <p class="text-center mt-10">
+            <a href="pricing.html" class="text-red-600 hover:text-red-700 font-semibold inline-flex items-center gap-1.5">
+                <span data-i18n="home.seeAllPlans">Alle Pläne & Details ansehen</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+        </p>
+    </section>
+
+    <!-- CTA banner -->
+    <section class="bg-slate-950 py-16">
+        <div class="max-w-3xl mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold text-white" data-i18n="home.ctaBannerTitle">Bereit für automatisierten Versand?</h2>
+            <p class="text-slate-400 mt-3" data-i18n="home.ctaBannerSubtitle">Erstelle dein Konto in unter 2 Minuten — keine Kreditkarte nötig.</p>
+            <a href="register.html" class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl transition mt-7 shadow-lg shadow-red-600/30">
+                <span data-i18n="home.ctaBannerButton">Konto erstellen</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <a href="index.html" class="flex items-center gap-2">
+            <svg class="brand-logo" width="22" height="22" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+        <p class="text-slate-400 text-xs" id="footer-copyright"></p>
+        <div class="flex items-center gap-4 flex-wrap justify-center">
+            <a href="about.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerAbout">Über uns</a>
+            <a href="faq.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerFaq">FAQ</a>
+            <a href="policies.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerPolicies">AGB</a>
+            <a href="withdrawal.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerWithdrawal">Widerrufsrecht</a>
+            <a href="contact.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerContact">Kontakt</a>
+            <a href="privacy.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerPrivacy">Datenschutz</a>
+            <a href="impressum.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerImpressum">Impressum</a>
+            <a href="cookies.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerCookies">Cookie-Hinweis</a>
+            <a href="careers.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerCareers">Karriere</a>
+            <a href="help.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerHelp">Hilfe-Center</a>
+            <a href="status.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerStatus">Systemstatus</a>
+            <a href="changelog.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerChangelog">Änderungsprotokoll</a>
+            <a href="integrations.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerIntegrations">Integrationen</a>
+            <a href="customers.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerCustomers">Erfolgsgeschichten</a>
+            <a href="partners.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerPartners">Partnerprogramm</a>
+            <a href="blog.html" class="text-slate-500 hover:text-red-600 text-xs font-semibold transition" data-i18n="home.footerBlog">Blog</a>
+        </div>
+    </footer>
+
     <script>
         const API_URL = "https://express-print-saas.onrender.com";
 
-        async function handleAuth(event) {
-            event.preventDefault();
-            const errBox = document.getElementById("error-box");
-            const succBox = document.getElementById("success-box");
-            const btn = document.getElementById("submit-btn");
+        document.getElementById("footer-copyright").innerText = `© ${new Date().getFullYear()} ShipSync. ${t("home.footerRights")}`;
+        document.addEventListener("langchange", () => {
+            document.getElementById("footer-copyright").innerText = `© ${new Date().getFullYear()} ShipSync. ${t("home.footerRights")}`;
+        });
 
-            errBox.classList.add("hidden");
-            succBox.classList.add("hidden");
-            btn.disabled = true;
-            btn.innerText = "Bitte warten...";
+        function formatPrice(plan) {
+            if (plan.price_monthly === null || plan.price_monthly === undefined) {
+                return { amount: t("pricing.contact"), suffix: "" };
+            }
+            const amount = Number(plan.price_monthly);
+            if (amount === 0) {
+                return { amount: t("pricing.free"), suffix: "" };
+            }
+            return { amount: `${amount.toFixed(2)} ${plan.currency}`, suffix: t("pricing.perMonth") };
+        }
 
-            const payload = {
-                company_name: document.getElementById("company_name").value,
-                email: document.getElementById("email").value,
-                password: document.getElementById("password").value
-            };
+        function renderPricingCard(plan) {
+            const price = formatPrice(plan);
+            const highlight = plan.is_recommended;
+            const cardClasses = highlight
+                ? "border-2 border-red-600 shadow-lg relative"
+                : "border border-slate-200 shadow-sm";
+
+            return `
+                <div class="bg-white rounded-2xl p-7 flex flex-col ${cardClasses}">
+                    ${highlight ? `<span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full">${t("pricing.recommended")}</span>` : ""}
+                    <h3 class="text-lg font-bold">${plan.name}</h3>
+                    <p class="text-slate-500 text-sm mt-1 min-h-[2.5rem]">${plan.description || ""}</p>
+                    <div class="mt-2 mb-6">
+                        <span class="text-3xl font-bold">${price.amount}</span>
+                        ${price.suffix ? `<span class="text-slate-400 text-sm ml-1">${price.suffix}</span>` : ""}
+                    </div>
+                    <a href="register.html?plan=${encodeURIComponent(plan.name)}"
+                       class="mt-auto block text-center font-semibold py-2.5 rounded-lg transition ${highlight ? "bg-red-600 hover:bg-red-700 text-white shadow-sm shadow-red-600/20" : "bg-slate-100 hover:bg-slate-200 text-slate-900"}">
+                        ${t("home.pricingCta")}
+                    </a>
+                </div>`;
+        }
+
+        let loadedPlans = null;
+
+        function renderPricingGrid() {
+            if (!loadedPlans) return;
+            document.getElementById("pricing-grid").innerHTML = loadedPlans.slice(0, 3).map(renderPricingCard).join("");
+        }
+
+        async function loadPricingTeaser() {
+            const loadingState = document.getElementById("pricing-loading");
+            const errorState = document.getElementById("pricing-error");
+            const grid = document.getElementById("pricing-grid");
 
             try {
-                // تجربة مسار التسجيل الأساسي
-                let response = await fetch(`${API_URL}/auth/register`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+                const response = await fetch(`${API_URL}/plans`);
+                if (!response.ok) throw new Error("request failed");
+                const plans = await response.json();
 
-                // إذا كان المسار /register بدون /auth
-                if (response.status === 404) {
-                    response = await fetch(`${API_URL}/register`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload)
-                    });
+                loadingState.classList.add("hidden");
+
+                if (!plans || plans.length === 0) {
+                    return;
                 }
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    succBox.innerText = "Konto erfolgreich erstellt! Du wirst weitergeleitet...";
-                    succBox.classList.remove("hidden");
-                    localStorage.setItem("access_token", data.access_token);
-                    setTimeout(() => { window.location.href = "app/dashboard.html"; }, 1000);
-                } else {
-                    errBox.innerText = data.detail || "Fehler beim Erstellen des Kontos.";
-                    errBox.classList.remove("hidden");
-                }
+                loadedPlans = plans;
+                renderPricingGrid();
+                grid.classList.remove("hidden");
             } catch (err) {
-                errBox.innerText = "Server nicht erreichbar. Bitte 30s warten (Render Free Tier).";
-                errBox.classList.remove("hidden");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Konto erstellen";
+                loadingState.classList.add("hidden");
+                errorState.classList.remove("hidden");
             }
         }
+
+        document.addEventListener("langchange", renderPricingGrid);
+        loadPricingTeaser();
     </script>
 </body>
 </html>

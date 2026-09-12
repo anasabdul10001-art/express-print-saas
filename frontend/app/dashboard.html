@@ -3,74 +3,175 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard — Express Print SaaS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Dashboard — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="trial-guard.js"></script>
+    <script src="../site-logo.js"></script>
+    <script src="../translations.js"></script>
+    <script src="../i18n.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
-    <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
-        <div class="flex items-center justify-between">
-            <h1 class="text-lg font-bold">Versandzentrale</h1>
-            <div class="hidden md:flex items-center gap-6">
-                <a href="products.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Produkte</a>
-                <a href="orders.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Bestellungen</a>
-                <a href="expenses.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Ausgaben</a>
-                <a href="market-research.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Marktrecherche</a>
-                <a href="print-agents.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Print-Agents</a>
-                <a href="settings.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Einstellungen</a>
-                <button onclick="logout()" class="text-slate-500 hover:text-slate-900 text-sm transition">Abmelden</button>
-            </div>
-            <button onclick="toggleMobileMenu()" class="md:hidden p-2 -mr-2 text-slate-600" aria-label="Menü öffnen">
-                <svg id="menu-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                <svg id="menu-icon-close" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+<body class="bg-slate-50 text-slate-900">
+    <div class="flex min-h-screen">
+    <aside class="hidden md:flex md:flex-col md:w-60 bg-white border-r border-slate-200 flex-shrink-0">
+        <a href="dashboard.html" class="flex items-center gap-2 p-5 border-b border-slate-100">
+            <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+        <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                    <span data-i18n="nav.dashboard">Dashboard</span>
+                </a>
+                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                    <span data-i18n="nav.products">Produkte</span>
+                </a>
+                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+                    <span data-i18n="nav.orders">Bestellungen</span>
+                </a>
+                <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                    <span data-i18n="nav.expenses">Ausgaben</span>
+                </a>
+                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <span data-i18n="nav.marketResearch">Marktrecherche</span>
+                </a>
+                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span data-i18n="nav.printAgents">Print-Agents</span>
+                </a>
+                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span data-i18n="nav.settings">Einstellungen</span>
+                </a>
+        </nav>
+        <a href="settings.html" class="flex items-center gap-3 mx-3 mb-1 p-2 rounded-lg hover:bg-slate-50 transition">
+            <span class="flex-shrink-0 w-9 h-9 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
+                <img id="sidebar-avatar-img" class="hidden w-full h-full object-cover" alt="">
+                <span id="sidebar-avatar-initial" class="text-slate-400 text-sm font-bold">?</span>
+            </span>
+            <span class="min-w-0 flex-1">
+                <span id="sidebar-user-name" class="block text-sm font-semibold text-slate-900 truncate">—</span>
+                <span id="sidebar-user-email" class="block text-xs text-slate-400 truncate">—</span>
+            </span>
+        </a>
+        <div class="p-3 border-t border-slate-100">
+            <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.logout">Abmelden</span>
             </button>
         </div>
-        <div id="mobile-menu" class="hidden md:hidden flex flex-col gap-1 mt-4">
-            <a href="products.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Produkte</a>
-            <a href="orders.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Bestellungen</a>
-            <a href="expenses.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Ausgaben</a>
-            <a href="market-research.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Marktrecherche</a>
-            <a href="print-agents.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Print-Agents</a>
-            <a href="settings.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Einstellungen</a>
-            <button onclick="logout()" class="text-left px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Abmelden</button>
-        </div>
-    </nav>
+    </aside>
 
-    <main class="max-w-2xl mx-auto p-6 space-y-6">
+    <div class="flex-1 min-w-0">
+        <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+            <a href="dashboard.html" class="flex items-center gap-2">
+                <svg class="brand-logo" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <button onclick="toggleMobileMenu()" class="p-2 -mr-2 text-slate-600" aria-label="Menü öffnen">
+                    <svg id="menu-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    <svg id="menu-icon-close" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                </button>
+            </div>
+        </header>
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 p-3 space-y-1">
+            <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                <span data-i18n="nav.dashboard">Dashboard</span>
+            </a>
+            <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                <span data-i18n="nav.products">Produkte</span>
+            </a>
+            <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+                <span data-i18n="nav.orders">Bestellungen</span>
+            </a>
+            <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                <span data-i18n="nav.expenses">Ausgaben</span>
+            </a>
+            <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span data-i18n="nav.marketResearch">Marktrecherche</span>
+            </a>
+            <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span data-i18n="nav.printAgents">Print-Agents</span>
+            </a>
+            <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span data-i18n="nav.settings">Einstellungen</span>
+            </a>
+            <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.logout">Abmelden</span>
+            </button>
+        </div>
+
+        <div class="hidden md:flex justify-end items-center gap-1 px-6 pt-4 text-xs font-semibold">
+            <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+        </div>
+
+    <main class="max-w-4xl mx-auto p-6 space-y-6">
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
-                <p class="text-slate-500 text-xs mb-1">Bestellungen heute</p>
-                <p class="text-2xl font-bold" id="summary-orders-today">—</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-red-50 p-4 rounded-xl">
+                <p class="text-slate-500 text-xs mb-1" data-i18n="dashboard.ordersToday">Bestellungen heute</p>
+                <p class="text-2xl font-bold text-red-600" id="summary-orders-today">—</p>
             </div>
-            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
-                <p class="text-slate-500 text-xs mb-1">Gewinn heute</p>
+            <div class="bg-emerald-50 p-4 rounded-xl">
+                <p class="text-slate-500 text-xs mb-1" data-i18n="dashboard.profitToday">Gewinn heute</p>
                 <p class="text-2xl font-bold text-emerald-600" id="summary-profit-today">—</p>
             </div>
-            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
-                <p class="text-slate-500 text-xs mb-1">Bestellungen diesen Monat</p>
-                <p class="text-2xl font-bold" id="summary-orders-month">—</p>
+            <div class="bg-red-50 p-4 rounded-xl">
+                <p class="text-slate-500 text-xs mb-1" data-i18n="dashboard.ordersMonth">Bestellungen diesen Monat</p>
+                <p class="text-2xl font-bold text-red-600" id="summary-orders-month">—</p>
             </div>
-            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
-                <p class="text-slate-500 text-xs mb-1">Gewinn diesen Monat</p>
+            <div class="bg-emerald-50 p-4 rounded-xl">
+                <p class="text-slate-500 text-xs mb-1" data-i18n="dashboard.profitMonth">Gewinn diesen Monat</p>
                 <p class="text-2xl font-bold text-emerald-600" id="summary-profit-month">—</p>
             </div>
         </div>
 
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
-            <h2 class="text-xl font-bold mb-2">eBay-Konto</h2>
-            <p class="text-slate-500 text-sm mb-4" id="ebay-desc">Status wird geladen...</p>
+            <h2 class="text-lg font-bold mb-4" data-i18n="dashboard.chartTitle">Gewinnverlauf (letzte 14 Tage)</h2>
+            <div id="profit-chart"></div>
+        </div>
+
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+            <h2 class="text-xl font-bold mb-2" data-i18n="dashboard.ebayTitle">eBay-Konto</h2>
+            <p class="text-slate-500 text-sm mb-4" id="ebay-desc" data-i18n="dashboard.ebayLoading">Status wird geladen...</p>
 
             <button id="ebay-connect-btn" onclick="connectEbay()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition hidden">
-                Mit eBay verbinden
+                <span data-i18n="dashboard.ebayConnect">Mit eBay verbinden</span>
             </button>
             <button id="ebay-disconnect-btn" onclick="disconnectEbay()"
                     class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded transition hidden">
-                eBay-Verbindung trennen
+                <span data-i18n="dashboard.ebayDisconnect">eBay-Verbindung trennen</span>
             </button>
         </div>
     </main>
+    </div>
+    </div>
 
     <script>
         const API_URL = "https://express-print-saas.onrender.com";
@@ -92,22 +193,39 @@
         }
 
 
-        async function injectAdminLink() {
+        function applySidebarProfile(me) {
+            const nameEl = document.getElementById("sidebar-user-name");
+            const emailEl = document.getElementById("sidebar-user-email");
+            const avatarImg = document.getElementById("sidebar-avatar-img");
+            const avatarInitial = document.getElementById("sidebar-avatar-initial");
+            if (nameEl) nameEl.innerText = me.full_name || me.email;
+            if (emailEl) emailEl.innerText = me.email;
+            if (me.avatar_url) {
+                avatarImg.src = me.avatar_url;
+                avatarImg.classList.remove("hidden");
+                avatarInitial.classList.add("hidden");
+            } else {
+                avatarInitial.innerText = (me.full_name || me.email || "?").trim().charAt(0).toUpperCase();
+            }
+        }
+
+        async function loadSidebarProfile() {
             try {
                 const response = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
                 if (!response.ok) return;
                 const me = await response.json();
+                applySidebarProfile(me);
                 if (!me.is_superadmin) return;
 
-                const desktopLogout = document.querySelector('nav .hidden.md\\:flex button[onclick="logout()"]');
+                const desktopLogout = document.querySelector('aside button[onclick="logout()"]');
                 const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
-                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Admin</a>');
-                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Admin</a>');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
+                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
             } catch (err) {
-                // Non-critical - regular tenants simply never see this link.
+                // Non-critical - sidebar profile info and the admin link just don't show.
             }
         }
-        injectAdminLink();
+        loadSidebarProfile();
 
         function logout() {
             localStorage.removeItem("access_token");
@@ -123,13 +241,28 @@
         // Show the eBay connect/disconnect result the browser was just redirected back with.
         const params = new URLSearchParams(window.location.search);
         if (params.get("ebay_connected")) {
-            showBanner("eBay-Konto erfolgreich verbunden!", false);
+            showBanner(t("dashboard.ebayConnected"), false);
         } else if (params.get("ebay_error")) {
-            showBanner(`Fehler bei der eBay-Verbindung: ${params.get("ebay_error")}`, true);
+            showBanner(`${t("dashboard.ebayConnectError")} ${params.get("ebay_error")}`, true);
         }
 
-        async function loadEbayStatus() {
+        // Cached so a language switch can re-render the description in the
+        // new language without hitting the API again.
+        let ebayStatus = undefined;
+
+        function renderEbayStatus() {
+            if (ebayStatus === undefined) return;
             const descEl = document.getElementById("ebay-desc");
+            descEl.removeAttribute("data-i18n");
+            if (ebayStatus) {
+                descEl.innerText = `${t("dashboard.ebayConnectedAs")} ${ebayStatus.ebay_username || t("dashboard.ebaySeller")}.`;
+            } else {
+                descEl.innerText = t("dashboard.ebayNotConnected");
+            }
+        }
+        document.addEventListener("langchange", renderEbayStatus);
+
+        async function loadEbayStatus() {
             const connectBtn = document.getElementById("ebay-connect-btn");
             const disconnectBtn = document.getElementById("ebay-disconnect-btn");
 
@@ -142,16 +275,17 @@
                 }
 
                 const data = await response.json();
+                ebayStatus = data;
+                renderEbayStatus();
 
                 if (data) {
-                    descEl.innerText = `Verbunden als ${data.ebay_username || "eBay-Verkäufer"}.`;
                     disconnectBtn.classList.remove("hidden");
                 } else {
-                    descEl.innerText = "Noch kein eBay-Konto verbunden.";
                     connectBtn.classList.remove("hidden");
                 }
             } catch (err) {
-                descEl.innerText = "Server nicht erreichbar. Bitte Seite neu laden.";
+                document.getElementById("ebay-desc").removeAttribute("data-i18n");
+                document.getElementById("ebay-desc").innerText = t("dashboard.serverErrorReload");
             }
         }
 
@@ -161,7 +295,7 @@
                 const data = await response.json();
                 window.location.href = data.authorize_url;
             } catch (err) {
-                showBanner("Verbindung zu eBay konnte nicht gestartet werden.", true);
+                showBanner(t("dashboard.ebayStartError"), true);
             }
         }
 
@@ -170,7 +304,7 @@
                 await fetch(`${API_URL}/ebay/disconnect`, { method: "POST", headers: authHeaders() });
                 window.location.reload();
             } catch (err) {
-                showBanner("Trennen der eBay-Verbindung fehlgeschlagen.", true);
+                showBanner(t("dashboard.ebayDisconnectError"), true);
             }
         }
 
@@ -194,8 +328,74 @@
             }
         }
 
+        let profitHistory = null;
+
+        function renderProfitChart() {
+            if (!profitHistory) return;
+            const container = document.getElementById("profit-chart");
+
+            const svgWidth = 600;
+            const svgHeight = 180;
+            const padding = { top: 10, right: 10, bottom: 24, left: 12 };
+            const chartWidth = svgWidth - padding.left - padding.right;
+            const chartHeight = svgHeight - padding.top - padding.bottom;
+
+            const values = profitHistory.map(p => Number(p.profit));
+            const maxValue = Math.max(...values, 1);
+            const minValue = Math.min(...values, 0);
+            const range = maxValue - minValue || 1;
+
+            const stepX = profitHistory.length > 1 ? chartWidth / (profitHistory.length - 1) : 0;
+            const coords = profitHistory.map((p, i) => ({
+                x: padding.left + i * stepX,
+                y: padding.top + chartHeight - ((Number(p.profit) - minValue) / range) * chartHeight,
+                value: Number(p.profit),
+                date: p.date,
+            }));
+
+            const linePath = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ");
+            const floorY = (padding.top + chartHeight).toFixed(1);
+            const areaPath = `${linePath} L ${coords[coords.length - 1].x.toFixed(1)} ${floorY} L ${coords[0].x.toFixed(1)} ${floorY} Z`;
+            const zeroY = (padding.top + chartHeight - ((0 - minValue) / range) * chartHeight).toFixed(1);
+
+            const labelEvery = Math.max(1, Math.ceil(profitHistory.length / 6));
+            const locale = getLang() === "de" ? "de-DE" : "en-US";
+            const labels = coords.map((c, i) => {
+                if (i % labelEvery !== 0 && i !== coords.length - 1) return "";
+                const d = new Date(c.date + "T00:00:00");
+                const label = d.toLocaleDateString(locale, { day: "2-digit", month: "2-digit" });
+                return `<text x="${c.x.toFixed(1)}" y="${svgHeight - 4}" font-size="10" fill="#94a3b8" text-anchor="middle">${label}</text>`;
+            }).join("");
+
+            const dots = coords.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3" fill="#dc2626"/>`).join("");
+
+            container.innerHTML = `
+                <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full">
+                    <line x1="${padding.left}" y1="${zeroY}" x2="${svgWidth - padding.right}" y2="${zeroY}" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 3"/>
+                    <path d="${areaPath}" fill="#fee2e2" stroke="none"/>
+                    <path d="${linePath}" fill="none" stroke="#dc2626" stroke-width="2"/>
+                    ${dots}
+                    ${labels}
+                </svg>
+            `;
+        }
+
+        async function loadProfitHistory() {
+            try {
+                const response = await fetch(`${API_URL}/orders/profit-history?days=14`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                profitHistory = await response.json();
+                renderProfitChart();
+            } catch (err) {
+                // Non-critical - the stat cards and eBay section above are the important part of this page.
+            }
+        }
+
+        document.addEventListener("langchange", renderProfitChart);
+
         loadEbayStatus();
         loadSummary();
+        loadProfitHistory();
     </script>
 </body>
 </html>

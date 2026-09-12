@@ -3,96 +3,141 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Preise — Express Print</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Preise — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="site-logo.js"></script>
+    <script src="cookie-notice.js"></script>
+    <script src="translations.js"></script>
+    <script src="i18n.js"></script>
 </head>
-<body class="bg-white text-slate-900 min-h-screen">
-
-    <!-- Nav -->
-    <nav class="border-b border-slate-200">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <nav class="bg-white border-b border-slate-200 px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-2">
-                <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+                <svg class="brand-logo" width="30" height="30" viewBox="0 0 32 32" fill="none">
                     <rect width="32" height="32" rx="9" fill="#E11D48"/>
                     <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <span class="text-lg font-bold">Express Print</span>
             </a>
-            <div class="flex items-center gap-3">
-                <a href="login.html" class="text-slate-600 hover:text-slate-900 text-sm font-medium px-3 py-2">Anmelden</a>
-                <a href="index.html" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">Kostenlos starten</a>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <a href="login.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition" data-i18n="nav.login">Anmelden</a>
+                <a href="register.html" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition" data-i18n="nav.registerCta">Kostenlos starten</a>
             </div>
         </div>
     </nav>
 
-    <!-- Header -->
-    <div class="max-w-3xl mx-auto px-6 pt-16 pb-10 text-center">
-        <h1 class="text-4xl font-bold mb-4">Einfache, faire Preise</h1>
-        <p class="text-slate-500 text-lg">Wähle den Plan, der zu deinem eBay-Geschäft passt. Jederzeit kündbar.</p>
-    </div>
-
-    <!-- Plans -->
-    <div class="max-w-6xl mx-auto px-6 pb-24">
-        <div id="loading" class="text-center text-slate-400 py-16">Preise werden geladen...</div>
-        <div id="error-box" class="hidden max-w-md mx-auto bg-red-50 text-red-700 border border-red-200 p-4 rounded-lg text-center text-sm"></div>
-        <div id="plans-grid" class="hidden grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch"></div>
-    </div>
-
-    <!-- Contact strip -->
-    <div class="border-t border-slate-200 bg-slate-50">
-        <div class="max-w-3xl mx-auto px-6 py-12 text-center">
-            <h2 class="text-xl font-bold mb-2">Nicht sicher, welcher Plan passt?</h2>
-            <p class="text-slate-500 mb-5">Schreib uns, wir beraten dich gerne unverbindlich.</p>
-            <a href="mailto:anasabdulazizde@gmail.com" class="inline-block bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition">Kontakt aufnehmen</a>
+    <main class="max-w-6xl mx-auto px-6 py-16">
+        <div class="text-center max-w-2xl mx-auto mb-14">
+            <h1 class="text-3xl sm:text-4xl font-bold" data-i18n="pricing.title">Einfache, transparente Preise</h1>
+            <p class="text-slate-500 mt-3" data-i18n="pricing.subtitle">Wähle den Plan, der zu deinem Versandvolumen passt. Jederzeit kündbar.</p>
         </div>
-    </div>
 
-    <footer id="site-footer"></footer>
+        <div id="loading-state" class="text-center text-slate-400 py-12" data-i18n="pricing.loading">Preise werden geladen...</div>
+        <div id="error-state" class="hidden text-center text-red-600 py-12" data-i18n="pricing.loadError">
+            Preise konnten nicht geladen werden. Bitte Seite neu laden.
+        </div>
+        <div id="empty-state" class="hidden text-center text-slate-400 py-12" data-i18n="pricing.empty">
+            Aktuell sind keine Preispläne verfügbar.
+        </div>
 
-    <script src="js/site.js"></script>
+        <div id="plans-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"></div>
+
+        <div id="payment-methods-section" class="hidden mt-16 max-w-2xl mx-auto">
+            <h2 class="text-xl font-bold text-center" data-i18n="pricing.paymentMethodsTitle">Zahlungsarten</h2>
+            <div id="payment-methods-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6"></div>
+        </div>
+
+        <p class="text-center text-slate-400 text-xs mt-14">
+            <span data-i18n="pricing.footNote">Alle Preise zzgl. MwSt. Fragen?</span>
+            <a href="mailto:hallo@expressprint.example" class="text-red-600 font-semibold" data-i18n="pricing.contactUs">Kontaktiere uns</a>.
+        </p>
+    </main>
+
     <script>
         const API_URL = "https://express-print-saas.onrender.com";
 
-        function planCardHtml(plan) {
-            const price = plan.price_monthly !== null && plan.price_monthly !== undefined
-                ? `<span class="text-4xl font-bold">${Number(plan.price_monthly).toFixed(2)}</span><span class="text-slate-400 font-medium"> ${plan.currency} / Monat</span>`
-                : `<span class="text-3xl font-bold">Auf Anfrage</span>`;
+        function formatPrice(plan) {
+            if (plan.price_monthly === null || plan.price_monthly === undefined) {
+                return { amount: t("pricing.contact"), suffix: "" };
+            }
+            const amount = Number(plan.price_monthly);
+            if (amount === 0) {
+                return { amount: t("pricing.free"), suffix: "" };
+            }
+            return { amount: `${amount.toFixed(2)} ${plan.currency}`, suffix: t("pricing.perMonth") };
+        }
 
-            const limits = [];
-            if (plan.order_limit !== null && plan.order_limit !== undefined) limits.push(`${plan.order_limit} Bestellungen / Monat`);
-            if (plan.printer_limit !== null && plan.printer_limit !== undefined) limits.push(`${plan.printer_limit} Drucker`);
-            if (plan.user_limit !== null && plan.user_limit !== undefined) limits.push(`${plan.user_limit} Benutzer`);
+        function limitLine(value, label) {
+            const text = value === null || value === undefined ? `${t("pricing.unlimited")} ${label}` : `${value} ${label}`;
+            return `
+                <li class="flex items-start gap-3">
+                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xs">✓</span>
+                    <span class="text-sm text-slate-600">${text}</span>
+                </li>`;
+        }
 
-            const featureItems = [...limits, ...(plan.features || [])].map(f => `
-                <li class="flex items-start gap-2 text-sm text-slate-600">
-                    <svg class="w-5 h-5 flex-shrink-0 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>${f}</span>
-                </li>
-            `).join("");
+        function featureLine(feature) {
+            return `
+                <li class="flex items-start gap-3">
+                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xs">✓</span>
+                    <span class="text-sm text-slate-600">${feature}</span>
+                </li>`;
+        }
+
+        function renderPlan(plan) {
+            const price = formatPrice(plan);
+            const limits = [
+                limitLine(plan.order_limit, t("pricing.limitOrders")),
+                limitLine(plan.printer_limit, t("pricing.limitPrinters")),
+                limitLine(plan.user_limit, t("pricing.limitUsers")),
+            ].join("");
+            const features = (plan.features || []).map(featureLine).join("");
 
             const highlight = plan.is_recommended;
+            const cardClasses = highlight
+                ? "border-2 border-red-600 shadow-lg relative"
+                : "border border-slate-200 shadow-sm";
 
             return `
-                <div class="relative rounded-2xl p-8 flex flex-col ${highlight ? 'bg-slate-950 text-white shadow-xl shadow-slate-900/20 border-2 border-red-500' : 'bg-white border border-slate-200'}">
-                    ${highlight ? '<span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">Beliebteste Wahl</span>' : ''}
-                    <h3 class="text-lg font-bold mb-1 ${highlight ? 'text-white' : 'text-slate-900'}">${plan.name}</h3>
-                    <p class="text-sm mb-5 ${highlight ? 'text-slate-400' : 'text-slate-500'}">${plan.description || ''}</p>
-                    <div class="mb-6 ${highlight ? 'text-white' : 'text-slate-900'}">${price}</div>
-                    <ul class="space-y-3 mb-8 flex-1 ${highlight ? '[&_svg]:text-red-400 [&_span]:text-slate-200' : ''}">
-                        ${featureItems}
+                <div class="bg-white rounded-2xl p-8 flex flex-col ${cardClasses}">
+                    ${highlight ? `<span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full">${t("pricing.recommended")}</span>` : ""}
+                    <h3 class="text-lg font-bold">${plan.name}</h3>
+                    <p class="text-slate-500 text-sm mt-1 min-h-[2.5rem]">${plan.description || ""}</p>
+                    <div class="mt-4 mb-2">
+                        <span class="text-3xl font-bold">${price.amount}</span>
+                        ${price.suffix ? `<span class="text-slate-400 text-sm ml-1">${price.suffix}</span>` : ""}
+                    </div>
+                    ${plan.trial_days ? `<p class="text-emerald-600 text-sm font-semibold mb-4">${plan.trial_days} ${t("pricing.trialDays")}</p>` : '<div class="mb-4"></div>'}
+                    <ul class="space-y-3 flex-1">
+                        ${limits}
+                        ${features}
                     </ul>
-                    <a href="index.html" class="block text-center font-semibold py-2.5 rounded-lg transition ${highlight ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white'}">
-                        Jetzt starten
+                    <a href="register.html?plan=${encodeURIComponent(plan.name)}"
+                       class="mt-8 block text-center font-semibold py-2.5 rounded-lg transition ${highlight ? "bg-red-600 hover:bg-red-700 text-white shadow-sm shadow-red-600/20" : "bg-slate-100 hover:bg-slate-200 text-slate-900"}">
+                        ${t("pricing.cta")}
                     </a>
-                </div>
-            `;
+                </div>`;
+        }
+
+        // Cached so a language switch can re-render the cards (translated
+        // labels, same data) without hitting the API again.
+        let loadedPlans = null;
+
+        function renderPlansGrid() {
+            if (!loadedPlans) return;
+            document.getElementById("plans-grid").innerHTML = loadedPlans.map(renderPlan).join("");
         }
 
         async function loadPlans() {
-            const loading = document.getElementById("loading");
-            const errorBox = document.getElementById("error-box");
+            const loadingState = document.getElementById("loading-state");
+            const errorState = document.getElementById("error-state");
+            const emptyState = document.getElementById("empty-state");
             const grid = document.getElementById("plans-grid");
 
             try {
@@ -100,24 +145,55 @@
                 if (!response.ok) throw new Error("request failed");
                 const plans = await response.json();
 
-                loading.classList.add("hidden");
+                loadingState.classList.add("hidden");
 
-                if (!plans.length) {
-                    errorBox.innerText = "Aktuell sind keine Preispläne verfügbar. Bitte kontaktiere uns.";
-                    errorBox.classList.remove("hidden");
+                if (!plans || plans.length === 0) {
+                    emptyState.classList.remove("hidden");
                     return;
                 }
 
-                grid.innerHTML = plans.map(planCardHtml).join("");
+                loadedPlans = plans;
+                renderPlansGrid();
                 grid.classList.remove("hidden");
             } catch (err) {
-                loading.classList.add("hidden");
-                errorBox.innerText = "Preise konnten nicht geladen werden. Bitte 30s warten und Seite neu laden (Render Free Tier).";
-                errorBox.classList.remove("hidden");
+                loadingState.classList.add("hidden");
+                errorState.classList.remove("hidden");
             }
         }
 
+        let loadedPaymentMethods = null;
+
+        function renderPaymentMethodsGrid() {
+            if (!loadedPaymentMethods) return;
+            document.getElementById("payment-methods-grid").innerHTML = loadedPaymentMethods.map(m => `
+                <div class="bg-white border border-slate-200 rounded-xl p-5">
+                    <p class="font-semibold">${m.name}</p>
+                    <p class="text-slate-500 text-sm mt-1 whitespace-pre-line">${m.details}</p>
+                </div>
+            `).join("");
+        }
+
+        async function loadPaymentMethods() {
+            try {
+                const response = await fetch(`${API_URL}/payment-methods`);
+                if (!response.ok) return;
+                const methods = await response.json();
+                if (!methods || methods.length === 0) return;
+
+                loadedPaymentMethods = methods;
+                renderPaymentMethodsGrid();
+                document.getElementById("payment-methods-section").classList.remove("hidden");
+            } catch (err) {
+                // Non-critical - the pricing cards above are the important part of this page.
+            }
+        }
+
+        document.addEventListener("langchange", () => {
+            renderPlansGrid();
+            renderPaymentMethodsGrid();
+        });
         loadPlans();
+        loadPaymentMethods();
     </script>
 </body>
 </html>

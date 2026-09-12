@@ -22,6 +22,15 @@ class Product(Base):
     # missing-by-accident.
     purchase_price = Column(DECIMAL(10, 2))  # what we pay to get one unit
     selling_price = Column(DECIMAL(10, 2))   # what the customer pays
+    # Package physical specs for this product, used to pick the right DHL
+    # shipping product and weight/dimensions when creating a shipment label.
+    # Null when not set - falls back to the tenant's default package size
+    # (see Tenant.default_package_*) at shipment-creation time, since most
+    # eBay listings don't reliably carry this data themselves.
+    weight_kg = Column(DECIMAL(6, 3))
+    length_cm = Column(Integer)
+    width_cm = Column(Integer)
+    height_cm = Column(Integer)
     active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())

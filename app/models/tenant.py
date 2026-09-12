@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, DateTime, CheckConstraint
+from sqlalchemy import Column, String, DateTime, DECIMAL, Integer, CheckConstraint, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -15,12 +15,27 @@ class Tenant(Base):
     country_code = Column(String(2), nullable=False, default="DE")
     status = Column(String(20), nullable=False, default="active")
 
+    plan_id = Column(UUID(as_uuid=True), ForeignKey("plans.id"), nullable=True)
+    # Null = no trial deadline (no plan matched at signup, or the plan has
+    # no trial_days set). Once past, get_current_user blocks non-superadmin
+    # requests until a real subscription exists - see deps.py.
+    trial_ends_at = Column(DateTime(timezone=True), nullable=True)
+
     # Controls how shipping labels get printed for this tenant's orders:
     #   INSTANT           - auto-print the moment an order arrives
     #   DASHBOARD_MANUAL   - order sits in a list; user clicks "Print" per order
     #   INTEGRATED          - one PDF combining the shipping label + a picking
     #                          slip (product photo, name, shelf location)
     print_mode = Column(String(20), nullable=False, default="DASHBOARD_MANUAL")
+
+    # Fallback package size/weight used to create a DHL shipment when an
+    # order's product(s) don't have their own weight_kg/length_cm/etc. set
+    # (see Product model) - keeps label creation from ever being blocked on
+    # missing package data. A small padded-envelope-ish default.
+    default_package_weight_kg = Column(DECIMAL(6, 3), nullable=False, default=1.0)
+    default_package_length_cm = Column(Integer, nullable=False, default=20)
+    default_package_width_cm = Column(Integer, nullable=False, default=15)
+    default_package_height_cm = Column(Integer, nullable=False, default=10)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())

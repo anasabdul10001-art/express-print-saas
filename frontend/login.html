@@ -3,99 +3,65 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Anmelden — Express Print</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Anmelden — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="site-logo.js"></script>
+    <script src="cookie-notice.js"></script>
+    <script src="translations.js"></script>
+    <script src="i18n.js"></script>
 </head>
 <body class="bg-white text-slate-900 min-h-screen flex flex-col">
-    <div class="flex flex-1">
-    <!-- Left: branding panel (hidden on small screens) -->
-    <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-slate-950 items-center justify-center p-12">
-        <div class="absolute -top-32 -left-20 w-96 h-96 bg-red-600/30 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl"></div>
-
-        <div class="relative max-w-md space-y-8">
-            <div class="flex items-center gap-2">
-                <svg width="34" height="34" viewBox="0 0 32 32" fill="none">
+    <nav class="border-b border-slate-100">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2">
+                <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
                     <rect width="32" height="32" rx="9" fill="#E11D48"/>
                     <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <span class="text-xl font-bold text-white">Express Print</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <span class="text-slate-500 text-sm hidden sm:inline" data-i18n="login.noAccount">Noch kein Konto?</span>
+                <a href="register.html" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition shadow-sm shadow-red-600/20" data-i18n="login.registerLink">Jetzt registrieren</a>
             </div>
-
-            <h1 class="text-3xl font-bold leading-snug text-white">
-                Versand und Etikettendruck für eBay-Verkäufer, automatisiert.
-            </h1>
-            <p class="text-slate-400">
-                Verbinde dein eBay-Konto, verwalte Bestellungen und Lagerbestand, und drucke Versandetiketten automatisch — ohne manuelle Umwege.
-            </p>
-
-            <ul class="space-y-4 text-sm text-slate-300">
-                <li class="flex items-start gap-3">
-                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs">✓</span>
-                    eBay-Bestellungen automatisch synchronisieren
-                </li>
-                <li class="flex items-start gap-3">
-                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs">✓</span>
-                    Versandetiketten drucken, ohne den Computer anzufassen
-                </li>
-                <li class="flex items-start gap-3">
-                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs">✓</span>
-                    Lagerbestand und Gewinn immer im Blick
-                </li>
-            </ul>
         </div>
-    </div>
+    </nav>
 
-    <!-- Right: form -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 bg-slate-50 lg:bg-white">
+    <main class="flex-1 flex items-center justify-center p-6">
         <div class="w-full max-w-md">
-            <div class="lg:hidden flex items-center gap-2 justify-center mb-8">
-                <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="text-lg font-bold">Express Print</span>
-            </div>
-
-            <h2 class="text-2xl font-bold mb-2 text-center lg:text-left">Willkommen zurück</h2>
-            <p class="text-slate-500 text-sm mb-6 text-center lg:text-left">Melde dich bei deinem Konto an</p>
+            <h2 class="text-2xl font-bold mb-2" data-i18n="login.formTitle">Willkommen zurück</h2>
+            <p class="text-slate-500 text-sm mb-6" data-i18n="login.formSubtitle">Melde dich bei deinem Konto an</p>
 
             <div id="error-box" class="hidden bg-red-50 text-red-700 border border-red-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
 
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">E-Mail</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="login.email">E-Mail</label>
                     <input type="email" id="email" required autocomplete="email"
                            class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
                 </div>
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
-                        <label class="block text-sm font-medium text-slate-700">Passwort</label>
-                        <a href="forgot-password.html" class="text-xs text-red-600 hover:text-red-700 font-medium">Passwort vergessen?</a>
+                        <label class="block text-sm font-medium text-slate-700" data-i18n="login.password">Passwort</label>
+                        <a href="forgot-password.html" class="text-xs text-red-600 hover:text-red-700 font-medium" data-i18n="login.forgotPassword">Passwort vergessen?</a>
                     </div>
                     <input type="password" id="password" required autocomplete="current-password"
                            class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
                 </div>
                 <button type="submit" id="submit-btn"
-                        class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg transition shadow-sm shadow-red-600/20">
-                    Anmelden
+                        class="w-full inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-red-600/25">
+                    <span data-i18n="login.submit">Anmelden</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </button>
             </form>
-
-            <p class="text-slate-500 text-sm text-center mt-6">
-                Noch kein Konto?
-                <a href="index.html" class="text-red-600 hover:text-red-700 font-semibold">Jetzt registrieren</a>
-            </p>
-            <p class="text-slate-400 text-xs text-center mt-3">
-                <a href="pricing.html" class="hover:text-slate-600">Preise ansehen</a>
-            </p>
         </div>
-    </div>
-    </div>
+    </main>
 
-    <footer id="site-footer"></footer>
-
-    <script src="js/site.js"></script>
     <script>
         const API_URL = "https://express-print-saas.onrender.com";
 
@@ -111,7 +77,7 @@
 
             errBox.classList.add("hidden");
             btn.disabled = true;
-            btn.innerText = "Bitte warten...";
+            btn.innerText = t("login.submitLoading");
 
             const payload = {
                 email: document.getElementById("email").value,
@@ -130,16 +96,19 @@
                 if (response.ok) {
                     localStorage.setItem("access_token", data.access_token);
                     window.location.href = "app/dashboard.html";
+                } else if (response.status === 402) {
+                    if (data.detail) sessionStorage.setItem("trial_expired_message", data.detail);
+                    window.location.href = "trial-expired.html";
                 } else {
-                    errBox.innerText = data.detail || "E-Mail oder Passwort ist falsch.";
+                    errBox.innerText = data.detail || t("login.invalidCredentials");
                     errBox.classList.remove("hidden");
                 }
             } catch (err) {
-                errBox.innerText = "Server nicht erreichbar. Bitte 30s warten (Render Free Tier) und erneut versuchen.";
+                errBox.innerText = t("login.serverError");
                 errBox.classList.remove("hidden");
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Anmelden";
+                btn.innerText = t("login.submit");
             }
         }
     </script>

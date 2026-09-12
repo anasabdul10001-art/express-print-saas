@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,7 +9,7 @@ from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
 from app.models.user import User
-from app.schemas.order import OrderCreate, OrderItemOut, OrderOut, OrderSummaryOut
+from app.schemas.order import OrderCreate, OrderItemOut, OrderOut, OrderSummaryOut, ProfitHistoryPoint, RecipientAddressOut
 router = APIRouter(prefix="/orders", tags=["orders"])
 def _serialize_order(order: Order) -> OrderOut:
     """
@@ -49,12 +49,27 @@ def _serialize_order(order: Order) -> OrderOut:
                 profit=profit,
             )
         )
+    recipient_address = None
+    if order.recipient_name or order.recipient_street1:
+        recipient_address = RecipientAddressOut(
+            name=order.recipient_name,
+            street1=order.recipient_street1,
+            street2=order.recipient_street2,
+            city=order.recipient_city,
+            state=order.recipient_state,
+            zip=order.recipient_zip,
+            country_code=order.recipient_country_code,
+            phone=order.recipient_phone,
+        )
+
     return OrderOut(
         id=order.id,
         external_order_ref=order.external_order_ref,
         status=order.status,
         items=items_out,
         total_profit=total_profit if profit_known else None,
+        recipient_address=recipient_address,
+        tracking_number=order.tracking_number,
     )
 @router.get("", response_model=list[OrderOut])
 def list_orders(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -107,6 +122,41 @@ def order_summary(current_user: User = Depends(get_current_user), db: Session = 
         orders_month=orders_month,
         profit_month=profit_month,
     )
+
+
+@router.get("/profit-history", response_model=list[ProfitHistoryPoint])
+def profit_history(
+    days: int = 14,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Daily profit totals for the last `days` days (including today), powering
+    the dashboard's trend chart. Days with no orders come back as 0 rather
+    than being omitted, so the chart's x-axis stays evenly spaced.
+    """
+    days = max(1, min(days, 90))
+    start_date = (datetime.now(timezone.utc) - timedelta(days=days - 1)).date()
+
+    day_col = func.date(Order.created_at)
+    rows = (
+        db.query(
+            day_col.label("day"),
+            func.sum((OrderItem.unit_price - OrderItem.purchase_price) * OrderItem.quantity).label("profit"),
+        )
+        .join(OrderItem, OrderItem.order_id == Order.id)
+        .filter(Order.tenant_id == current_user.tenant_id, day_col >= start_date)
+        .group_by(day_col)
+        .all()
+    )
+    profit_by_day = {row.day: (row.profit or Decimal("0")) for row in rows}
+
+    return [
+        ProfitHistoryPoint(date=start_date + timedelta(days=i), profit=profit_by_day.get(start_date + timedelta(days=i), Decimal("0")))
+        for i in range(days)
+    ]
+
+
 @router.post("", response_model=OrderOut, status_code=201)
 def create_order(
     payload: OrderCreate,

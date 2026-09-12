@@ -74,7 +74,7 @@ def run_setup_wizard(on_saved) -> None:
     existing = load_config() or {}
 
     root = tk.Tk()
-    root.title("Express Print Agent - Einrichtung")
+    root.title("ShipSync Agent - Einrichtung")
     root.geometry("480x560")
     root.resizable(False, False)
 
@@ -87,7 +87,7 @@ def run_setup_wizard(on_saved) -> None:
     frame = ttk.Frame(root, padding=16)
     frame.pack(fill="both", expand=True)
 
-    ttk.Label(frame, text="Express Print Agent einrichten", font=("Segoe UI", 12, "bold")).pack(anchor="w")
+    ttk.Label(frame, text="ShipSync Agent einrichten", font=("Segoe UI", 12, "bold")).pack(anchor="w")
     ttk.Label(
         frame,
         text="Agent-ID und API-Key findest du im Dashboard unter\n\"Print-Agents\" -> \"+ Neuer Print-Agent\".\nFalls Strg+V nicht reagiert, nutze den \"Einfügen\"-Knopf daneben.",
@@ -189,7 +189,7 @@ def run_setup_wizard(on_saved) -> None:
             return
 
         save_config(agent_id, api_key, printer_name, watch_folder, watch_rotation)
-        messagebox.showinfo("Express Print Agent", "Einrichtung abgeschlossen. Der Agent läuft jetzt im Hintergrund.")
+        messagebox.showinfo("ShipSync Agent", "Einrichtung abgeschlossen. Der Agent läuft jetzt im Hintergrund.")
         root.destroy()
         on_saved({
             "agent_id": agent_id,

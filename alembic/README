@@ -1,0 +1,39 @@
+Generic single-database configuration.
+
+---
+
+Added for ShipSync (see PR that introduced this file for context):
+
+This is NEW infrastructure, ready for the *next* schema change - it does
+NOT yet replace how the app actually migrates its schema today. Right now,
+app/main.py still runs Base.metadata.create_all() plus a list of manual
+`ALTER TABLE ... ADD COLUMN IF NOT EXISTS` statements on every startup, and
+that is unchanged by this commit. The baseline migration in
+alembic/versions/ was generated from - and verified byte-for-byte identical
+to (via pg_dump schema diff) - that exact same current schema, so Alembic
+starts out perfectly in sync with what's already running in production.
+
+Why add this now if nothing changes yet: growing that manual ALTER TABLE
+list in main.py doesn't scale (no down-migrations, no real history, easy to
+forget a statement, every startup re-checks every column on every table
+forever). Alembic is the standard, safer way to manage schema changes going
+forward - this PR only sets up the tooling and proves it matches reality.
+
+How to use it for a FUTURE schema change (once the team decides to actually
+switch over - see the open question below):
+    1. Change a model in app/models/
+    2. Run `alembic revision --autogenerate -m "short description"`
+    3. Read the generated file in alembic/versions/ - autogenerate is a
+       starting point, not gospel (it won't catch everything, e.g. column
+       renames show up as a drop+add unless you edit the migration by hand)
+    4. Run `alembic upgrade head` against a local/staging database to test it
+    5. Commit the migration file and deploy; run `alembic upgrade head`
+       against production as part of the deploy step
+
+Open question this PR deliberately leaves unresolved: whether to now strip
+main.py's create_all()/ALTER TABLE block and make `alembic upgrade head` the
+only way schema changes happen (the "correct" end state), or run both side
+by side for a while. That changes the production deploy process (Render
+needs a migration step before/alongside starting the app) and deserves an
+explicit decision rather than a silent switch - the app keeps working
+exactly as before until that's decided.

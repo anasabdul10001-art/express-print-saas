@@ -1,10 +1,58 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 
-from app.routers import admin, auth, ebay, expenses, market_research, orders, pages, plans, print_agents, print_jobs, products, tenants, uploads
+from app.core.sentry import init_sentry
+from app.database import Base, engine
+from app import models  # noqa: F401 - import registers all models with Base, needed for create_all() below
+from app.routers import admin, auth, dhl, ebay, expenses, market_research, orders, plans, print_agents, print_jobs, products, tenants, uploads
+
+# Before the app is created: a no-op until settings.sentry_dsn is set (see
+# app/core/sentry.py) - safe to always call.
+init_sentry()
 
 app = FastAPI(title="eBay Seller SaaS API", version="0.1.0")
+
+# There's no Alembic here (see init_db.py) - create_all() only creates
+# missing tables, it never adds a column to one that already exists in
+# production. Calling it on every startup means a brand-new model (like
+# PaymentMethod) gets its table automatically instead of requiring a
+# manual `python init_db.py` run against the live database; it's a no-op
+# for tables that already exist. Column changes on an existing table still
+# need an explicit ALTER below.
+Base.metadata.create_all(bind=engine)
+
+with engine.begin() as connection:
+    connection.execute(text("ALTER TABLE plans ADD COLUMN IF NOT EXISTS trial_days INTEGER"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS plan_id UUID REFERENCES plans(id)"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS logo_height INTEGER"))
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_legal_name VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_address VARCHAR(1000)"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_tax_id VARCHAR(100)"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_email VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS last_invoice_number INTEGER NOT NULL DEFAULT 0"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS weight_kg DECIMAL(6,3)"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS length_cm INTEGER"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS width_cm INTEGER"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS height_cm INTEGER"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_weight_kg DECIMAL(6,3) NOT NULL DEFAULT 1.0"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_length_cm INTEGER NOT NULL DEFAULT 20"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_width_cm INTEGER NOT NULL DEFAULT 15"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS default_package_height_cm INTEGER NOT NULL DEFAULT 10"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_name VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_street1 VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_street2 VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_city VARCHAR(100)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_state VARCHAR(100)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_zip VARCHAR(20)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_country_code VARCHAR(2)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS recipient_phone VARCHAR(50)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number VARCHAR(50)"))
+    connection.execute(text("ALTER TABLE print_jobs ADD COLUMN IF NOT EXISTS label_pdf_data BYTEA"))
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS early_service_consent_at TIMESTAMPTZ"))
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,7 +74,7 @@ app.include_router(expenses.router)
 app.include_router(market_research.router)
 app.include_router(admin.router)
 app.include_router(plans.router)
-app.include_router(pages.router)
+app.include_router(dhl.router)
 
 
 @app.get("/health")

@@ -3,53 +3,145 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Print-Agents — Express Print SaaS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Print-Agents — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="trial-guard.js"></script>
+    <script src="../site-logo.js"></script>
+    <script src="../translations.js"></script>
+    <script src="../i18n.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
-    <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
-        <div class="flex items-center justify-between">
-            <h1 class="text-lg font-bold">Versandzentrale</h1>
-            <div class="hidden md:flex items-center gap-6">
-                <a href="dashboard.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Dashboard</a>
-                <a href="products.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Produkte</a>
-                <a href="orders.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Bestellungen</a>
-                <a href="expenses.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Ausgaben</a>
-                <a href="market-research.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Marktrecherche</a>
-                <a href="print-agents.html" class="text-red-600 text-sm font-semibold">Print-Agents</a>
-                <a href="settings.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Einstellungen</a>
-                <button onclick="logout()" class="text-slate-500 hover:text-slate-900 text-sm transition">Abmelden</button>
-            </div>
-            <button onclick="toggleMobileMenu()" class="md:hidden p-2 -mr-2 text-slate-600" aria-label="Menü öffnen">
-                <svg id="menu-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                <svg id="menu-icon-close" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+<body class="bg-slate-50 text-slate-900">
+    <div class="flex min-h-screen">
+    <aside class="hidden md:flex md:flex-col md:w-60 bg-white border-r border-slate-200 flex-shrink-0">
+        <a href="dashboard.html" class="flex items-center gap-2 p-5 border-b border-slate-100">
+            <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+        <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                    <span data-i18n="nav.dashboard">Dashboard</span>
+                </a>
+                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                    <span data-i18n="nav.products">Produkte</span>
+                </a>
+                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+                    <span data-i18n="nav.orders">Bestellungen</span>
+                </a>
+                <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                    <span data-i18n="nav.expenses">Ausgaben</span>
+                </a>
+                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <span data-i18n="nav.marketResearch">Marktrecherche</span>
+                </a>
+                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span data-i18n="nav.printAgents">Print-Agents</span>
+                </a>
+                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span data-i18n="nav.settings">Einstellungen</span>
+                </a>
+        </nav>
+        <a href="settings.html" class="flex items-center gap-3 mx-3 mb-1 p-2 rounded-lg hover:bg-slate-50 transition">
+            <span class="flex-shrink-0 w-9 h-9 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
+                <img id="sidebar-avatar-img" class="hidden w-full h-full object-cover" alt="">
+                <span id="sidebar-avatar-initial" class="text-slate-400 text-sm font-bold">?</span>
+            </span>
+            <span class="min-w-0 flex-1">
+                <span id="sidebar-user-name" class="block text-sm font-semibold text-slate-900 truncate">—</span>
+                <span id="sidebar-user-email" class="block text-xs text-slate-400 truncate">—</span>
+            </span>
+        </a>
+        <div class="p-3 border-t border-slate-100">
+            <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.logout">Abmelden</span>
             </button>
         </div>
-        <div id="mobile-menu" class="hidden md:hidden flex flex-col gap-1 mt-4">
-            <a href="dashboard.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Dashboard</a>
-            <a href="products.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Produkte</a>
-            <a href="orders.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Bestellungen</a>
-            <a href="expenses.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Ausgaben</a>
-            <a href="market-research.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Marktrecherche</a>
-            <a href="print-agents.html" class="block px-3 py-2.5 rounded-lg bg-red-50 text-red-600 text-sm font-semibold">Print-Agents</a>
-            <a href="settings.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Einstellungen</a>
-            <button onclick="logout()" class="text-left px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Abmelden</button>
+    </aside>
+
+    <div class="flex-1 min-w-0">
+        <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+            <a href="dashboard.html" class="flex items-center gap-2">
+                <svg class="brand-logo" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <button onclick="toggleMobileMenu()" class="p-2 -mr-2 text-slate-600" aria-label="Menü öffnen">
+                    <svg id="menu-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    <svg id="menu-icon-close" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                </button>
+            </div>
+        </header>
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 p-3 space-y-1">
+            <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                <span data-i18n="nav.dashboard">Dashboard</span>
+            </a>
+            <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                <span data-i18n="nav.products">Produkte</span>
+            </a>
+            <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+                <span data-i18n="nav.orders">Bestellungen</span>
+            </a>
+            <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                <span data-i18n="nav.expenses">Ausgaben</span>
+            </a>
+            <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span data-i18n="nav.marketResearch">Marktrecherche</span>
+            </a>
+            <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span data-i18n="nav.printAgents">Print-Agents</span>
+            </a>
+            <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span data-i18n="nav.settings">Einstellungen</span>
+            </a>
+            <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.logout">Abmelden</span>
+            </button>
         </div>
-    </nav>
+
+        <div class="hidden md:flex justify-end items-center gap-1 px-6 pt-4 text-xs font-semibold">
+            <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+        </div>
 
     <main class="max-w-3xl mx-auto p-6 space-y-6">
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
         <div class="flex items-center justify-between gap-4">
-            <h2 class="text-2xl font-bold">Print-Agents</h2>
+            <h2 class="text-2xl font-bold" data-i18n="printAgents.title">Print-Agents</h2>
             <button onclick="openForm()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                + Neuer Print-Agent
+                <span data-i18n="printAgents.newButton">+ Neuer Print-Agent</span>
             </button>
         </div>
 
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-3">
-            <p class="text-slate-600 text-sm">
+            <p class="text-slate-600 text-sm" data-i18n="printAgents.introText">
                 Ein Print-Agent ist das kleine Windows-Programm, das auf dem Rechner neben deinem
                 Etikettendrucker läuft und automatisch druckt. Jeder Agent braucht einen eigenen
                 Agent-ID + API-Key (siehe "+ Neuer Print-Agent" oben), die du beim ersten Start
@@ -57,96 +149,96 @@
             </p>
             <a href="https://github.com/anasabdul10001-art/express-print-saas/releases/download/print-agent-v1.0.0/PrintAgentSetup.exe"
                class="inline-block bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                ⬇ Print-Agent herunterladen (Windows)
+                <span data-i18n="printAgents.downloadButton">⬇ Print-Agent herunterladen (Windows)</span>
             </a>
         </div>
 
         <!-- Setup guide -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">So richtest du automatisches Drucken ein</h3>
+            <h3 class="text-lg font-bold" data-i18n="printAgents.guideTitle">So richtest du automatisches Drucken ein</h3>
             <ol class="space-y-3 text-sm text-slate-600">
                 <li class="flex gap-3">
                     <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">1</span>
-                    <span>Oben auf <strong>"+ Neuer Print-Agent"</strong> klicken und einen Namen vergeben. Agent-ID und API-Key sofort kopieren (werden nur einmal angezeigt).</span>
+                    <span data-i18n-html="printAgents.step1">Oben auf <strong>"+ Neuer Print-Agent"</strong> klicken und einen Namen vergeben. Agent-ID und API-Key sofort kopieren (werden nur einmal angezeigt).</span>
                 </li>
                 <li class="flex gap-3">
                     <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">2</span>
-                    <span><strong>"Print-Agent herunterladen"</strong> oben klicken, Programm starten, Agent-ID + API-Key einfügen und deinen Drucker auswählen.</span>
+                    <span data-i18n-html="printAgents.step2"><strong>"Print-Agent herunterladen"</strong> oben klicken, Programm starten, Agent-ID + API-Key einfügen und deinen Drucker auswählen.</span>
                 </li>
                 <li class="flex gap-3">
                     <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center">3</span>
-                    <span>Häkchen bei <strong>"PDFs aus einem Ordner automatisch drucken"</strong> setzen und den Ordner bestätigen, in den eBay/DHL deine Etiketten herunterlädt (meist "Downloads").</span>
+                    <span data-i18n-html="printAgents.step3">Häkchen bei <strong>"PDFs aus einem Ordner automatisch drucken"</strong> setzen und den Ordner bestätigen, in den eBay/DHL deine Etiketten herunterlädt (meist "Downloads").</span>
                 </li>
                 <li class="flex gap-3">
                     <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">✓</span>
-                    <span>Fertig. Ab jetzt: bei eBay wie gewohnt auf <strong>"Versandetikett drucken"</strong> klicken - der Rest (öffnen, Drucker wählen, drehen, Größe anpassen, drucken) passiert von selbst.</span>
+                    <span data-i18n-html="printAgents.step4">Fertig. Ab jetzt: bei eBay wie gewohnt auf <strong>"Versandetikett drucken"</strong> klicken - der Rest (öffnen, Drucker wählen, drehen, Größe anpassen, drucken) passiert von selbst.</span>
                 </li>
             </ol>
         </div>
 
         <!-- Add form, hidden by default -->
         <div id="form-panel" class="hidden bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Neuer Print-Agent</h3>
+            <h3 class="text-lg font-bold" data-i18n="printAgents.formTitleNew">Neuer Print-Agent</h3>
             <div>
-                <label class="block text-sm mb-1">Name *</label>
-                <input type="text" id="field-name" placeholder="z.B. Lager-PC vorne"
+                <label class="block text-sm mb-1" data-i18n="printAgents.name">Name *</label>
+                <input type="text" id="field-name" data-i18n-placeholder="printAgents.namePlaceholder" placeholder="z.B. Lager-PC vorne"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div id="form-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <div class="flex gap-3">
                 <button onclick="createAgent()"
                         class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                    Anlegen
+                    <span data-i18n="printAgents.create">Anlegen</span>
                 </button>
                 <button onclick="closeForm()"
                         class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded transition">
-                    Abbrechen
+                    <span data-i18n="printAgents.cancel">Abbrechen</span>
                 </button>
             </div>
         </div>
 
         <!-- One-time API key reveal, hidden by default -->
         <div id="key-panel" class="hidden bg-red-50 border-2 border-red-500 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold text-red-700">API-Key — jetzt kopieren!</h3>
-            <p class="text-slate-600 text-sm">
+            <h3 class="text-lg font-bold text-red-700" data-i18n="printAgents.keyPanelTitle">API-Key — jetzt kopieren!</h3>
+            <p class="text-slate-600 text-sm" data-i18n-html="printAgents.keyPanelDesc">
                 Dieser Key wird aus Sicherheitsgründen nur dieses eine Mal angezeigt.
                 Trag ihn zusammen mit der Agent-ID in die <code class="bg-white px-1 rounded border border-slate-200">config.json</code>
                 des Print-Agents ein.
             </p>
             <div>
-                <label class="block text-xs text-slate-500 mb-1">Agent-ID</label>
+                <label class="block text-xs text-slate-500 mb-1" data-i18n="printAgents.agentId">Agent-ID</label>
                 <div class="flex gap-2">
                     <input type="text" id="key-agent-id" readonly
                            class="w-full p-2 rounded bg-white border border-slate-300 text-slate-700 font-mono text-xs">
                     <button onclick="copyValue('key-agent-id')"
                             class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2 px-3 rounded transition">
-                        Kopieren
+                        <span data-i18n="printAgents.copy">Kopieren</span>
                     </button>
                 </div>
             </div>
             <div>
-                <label class="block text-xs text-slate-500 mb-1">API-Key</label>
+                <label class="block text-xs text-slate-500 mb-1" data-i18n="printAgents.apiKey">API-Key</label>
                 <div class="flex gap-2">
                     <input type="text" id="key-value" readonly
                            class="w-full p-2 rounded bg-white border border-slate-300 text-slate-700 font-mono text-xs">
                     <button onclick="copyValue('key-value')"
                             class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2 px-3 rounded transition">
-                        Kopieren
+                        <span data-i18n="printAgents.copy">Kopieren</span>
                     </button>
                 </div>
             </div>
             <button onclick="closeKeyPanel()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                Ich habe den Key gespeichert
+                <span data-i18n="printAgents.keySavedButton">Ich habe den Key gespeichert</span>
             </button>
         </div>
 
         <!-- Empty state -->
         <div id="empty-state" class="hidden bg-white border border-slate-200 p-8 rounded-xl text-center space-y-3">
-            <p class="text-slate-500">Noch keine Print-Agents angelegt.</p>
+            <p class="text-slate-500" data-i18n="printAgents.empty">Noch keine Print-Agents angelegt.</p>
             <button onclick="openForm()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                Ersten Print-Agent anlegen
+                <span data-i18n="printAgents.createFirst">Ersten Print-Agent anlegen</span>
             </button>
         </div>
 
@@ -155,16 +247,18 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-slate-500 border-b border-slate-200">
-                        <th class="p-3">Name</th>
-                        <th class="p-3">Status</th>
-                        <th class="p-3">Zuletzt gesehen</th>
-                        <th class="p-3">Aktionen</th>
+                        <th class="p-3" data-i18n="printAgents.colName">Name</th>
+                        <th class="p-3" data-i18n="printAgents.colStatus">Status</th>
+                        <th class="p-3" data-i18n="printAgents.colLastSeen">Zuletzt gesehen</th>
+                        <th class="p-3" data-i18n="printAgents.colActions">Aktionen</th>
                     </tr>
                 </thead>
                 <tbody id="agents-tbody"></tbody>
             </table>
         </div>
     </main>
+    </div>
+    </div>
 
     <script>
         const API_URL = "https://express-print-saas.onrender.com";
@@ -188,22 +282,39 @@
         }
 
 
-        async function injectAdminLink() {
+        function applySidebarProfile(me) {
+            const nameEl = document.getElementById("sidebar-user-name");
+            const emailEl = document.getElementById("sidebar-user-email");
+            const avatarImg = document.getElementById("sidebar-avatar-img");
+            const avatarInitial = document.getElementById("sidebar-avatar-initial");
+            if (nameEl) nameEl.innerText = me.full_name || me.email;
+            if (emailEl) emailEl.innerText = me.email;
+            if (me.avatar_url) {
+                avatarImg.src = me.avatar_url;
+                avatarImg.classList.remove("hidden");
+                avatarInitial.classList.add("hidden");
+            } else {
+                avatarInitial.innerText = (me.full_name || me.email || "?").trim().charAt(0).toUpperCase();
+            }
+        }
+
+        async function loadSidebarProfile() {
             try {
                 const response = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
                 if (!response.ok) return;
                 const me = await response.json();
+                applySidebarProfile(me);
                 if (!me.is_superadmin) return;
 
-                const desktopLogout = document.querySelector('nav .hidden.md\\:flex button[onclick="logout()"]');
+                const desktopLogout = document.querySelector('aside button[onclick="logout()"]');
                 const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
-                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Admin</a>');
-                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Admin</a>');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
+                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
             } catch (err) {
-                // Non-critical - regular tenants simply never see this link.
+                // Non-critical - sidebar profile info and the admin link just don't show.
             }
         }
-        injectAdminLink();
+        loadSidebarProfile();
 
         function logout() {
             localStorage.removeItem("access_token");
@@ -218,16 +329,16 @@
         }
 
         function formatDate(isoString) {
-            if (!isoString) return "Nie";
+            if (!isoString) return t("printAgents.never");
             const d = new Date(isoString);
             return d.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
         }
 
         function statusLabel(status) {
             const map = {
-                online: { text: "Online", cls: "bg-emerald-100 text-emerald-700" },
-                offline: { text: "Offline", cls: "bg-slate-100 text-slate-500" },
-                disabled: { text: "Deaktiviert", cls: "bg-red-100 text-red-700" },
+                online: { text: t("printAgents.statusOnline"), cls: "bg-emerald-100 text-emerald-700" },
+                offline: { text: t("printAgents.statusOffline"), cls: "bg-slate-100 text-slate-500" },
+                disabled: { text: t("printAgents.statusDisabled"), cls: "bg-red-100 text-red-700" },
             };
             return map[status] || { text: status, cls: "bg-slate-100 text-slate-500" };
         }
@@ -252,10 +363,10 @@
             const field = document.getElementById(fieldId);
             try {
                 await navigator.clipboard.writeText(field.value);
-                showBanner("In die Zwischenablage kopiert.", false);
+                showBanner(t("printAgents.copied"), false);
             } catch (err) {
                 field.select();
-                showBanner("Automatisches Kopieren nicht möglich — bitte manuell markieren.", true);
+                showBanner(t("printAgents.copyFailed"), true);
             }
         }
 
@@ -265,7 +376,7 @@
 
             const name = document.getElementById("field-name").value.trim();
             if (!name) {
-                errorBox.innerText = "Bitte einen Namen eingeben.";
+                errorBox.innerText = t("printAgents.nameRequired");
                 errorBox.classList.remove("hidden");
                 return;
             }
@@ -282,7 +393,7 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.innerText = data.detail || "Anlegen fehlgeschlagen.";
+                    errorBox.innerText = data.detail || t("printAgents.createFailed");
                     errorBox.classList.remove("hidden");
                     return;
                 }
@@ -294,15 +405,15 @@
                 document.getElementById("key-panel").scrollIntoView({ behavior: "smooth" });
                 loadAgents();
             } catch (err) {
-                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.innerText = t("printAgents.serverErrorRetry");
                 errorBox.classList.remove("hidden");
             }
         }
 
         async function toggleAgent(id, name, disable) {
             const question = disable
-                ? `Print-Agent "${name}" wirklich deaktivieren? Er kann dann keine Druckaufträge mehr abrufen.`
-                : `Print-Agent "${name}" wieder aktivieren?`;
+                ? t("printAgents.confirmDisable").replace("{name}", name)
+                : t("printAgents.confirmEnable").replace("{name}", name);
             if (!confirm(question)) return;
 
             try {
@@ -313,13 +424,13 @@
                 });
                 if (response.status === 401) { logout(); return; }
                 if (!response.ok) {
-                    showBanner("Aktion fehlgeschlagen.", true);
+                    showBanner(t("printAgents.actionFailed"), true);
                     return;
                 }
-                showBanner(disable ? "Print-Agent deaktiviert." : "Print-Agent aktiviert.", false);
+                showBanner(disable ? t("printAgents.disabledMsg") : t("printAgents.enabledMsg"), false);
                 loadAgents();
             } catch (err) {
-                showBanner("Server nicht erreichbar.", true);
+                showBanner(t("printAgents.serverError"), true);
             }
         }
 
@@ -347,26 +458,30 @@
                     <td class="p-3 text-slate-500">${formatDate(a.last_seen_at)}</td>
                     <td class="p-3">
                         ${a.status === "disabled"
-                            ? `<button onclick='toggleAgent(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)}, false)' class="text-emerald-600 hover:text-emerald-700 text-xs">Aktivieren</button>`
-                            : `<button onclick='toggleAgent(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)}, true)' class="text-red-600 hover:text-red-700 text-xs">Deaktivieren</button>`}
+                            ? `<button onclick='toggleAgent(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)}, false)' class="text-emerald-600 hover:text-emerald-700 text-xs">${t("printAgents.enable")}</button>`
+                            : `<button onclick='toggleAgent(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)}, true)' class="text-red-600 hover:text-red-700 text-xs">${t("printAgents.disable")}</button>`}
                     </td>
                 </tr>
             `;
             }).join("");
         }
 
+        let lastAgents = null;
+
         async function loadAgents() {
             try {
                 const response = await fetch(`${API_URL}/print-agents`, { headers: authHeaders() });
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
+                lastAgents = data;
                 renderAgents(data);
             } catch (err) {
-                showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
+                showBanner(t("printAgents.serverErrorReload"), true);
             }
         }
 
         loadAgents();
+        document.addEventListener("langchange", () => { if (lastAgents) renderAgents(lastAgents); });
     </script>
 </body>
 </html>

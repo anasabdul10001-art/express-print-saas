@@ -1,5 +1,5 @@
 """
-Entry point for the Express Print Agent.
+Entry point for the ShipSync Agent.
 
 First run (no config yet): shows the setup wizard, then starts the tray app.
 Every run after that: goes straight to the tray app with the saved config.
@@ -40,5 +40,5 @@ if __name__ == "__main__":
     except Exception:
         import tkinter.messagebox as messagebox
 
-        messagebox.showerror("Express Print Agent - Fehler", traceback.format_exc())
+        messagebox.showerror("ShipSync Agent - Fehler", traceback.format_exc())
         sys.exit(1)

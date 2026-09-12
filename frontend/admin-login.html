@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Admin-Anmeldung — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="site-logo.js"></script>
+    <script src="cookie-notice.js"></script>
+    <script src="translations.js"></script>
+    <script src="i18n.js"></script>
+</head>
+<body class="bg-white text-slate-900 min-h-screen flex flex-col">
+    <nav class="border-b border-slate-100">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+                <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+            <div class="flex items-center gap-1 text-xs font-semibold">
+                <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                <span class="text-slate-300">|</span>
+                <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 flex items-center justify-center p-6">
+        <div class="w-full max-w-md">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-red-50 text-red-600 mb-4">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <h2 class="text-2xl font-bold mb-2" data-i18n="adminLogin.formTitle">Admin-Anmeldung</h2>
+            <p class="text-slate-500 text-sm mb-6" data-i18n="adminLogin.formSubtitle">Nur für den Plattform-Betreiber.</p>
+
+            <div id="error-box" class="hidden bg-red-50 text-red-700 border border-red-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
+
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="login.email">E-Mail</label>
+                    <input type="email" id="email" required autocomplete="email"
+                           class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="login.password">Passwort</label>
+                    <input type="password" id="password" required autocomplete="current-password"
+                           class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
+                </div>
+                <button type="submit" id="submit-btn"
+                        class="w-full inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-red-600/25">
+                    <span data-i18n="login.submit">Anmelden</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const errBox = document.getElementById("error-box");
+            const btn = document.getElementById("submit-btn");
+
+            errBox.classList.add("hidden");
+            btn.disabled = true;
+            btn.innerText = t("login.submitLoading");
+
+            const payload = {
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/auth/admin-login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem("access_token", data.access_token);
+                    window.location.href = "app/admin.html";
+                } else {
+                    errBox.innerText = data.detail || t("login.invalidCredentials");
+                    errBox.classList.remove("hidden");
+                }
+            } catch (err) {
+                errBox.innerText = t("login.serverError");
+                errBox.classList.remove("hidden");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = t("login.submit");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Konto erstellen — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="site-logo.js"></script>
+    <script src="cookie-notice.js"></script>
+    <script src="translations.js"></script>
+    <script src="i18n.js"></script>
+</head>
+<body class="bg-white text-slate-900 min-h-screen flex flex-col">
+    <nav class="border-b border-slate-100">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2">
+                <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <span class="text-slate-500 text-sm hidden sm:inline" data-i18n="register.haveAccount">Schon ein Konto?</span>
+                <a href="login.html" class="text-red-600 hover:text-red-700 text-sm font-semibold transition" data-i18n="register.loginLink">Jetzt anmelden</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 flex items-center justify-center p-6">
+        <div class="w-full max-w-md">
+            <span class="inline-block bg-red-50 text-red-600 text-xs font-semibold px-3 py-1.5 rounded-full mb-4" data-i18n="home.badge">Für eBay-Verkäufer gebaut</span>
+            <h2 class="text-2xl font-bold mb-2" data-i18n="register.formTitle">Konto erstellen</h2>
+            <p class="text-slate-500 text-sm mb-6" data-i18n="register.formSubtitle">Kostenlos starten, in unter 2 Minuten</p>
+
+            <div id="error-box" class="hidden bg-red-50 text-red-700 border border-red-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
+            <div id="success-box" class="hidden bg-emerald-50 text-emerald-700 border border-emerald-200 p-3 rounded-lg mb-4 text-center text-sm"></div>
+
+            <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="register.companyName">Firmenname</label>
+                    <input type="text" id="company_name" required class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="register.email">E-Mail</label>
+                    <input type="email" id="email" required class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="register.password">Passwort</label>
+                    <input type="password" id="password" required minlength="8" class="w-full px-3 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition">
+                    <p class="text-xs text-slate-400 mt-1" data-i18n="register.passwordHint">Mindestens 8 Zeichen</p>
+                </div>
+                <div class="flex items-start gap-2">
+                    <input type="checkbox" id="early_service_consent" required class="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500/40">
+                    <label for="early_service_consent" class="text-xs text-slate-500 leading-relaxed" data-i18n-html="register.consentLabel">
+                        Ich möchte, dass die Nutzung von ShipSync sofort beginnt, und weiß, dass ich dadurch mein
+                        <a href="withdrawal.html" target="_blank" class="text-red-600 hover:text-red-700 underline">Widerrufsrecht</a>
+                        bei vollständiger Vertragserfüllung verliere. Ich habe die
+                        <a href="policies.html" target="_blank" class="text-red-600 hover:text-red-700 underline">AGB</a>
+                        gelesen und akzeptiere sie.
+                    </label>
+                </div>
+                <button type="submit" id="submit-btn" class="w-full inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-red-600/25">
+                    <span data-i18n="register.submit">Konto erstellen</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+            </form>
+
+            <p class="text-slate-400 text-xs text-center mt-6" data-i18n="home.noCreditCard">Keine Kreditkarte nötig</p>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+
+        async function handleAuth(event) {
+            event.preventDefault();
+            const errBox = document.getElementById("error-box");
+            const succBox = document.getElementById("success-box");
+            const btn = document.getElementById("submit-btn");
+
+            errBox.classList.add("hidden");
+            succBox.classList.add("hidden");
+            btn.disabled = true;
+            btn.innerText = t("register.submitLoading");
+
+            const payload = {
+                company_name: document.getElementById("company_name").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value,
+                plan_name: new URLSearchParams(window.location.search).get("plan") || null,
+                referral_code: new URLSearchParams(window.location.search).get("ref") || null,
+                early_service_consent: document.getElementById("early_service_consent").checked
+            };
+
+            try {
+                // تجربة مسار التسجيل الأساسي
+                let response = await fetch(`${API_URL}/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                // إذا كان المسار /register بدون /auth
+                if (response.status === 404) {
+                    response = await fetch(`${API_URL}/register`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    succBox.innerText = t("register.successMessage");
+                    succBox.classList.remove("hidden");
+                    localStorage.setItem("access_token", data.access_token);
+                    setTimeout(() => { window.location.href = "app/dashboard.html"; }, 1000);
+                } else {
+                    errBox.innerText = data.detail || t("register.genericError");
+                    errBox.classList.remove("hidden");
+                }
+            } catch (err) {
+                errBox.innerText = t("register.serverError");
+                errBox.classList.remove("hidden");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = t("register.submit");
+            }
+        }
+    </script>
+</body>
+</html>

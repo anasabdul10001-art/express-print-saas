@@ -3,125 +3,375 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Einstellungen — Express Print SaaS</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Einstellungen — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="trial-guard.js"></script>
+    <script src="../site-logo.js"></script>
+    <script src="../translations.js"></script>
+    <script src="../i18n.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
-    <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
-        <div class="flex items-center justify-between">
-            <h1 class="text-lg font-bold">Versandzentrale</h1>
-            <div class="hidden md:flex items-center gap-6">
-                <a href="dashboard.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Dashboard</a>
-                <a href="products.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Produkte</a>
-                <a href="orders.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Bestellungen</a>
-                <a href="expenses.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Ausgaben</a>
-                <a href="market-research.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Marktrecherche</a>
-                <a href="print-agents.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Print-Agents</a>
-                <a href="settings.html" class="text-red-600 text-sm font-semibold">Einstellungen</a>
-                <button onclick="logout()" class="text-slate-500 hover:text-slate-900 text-sm transition">Abmelden</button>
-            </div>
-            <button onclick="toggleMobileMenu()" class="md:hidden p-2 -mr-2 text-slate-600" aria-label="Menü öffnen">
-                <svg id="menu-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                <svg id="menu-icon-close" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+<body class="bg-slate-50 text-slate-900">
+    <div class="flex min-h-screen">
+    <aside class="hidden md:flex md:flex-col md:w-60 bg-white border-r border-slate-200 flex-shrink-0">
+        <a href="dashboard.html" class="flex items-center gap-2 p-5 border-b border-slate-100">
+            <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+        <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                    <span data-i18n="nav.dashboard">Dashboard</span>
+                </a>
+                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                    <span data-i18n="nav.products">Produkte</span>
+                </a>
+                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+                    <span data-i18n="nav.orders">Bestellungen</span>
+                </a>
+                <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                    <span data-i18n="nav.expenses">Ausgaben</span>
+                </a>
+                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <span data-i18n="nav.marketResearch">Marktrecherche</span>
+                </a>
+                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span data-i18n="nav.printAgents">Print-Agents</span>
+                </a>
+                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span data-i18n="nav.settings">Einstellungen</span>
+                </a>
+        </nav>
+        <a href="settings.html" class="flex items-center gap-3 mx-3 mb-1 p-2 rounded-lg hover:bg-slate-50 transition">
+            <span class="flex-shrink-0 w-9 h-9 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
+                <img id="sidebar-avatar-img" class="hidden w-full h-full object-cover" alt="">
+                <span id="sidebar-avatar-initial" class="text-slate-400 text-sm font-bold">?</span>
+            </span>
+            <span class="min-w-0 flex-1">
+                <span id="sidebar-user-name" class="block text-sm font-semibold text-slate-900 truncate">—</span>
+                <span id="sidebar-user-email" class="block text-xs text-slate-400 truncate">—</span>
+            </span>
+        </a>
+        <div class="p-3 border-t border-slate-100">
+            <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.logout">Abmelden</span>
             </button>
         </div>
-        <div id="mobile-menu" class="hidden md:hidden flex flex-col gap-1 mt-4">
-            <a href="dashboard.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Dashboard</a>
-            <a href="products.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Produkte</a>
-            <a href="orders.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Bestellungen</a>
-            <a href="expenses.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Ausgaben</a>
-            <a href="market-research.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Marktrecherche</a>
-            <a href="print-agents.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Print-Agents</a>
-            <a href="settings.html" class="block px-3 py-2.5 rounded-lg bg-red-50 text-red-600 text-sm font-semibold">Einstellungen</a>
-            <button onclick="logout()" class="text-left px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Abmelden</button>
+    </aside>
+
+    <div class="flex-1 min-w-0">
+        <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+            <a href="dashboard.html" class="flex items-center gap-2">
+                <svg class="brand-logo" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <button onclick="toggleMobileMenu()" class="p-2 -mr-2 text-slate-600" aria-label="Menü öffnen">
+                    <svg id="menu-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    <svg id="menu-icon-close" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                </button>
+            </div>
+        </header>
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 p-3 space-y-1">
+            <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                <span data-i18n="nav.dashboard">Dashboard</span>
+            </a>
+            <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                <span data-i18n="nav.products">Produkte</span>
+            </a>
+            <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+                <span data-i18n="nav.orders">Bestellungen</span>
+            </a>
+            <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                <span data-i18n="nav.expenses">Ausgaben</span>
+            </a>
+            <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span data-i18n="nav.marketResearch">Marktrecherche</span>
+            </a>
+            <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span data-i18n="nav.printAgents">Print-Agents</span>
+            </a>
+            <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span data-i18n="nav.settings">Einstellungen</span>
+            </a>
+            <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.logout">Abmelden</span>
+            </button>
         </div>
-    </nav>
+
+        <div class="hidden md:flex justify-end items-center gap-1 px-6 pt-4 text-xs font-semibold">
+            <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+        </div>
 
     <main class="max-w-2xl mx-auto p-6 space-y-6">
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
-        <h2 class="text-2xl font-bold">Einstellungen</h2>
+        <h2 class="text-2xl font-bold" data-i18n="settings.title">Einstellungen</h2>
 
         <!-- Company info -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Unternehmen</h3>
+            <h3 class="text-lg font-bold" data-i18n="settings.companyTitle">Unternehmen</h3>
             <div>
-                <label class="block text-sm mb-1">Firmenname</label>
+                <label class="block text-sm mb-1" data-i18n="settings.companyName">Firmenname</label>
                 <input type="text" id="field-company-name"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div>
-                <label class="block text-sm mb-1">Land (Ländercode, z.B. DE, AT, CH)</label>
+                <label class="block text-sm mb-1" data-i18n="settings.country">Land (Ländercode, z.B. DE, AT, CH)</label>
                 <input type="text" id="field-country" maxlength="2"
                        class="w-24 p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none uppercase">
             </div>
             <div id="company-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="saveCompany()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                Speichern
+                <span data-i18n="settings.save">Speichern</span>
+            </button>
+        </div>
+
+        <!-- Profile: picture + name -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="settings.profileTitle">Profil</h3>
+
+            <div class="flex items-center gap-4">
+                <div id="avatar-preview-wrap" class="w-16 h-16 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    <img id="avatar-preview" class="hidden w-full h-full object-cover" alt="">
+                    <span id="avatar-preview-initial" class="text-slate-400 text-xl font-bold">?</span>
+                </div>
+                <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-lg transition">
+                    <span id="avatar-upload-label" data-i18n="settings.uploadAvatar">Profilbild hochladen</span>
+                    <input type="file" id="avatar-file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="uploadAvatar()">
+                </label>
+            </div>
+            <div id="avatar-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+
+            <div>
+                <label class="block text-sm mb-1" data-i18n="settings.name">Name</label>
+                <input type="text" id="field-full-name"
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            </div>
+            <div id="profile-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <button onclick="saveProfile()"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                <span data-i18n="settings.saveName">Name speichern</span>
             </button>
         </div>
 
         <!-- Account / login email -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Konto</h3>
+            <h3 class="text-lg font-bold" data-i18n="settings.accountTitle">Konto</h3>
             <div>
-                <label class="block text-sm mb-1">E-Mail (zum Anmelden)</label>
+                <label class="block text-sm mb-1" data-i18n="settings.email">E-Mail (zum Anmelden)</label>
                 <input type="email" id="field-email"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div>
-                <label class="block text-sm mb-1">Aktuelles Passwort (zur Bestätigung)</label>
+                <label class="block text-sm mb-1" data-i18n="settings.currentPasswordConfirm">Aktuelles Passwort (zur Bestätigung)</label>
                 <input type="password" id="field-email-password" autocomplete="current-password"
                        class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
             </div>
             <div id="email-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="saveEmail()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                E-Mail ändern
+                <span data-i18n="settings.changeEmail">E-Mail ändern</span>
+            </button>
+        </div>
+
+        <!-- Password change -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="settings.passwordTitle">Passwort ändern</h3>
+            <div>
+                <label class="block text-sm mb-1" data-i18n="settings.currentPassword">Aktuelles Passwort</label>
+                <input type="password" id="field-current-password" autocomplete="current-password"
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-sm mb-1" data-i18n="settings.newPassword">Neues Passwort</label>
+                <input type="password" id="field-new-password" autocomplete="new-password" minlength="8"
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                <p class="text-xs text-slate-400 mt-1" data-i18n="settings.minChars">Mindestens 8 Zeichen</p>
+            </div>
+            <div>
+                <label class="block text-sm mb-1" data-i18n="settings.confirmNewPassword">Neues Passwort bestätigen</label>
+                <input type="password" id="field-new-password-confirm" autocomplete="new-password"
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            </div>
+            <div id="password-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <button onclick="savePassword()"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                <span data-i18n="settings.changePassword">Passwort ändern</span>
             </button>
         </div>
 
         <!-- Print mode -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Druckmodus</h3>
-            <p class="text-slate-500 text-sm">
+            <h3 class="text-lg font-bold" data-i18n="settings.printModeTitle">Druckmodus</h3>
+            <p class="text-slate-500 text-sm" data-i18n="settings.printModeDesc">
                 Bestimmt, wie Versandetiketten für neue Bestellungen gedruckt werden.
             </p>
 
             <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="DASHBOARD_MANUAL" class="mt-1">
                 <span>
-                    <span class="font-semibold">Manuell im Dashboard</span>
-                    <span class="block text-slate-500 text-sm">Du klickst pro Bestellung selbst auf "Etikett drucken" (aktuell die einzige vollständig funktionierende Option).</span>
+                    <span class="font-semibold" data-i18n="settings.modeManualTitle">Manuell im Dashboard</span>
+                    <span class="block text-slate-500 text-sm" data-i18n="settings.modeManualDesc">Du klickst pro Bestellung selbst auf "Etikett drucken" (aktuell die einzige vollständig funktionierende Option).</span>
                 </span>
             </label>
 
             <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="INSTANT" class="mt-1">
                 <span>
-                    <span class="font-semibold">Sofort automatisch</span>
-                    <span class="block text-slate-500 text-sm">Etiketten sollen sofort bei Eingang einer Bestellung gedruckt werden.</span>
-                    <span class="block text-amber-600 text-xs mt-1">⚠ Hinweis: Diese Automatik ist im Backend noch nicht umgesetzt. Bestellungen müssen aktuell auch in diesem Modus manuell über "Etikett drucken" ausgelöst werden.</span>
+                    <span class="font-semibold" data-i18n="settings.modeInstantTitle">Sofort automatisch</span>
+                    <span class="block text-slate-500 text-sm" data-i18n="settings.modeInstantDesc">Etiketten sollen sofort bei Eingang einer Bestellung gedruckt werden.</span>
+                    <span class="block text-amber-600 text-xs mt-1" data-i18n="settings.modeInstantWarning">⚠ Hinweis: Diese Automatik ist im Backend noch nicht umgesetzt. Bestellungen müssen aktuell auch in diesem Modus manuell über "Etikett drucken" ausgelöst werden.</span>
                 </span>
             </label>
 
             <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="INTEGRATED" class="mt-1">
                 <span>
-                    <span class="font-semibold">Kombiniert (Etikett + Kommissionierzettel)</span>
-                    <span class="block text-slate-500 text-sm">Ein PDF aus Versandetikett und Kommissionierzettel (Produktfoto, Name, Lagerplatz).</span>
-                    <span class="block text-amber-600 text-xs mt-1">⚠ Hinweis: Diese PDF-Zusammenführung ist noch nicht gebaut. Solange dieser Modus aktiv ist, lehnt "Etikett drucken" jeden Druckversuch ab.</span>
+                    <span class="font-semibold" data-i18n="settings.modeIntegratedTitle">Kombiniert (Etikett + Kommissionierzettel)</span>
+                    <span class="block text-slate-500 text-sm" data-i18n="settings.modeIntegratedDesc">Ein PDF aus Versandetikett und Kommissionierzettel (Produktfoto, Name, Lagerplatz).</span>
+                    <span class="block text-amber-600 text-xs mt-1" data-i18n="settings.modeIntegratedWarning">⚠ Hinweis: Diese PDF-Zusammenführung ist noch nicht gebaut. Solange dieser Modus aktiv ist, lehnt "Etikett drucken" jeden Druckversuch ab.</span>
                 </span>
             </label>
 
             <div id="mode-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="savePrintMode()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                Druckmodus speichern
+                <span data-i18n="settings.savePrintMode">Druckmodus speichern</span>
             </button>
         </div>
+
+        <!-- Default package size, used as a fallback for shipping labels -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="settings.packageTitle">Standard-Paketgröße</h3>
+            <p class="text-slate-500 text-sm" data-i18n="settings.packageDesc">Wird für Versandetiketten verwendet, wenn ein Produkt keine eigene Paketgröße hat.</p>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="products.weight">Gewicht (kg)</label>
+                    <input type="number" step="0.001" min="0.001" id="field-default-weight"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="products.length">Länge (cm)</label>
+                    <input type="number" step="1" min="1" id="field-default-length"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="products.width">Breite (cm)</label>
+                    <input type="number" step="1" min="1" id="field-default-width"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="products.height">Höhe (cm)</label>
+                    <input type="number" step="1" min="1" id="field-default-height"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+            </div>
+
+            <div id="package-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <button onclick="saveDefaultPackage()"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                <span data-i18n="settings.save">Speichern</span>
+            </button>
+        </div>
+
+        <!-- DHL shipping account connection -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="settings.dhlTitle">DHL-Versand</h3>
+            <p class="text-slate-500 text-sm" id="dhl-desc" data-i18n="settings.dhlLoading">Status wird geladen...</p>
+            <p class="text-amber-600 text-xs" data-i18n="settings.dhlPhase1Notice">Hinweis: Aktuell werden nur die Zugangsdaten gespeichert. Der automatische Etikettenkauf über DHL wird in einem nächsten Schritt freigeschaltet.</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlBillingNumber">Abrechnungsnummer (EKP)</label>
+                    <input type="text" id="dhl-billing-number"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div></div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlUsername">DHL-Benutzername</label>
+                    <input type="text" id="dhl-username" autocomplete="off"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlPassword">DHL-Passwort</label>
+                    <input type="password" id="dhl-password" autocomplete="new-password"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+            </div>
+
+            <h4 class="text-sm font-semibold text-slate-600 pt-2" data-i18n="settings.dhlSenderTitle">Absenderadresse (auf dem Etikett)</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlSenderName">Name / Firma</label>
+                    <input type="text" id="dhl-sender-name"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlSenderStreet">Straße und Hausnummer</label>
+                    <input type="text" id="dhl-sender-street"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlSenderZip">PLZ</label>
+                    <input type="text" id="dhl-sender-zip"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlSenderCity">Ort</label>
+                    <input type="text" id="dhl-sender-city"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-i18n="settings.dhlSenderCountry">Land (Ländercode)</label>
+                    <input type="text" id="dhl-sender-country" maxlength="2" value="DE"
+                           class="w-24 p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none uppercase">
+                </div>
+            </div>
+
+            <div id="dhl-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <div class="flex items-center gap-3">
+                <button id="dhl-connect-btn" onclick="connectDhl()"
+                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                    <span data-i18n="settings.dhlConnect">DHL verbinden</span>
+                </button>
+                <button id="dhl-disconnect-btn" onclick="disconnectDhl()" hidden
+                        class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded transition">
+                    <span data-i18n="settings.dhlDisconnect">DHL-Verbindung trennen</span>
+                </button>
+            </div>
+        </div>
     </main>
+    </div>
+    </div>
 
     <script>
         const API_URL = "https://express-print-saas.onrender.com";
@@ -145,22 +395,39 @@
         }
 
 
-        async function injectAdminLink() {
+        function applySidebarProfile(me) {
+            const nameEl = document.getElementById("sidebar-user-name");
+            const emailEl = document.getElementById("sidebar-user-email");
+            const avatarImg = document.getElementById("sidebar-avatar-img");
+            const avatarInitial = document.getElementById("sidebar-avatar-initial");
+            if (nameEl) nameEl.innerText = me.full_name || me.email;
+            if (emailEl) emailEl.innerText = me.email;
+            if (me.avatar_url) {
+                avatarImg.src = me.avatar_url;
+                avatarImg.classList.remove("hidden");
+                avatarInitial.classList.add("hidden");
+            } else {
+                avatarInitial.innerText = (me.full_name || me.email || "?").trim().charAt(0).toUpperCase();
+            }
+        }
+
+        async function loadSidebarProfile() {
             try {
                 const response = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
                 if (!response.ok) return;
                 const me = await response.json();
+                applySidebarProfile(me);
                 if (!me.is_superadmin) return;
 
-                const desktopLogout = document.querySelector('nav .hidden.md\\:flex button[onclick="logout()"]');
+                const desktopLogout = document.querySelector('aside button[onclick="logout()"]');
                 const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
-                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition">Admin</a>');
-                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="block px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">Admin</a>');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
+                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
             } catch (err) {
-                // Non-critical - regular tenants simply never see this link.
+                // Non-critical - sidebar profile info and the admin link just don't show.
             }
         }
-        injectAdminLink();
+        loadSidebarProfile();
 
         function logout() {
             localStorage.removeItem("access_token");
@@ -182,11 +449,29 @@
 
                 document.getElementById("field-company-name").value = data.company_name || "";
                 document.getElementById("field-country").value = data.country_code || "";
+                document.getElementById("field-default-weight").value = data.default_package_weight_kg != null ? Number(data.default_package_weight_kg) : "";
+                document.getElementById("field-default-length").value = data.default_package_length_cm ?? "";
+                document.getElementById("field-default-width").value = data.default_package_width_cm ?? "";
+                document.getElementById("field-default-height").value = data.default_package_height_cm ?? "";
 
                 const radio = document.querySelector(`input[name="print-mode"][value="${data.print_mode}"]`);
                 if (radio) radio.checked = true;
             } catch (err) {
-                showBanner("Einstellungen konnten nicht geladen werden. Bitte Seite neu laden.", true);
+                showBanner(t("settings.loadError"), true);
+            }
+        }
+
+        function applyAvatar(data) {
+            const img = document.getElementById("avatar-preview");
+            const initial = document.getElementById("avatar-preview-initial");
+            if (data.avatar_url) {
+                img.src = data.avatar_url;
+                img.classList.remove("hidden");
+                initial.classList.add("hidden");
+            } else {
+                img.classList.add("hidden");
+                initial.classList.remove("hidden");
+                initial.innerText = (data.full_name || data.email || "?").trim().charAt(0).toUpperCase();
             }
         }
 
@@ -196,8 +481,137 @@
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
                 document.getElementById("field-email").value = data.email || "";
+                document.getElementById("field-full-name").value = data.full_name || "";
+                applyAvatar(data);
             } catch (err) {
-                // Non-critical - the field just starts empty if this fails.
+                // Non-critical - the fields just start empty if this fails.
+            }
+        }
+
+        async function uploadAvatar() {
+            const fileInput = document.getElementById("avatar-file");
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const errorBox = document.getElementById("avatar-error");
+            errorBox.classList.add("hidden");
+
+            const label = document.getElementById("avatar-upload-label");
+            label.removeAttribute("data-i18n");
+            label.innerText = t("settings.uploadingAvatar");
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me/avatar`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: formData,
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("settings.avatarUploadFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                applyAvatar(data);
+                showBanner(t("settings.avatarUpdated"), false);
+            } catch (err) {
+                errorBox.innerText = t("settings.serverErrorRetry");
+                errorBox.classList.remove("hidden");
+            } finally {
+                label.setAttribute("data-i18n", "settings.uploadAvatar");
+                label.innerText = t("settings.uploadAvatar");
+                fileInput.value = "";
+            }
+        }
+
+        async function saveProfile() {
+            const errorBox = document.getElementById("profile-error");
+            errorBox.classList.add("hidden");
+
+            const fullName = document.getElementById("field-full-name").value.trim();
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me/profile`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ full_name: fullName || null }),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("settings.saveFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                showBanner(t("settings.nameSaved"), false);
+            } catch (err) {
+                errorBox.innerText = t("settings.serverErrorRetry");
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function savePassword() {
+            const errorBox = document.getElementById("password-error");
+            errorBox.classList.add("hidden");
+
+            const currentPassword = document.getElementById("field-current-password").value;
+            const newPassword = document.getElementById("field-new-password").value;
+            const confirmPassword = document.getElementById("field-new-password-confirm").value;
+
+            if (!currentPassword || !newPassword) {
+                errorBox.innerText = t("settings.passwordRequired");
+                errorBox.classList.remove("hidden");
+                return;
+            }
+            if (newPassword.length < 8) {
+                errorBox.innerText = t("settings.passwordTooShort");
+                errorBox.classList.remove("hidden");
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                errorBox.innerText = t("settings.passwordMismatch");
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me/password`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+                });
+
+                if (response.status === 401) {
+                    errorBox.innerText = t("settings.currentPasswordWrong");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("settings.changeFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                document.getElementById("field-current-password").value = "";
+                document.getElementById("field-new-password").value = "";
+                document.getElementById("field-new-password-confirm").value = "";
+                showBanner(t("settings.passwordChanged"), false);
+            } catch (err) {
+                errorBox.innerText = t("settings.serverErrorRetry");
+                errorBox.classList.remove("hidden");
             }
         }
 
@@ -209,7 +623,7 @@
             const password = document.getElementById("field-email-password").value;
 
             if (!email || !password) {
-                errorBox.innerText = "Bitte E-Mail und aktuelles Passwort eingeben.";
+                errorBox.innerText = t("settings.emailPasswordRequired");
                 errorBox.classList.remove("hidden");
                 return;
             }
@@ -222,7 +636,7 @@
                 });
 
                 if (response.status === 401) {
-                    errorBox.innerText = "Passwort ist falsch.";
+                    errorBox.innerText = t("settings.passwordWrong");
                     errorBox.classList.remove("hidden");
                     return;
                 }
@@ -230,15 +644,15 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.innerText = data.detail || "Ändern fehlgeschlagen.";
+                    errorBox.innerText = data.detail || t("settings.changeFailed");
                     errorBox.classList.remove("hidden");
                     return;
                 }
 
                 document.getElementById("field-email-password").value = "";
-                showBanner("E-Mail-Adresse geändert. Bitte merke sie dir für die nächste Anmeldung.", false);
+                showBanner(t("settings.emailChanged"), false);
             } catch (err) {
-                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.innerText = t("settings.serverErrorRetry");
                 errorBox.classList.remove("hidden");
             }
         }
@@ -251,12 +665,12 @@
             const countryCode = document.getElementById("field-country").value.trim().toUpperCase();
 
             if (!companyName) {
-                errorBox.innerText = "Bitte einen Firmennamen eingeben.";
+                errorBox.innerText = t("settings.companyNameRequired");
                 errorBox.classList.remove("hidden");
                 return;
             }
             if (countryCode.length !== 2) {
-                errorBox.innerText = "Bitte einen zweistelligen Ländercode eingeben (z.B. DE).";
+                errorBox.innerText = t("settings.countryCodeInvalid");
                 errorBox.classList.remove("hidden");
                 return;
             }
@@ -273,14 +687,58 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.innerText = data.detail || t("settings.saveFailed");
                     errorBox.classList.remove("hidden");
                     return;
                 }
 
-                showBanner("Unternehmensdaten gespeichert.", false);
+                showBanner(t("settings.companySaved"), false);
             } catch (err) {
-                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.innerText = t("settings.serverErrorRetry");
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function saveDefaultPackage() {
+            const errorBox = document.getElementById("package-error");
+            errorBox.classList.add("hidden");
+
+            const weight = Number(document.getElementById("field-default-weight").value);
+            const length = Number(document.getElementById("field-default-length").value);
+            const width = Number(document.getElementById("field-default-width").value);
+            const height = Number(document.getElementById("field-default-height").value);
+
+            if (!weight || weight <= 0 || !length || length <= 0 || !width || width <= 0 || !height || height <= 0) {
+                errorBox.innerText = t("settings.packageFieldsRequired");
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/tenants/me`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({
+                        default_package_weight_kg: weight,
+                        default_package_length_cm: length,
+                        default_package_width_cm: width,
+                        default_package_height_cm: height,
+                    }),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("settings.saveFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                showBanner(t("settings.packageSaved"), false);
+            } catch (err) {
+                errorBox.innerText = t("settings.serverErrorRetry");
                 errorBox.classList.remove("hidden");
             }
         }
@@ -291,7 +749,7 @@
 
             const selected = document.querySelector('input[name="print-mode"]:checked');
             if (!selected) {
-                errorBox.innerText = "Bitte einen Druckmodus auswählen.";
+                errorBox.innerText = t("settings.printModeRequired");
                 errorBox.classList.remove("hidden");
                 return;
             }
@@ -308,20 +766,135 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.innerText = data.detail || t("settings.saveFailed");
                     errorBox.classList.remove("hidden");
                     return;
                 }
 
-                showBanner("Druckmodus gespeichert.", false);
+                showBanner(t("settings.printModeSaved"), false);
             } catch (err) {
-                errorBox.innerText = "Server nicht erreichbar. Bitte erneut versuchen.";
+                errorBox.innerText = t("settings.serverErrorRetry");
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        let dhlStatus = undefined;
+
+        function renderDhlStatus() {
+            if (dhlStatus === undefined) return;
+            const descEl = document.getElementById("dhl-desc");
+            const disconnectBtn = document.getElementById("dhl-disconnect-btn");
+            descEl.removeAttribute("data-i18n");
+
+            if (dhlStatus) {
+                descEl.innerText = `${t("settings.dhlConnected")} ${dhlStatus.billing_number || "—"}`;
+                disconnectBtn.hidden = false;
+            } else {
+                descEl.innerText = t("settings.dhlNotConnected");
+                disconnectBtn.hidden = true;
+            }
+        }
+        document.addEventListener("langchange", renderDhlStatus);
+
+        async function loadDhlStatus() {
+            try {
+                const response = await fetch(`${API_URL}/dhl/status`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                dhlStatus = data;
+                if (data) {
+                    document.getElementById("dhl-billing-number").value = data.billing_number || "";
+                    document.getElementById("dhl-sender-name").value = data.sender_name || "";
+                    document.getElementById("dhl-sender-street").value = data.sender_street || "";
+                    document.getElementById("dhl-sender-zip").value = data.sender_zip || "";
+                    document.getElementById("dhl-sender-city").value = data.sender_city || "";
+                    document.getElementById("dhl-sender-country").value = data.sender_country || "DE";
+                }
+                renderDhlStatus();
+            } catch (err) {
+                const descEl = document.getElementById("dhl-desc");
+                descEl.removeAttribute("data-i18n");
+                descEl.innerText = t("settings.serverErrorRetry");
+            }
+        }
+
+        async function connectDhl() {
+            const errorBox = document.getElementById("dhl-error");
+            errorBox.classList.add("hidden");
+
+            const payload = {
+                billing_number: document.getElementById("dhl-billing-number").value.trim(),
+                api_username: document.getElementById("dhl-username").value.trim(),
+                api_password: document.getElementById("dhl-password").value,
+                sender_name: document.getElementById("dhl-sender-name").value.trim(),
+                sender_street: document.getElementById("dhl-sender-street").value.trim(),
+                sender_zip: document.getElementById("dhl-sender-zip").value.trim(),
+                sender_city: document.getElementById("dhl-sender-city").value.trim(),
+                sender_country: document.getElementById("dhl-sender-country").value.trim().toUpperCase() || "DE",
+            };
+
+            if (!payload.billing_number || !payload.api_username || !payload.api_password
+                || !payload.sender_name || !payload.sender_street || !payload.sender_zip || !payload.sender_city) {
+                errorBox.innerText = t("settings.dhlFieldsRequired");
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/dhl/connect`, {
+                    method: "POST",
+                    headers: authHeaders(true),
+                    body: JSON.stringify(payload),
+                });
+
+                if (response.status === 401) { logout(); return; }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("settings.dhlConnectFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                document.getElementById("dhl-password").value = "";
+                dhlStatus = data;
+                renderDhlStatus();
+                showBanner(t("settings.dhlConnectSuccess"), false);
+            } catch (err) {
+                errorBox.innerText = t("settings.serverErrorRetry");
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        async function disconnectDhl() {
+            const errorBox = document.getElementById("dhl-error");
+            errorBox.classList.add("hidden");
+
+            try {
+                const response = await fetch(`${API_URL}/dhl/disconnect`, { method: "POST", headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+
+                if (!response.ok) {
+                    errorBox.innerText = t("settings.dhlDisconnectFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                document.getElementById("dhl-username").value = "";
+                document.getElementById("dhl-password").value = "";
+                dhlStatus = null;
+                renderDhlStatus();
+                showBanner(t("settings.dhlDisconnectSuccess"), false);
+            } catch (err) {
+                errorBox.innerText = t("settings.serverErrorRetry");
                 errorBox.classList.remove("hidden");
             }
         }
 
         loadTenant();
         loadAccount();
+        loadDhlStatus();
     </script>
 </body>
 </html>

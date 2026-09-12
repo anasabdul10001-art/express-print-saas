@@ -1,9 +1,11 @@
 """
-Admin-editable static content pages (Impressum, AGB, FAQ, etc.) - one row
-per page, addressed by a fixed slug. Unlike Plan, new slugs are defined in
-code (see app/content/site_pages.py) and a row is lazily created with
-default content the first time anyone requests it (public visit or admin
-panel), so a fresh deployment needs no separate seed script.
+Simple admin-editable content pages ("Über uns", "Richtlinien", "Kontakt")
+shown publicly on the marketing site. Deliberately NOT a general-purpose CMS
+with arbitrary slugs - see DEFAULT_SITE_PAGES in app/routers/plans.py for
+the fixed, known set this supports. content is plain text (paragraphs
+separated by a blank line, rendered/escaped on the frontend) rather than
+HTML, so there's no stored-XSS surface even though only the trusted
+Super Admin can ever write to it.
 """
 
 import uuid
@@ -19,9 +21,8 @@ class SitePage(Base):
     __tablename__ = "site_pages"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    slug = Column(String(50), unique=True, nullable=False, index=True)
-    title = Column(String(200), nullable=False)
-    content = Column(Text, nullable=False)  # raw HTML, rendered inside a `.prose` container
+    slug = Column(String(50), nullable=False, unique=True)
+    title = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
