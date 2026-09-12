@@ -126,6 +126,35 @@
             <div id="plans-empty" class="hidden text-slate-500 text-sm">Noch keine Pläne angelegt.</div>
             <div id="plans-list" class="space-y-3"></div>
         </div>
+
+        <!-- Content pages -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <div>
+                <h3 class="text-lg font-bold">Inhaltsseiten</h3>
+                <p class="text-slate-500 text-sm mt-1">Rechtliches, Unternehmen, Support und Wachstumsseiten der öffentlichen Website.</p>
+            </div>
+
+            <div id="page-form" class="hidden border border-slate-200 rounded-lg p-4 space-y-3">
+                <h4 id="page-form-title" class="font-semibold">Seite bearbeiten</h4>
+                <input type="hidden" id="page-slug">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Titel</label>
+                    <input type="text" id="page-title-input" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Inhalt (HTML)</label>
+                    <textarea id="page-content-input" rows="14" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"></textarea>
+                    <p class="text-xs text-slate-400 mt-1">Einfaches HTML (h1, h2, p, ul/li, a, strong ...) - wird auf der Seite automatisch im Lesestil formatiert.</p>
+                </div>
+                <div id="page-form-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+                <div class="flex gap-3">
+                    <button onclick="savePage()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition">Speichern</button>
+                    <button onclick="closePageForm()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2 px-4 rounded-lg transition">Abbrechen</button>
+                </div>
+            </div>
+
+            <div id="pages-list" class="space-y-6"></div>
+        </div>
     </main>
 
     <script>
@@ -175,6 +204,7 @@
                 }
                 loadSettings();
                 loadPlans();
+                loadPages();
             } catch (err) {
                 showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
             }
@@ -364,6 +394,109 @@
                 if (response.status === 403) { window.location.href = "dashboard.html"; return; }
                 const data = await response.json();
                 renderPlans(data);
+            } catch (err) {
+                showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
+            }
+        }
+
+        // Where each content-page slug lives on the public site, for the "Ansehen" link.
+        const PAGE_URLS = {
+            impressum: "../impressum.html", datenschutz: "../privacy.html", agb: "../agb.html",
+            widerruf: "../widerruf.html", cookies: "../cookies.html", about: "../about.html",
+            contact: "../contact.html", careers: "../careers.html", faq: "../faq.html",
+            help: "../help.html", status: "../status.html", changelog: "../changelog.html",
+            integrations: "../integrations.html", customers: "../customers.html",
+            partners: "../partners.html", blog: "../blog.html",
+        };
+
+        function openPageForm(page) {
+            document.getElementById("page-form").classList.remove("hidden");
+            document.getElementById("page-form-error").classList.add("hidden");
+            document.getElementById("page-form-title").innerText = `"${page.title}" bearbeiten`;
+            document.getElementById("page-slug").value = page.slug;
+            document.getElementById("page-title-input").value = page.title;
+            document.getElementById("page-content-input").value = page.content;
+            document.getElementById("page-form").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function closePageForm() {
+            document.getElementById("page-form").classList.add("hidden");
+        }
+
+        async function savePage() {
+            const errorBox = document.getElementById("page-form-error");
+            errorBox.classList.add("hidden");
+
+            const slug = document.getElementById("page-slug").value;
+            const title = document.getElementById("page-title-input").value.trim();
+            const content = document.getElementById("page-content-input").value.trim();
+
+            if (!title || !content) {
+                errorBox.innerText = "Titel und Inhalt dürfen nicht leer sein.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/admin/pages/${slug}`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ title, content }),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || "Speichern fehlgeschlagen.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                closePageForm();
+                showBanner("Seite aktualisiert.", false);
+                loadPages();
+            } catch (err) {
+                errorBox.innerText = "Server nicht erreichbar.";
+                errorBox.classList.remove("hidden");
+            }
+        }
+
+        function renderPages(pages) {
+            const list = document.getElementById("pages-list");
+            const groups = {};
+            pages.forEach(p => {
+                if (!groups[p.category]) groups[p.category] = [];
+                groups[p.category].push(p);
+            });
+
+            list.innerHTML = Object.entries(groups).map(([category, items]) => `
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">${category}</h4>
+                    <div class="space-y-2">
+                        ${items.map(p => `
+                            <div class="border border-slate-200 rounded-lg p-3 flex items-center justify-between gap-4">
+                                <div>
+                                    <span class="font-semibold text-sm">${p.title}</span>
+                                    <span class="text-slate-400 text-xs ml-2">/${p.slug}</span>
+                                </div>
+                                <div class="flex items-center gap-3 flex-shrink-0">
+                                    <a href="${PAGE_URLS[p.slug] || '#'}" target="_blank" class="text-slate-500 hover:text-slate-700 text-xs font-semibold">Ansehen</a>
+                                    <button onclick='openPageForm(${JSON.stringify(p)})' class="text-blue-600 hover:text-blue-700 text-xs font-semibold">Bearbeiten</button>
+                                </div>
+                            </div>
+                        `).join("")}
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        async function loadPages() {
+            try {
+                const response = await fetch(`${API_URL}/admin/pages`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                if (response.status === 403) { window.location.href = "dashboard.html"; return; }
+                const data = await response.json();
+                renderPages(data);
             } catch (err) {
                 showBanner("Server nicht erreichbar. Bitte Seite neu laden.", true);
             }

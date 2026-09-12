@@ -5,10 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.content.site_pages import PAGE_DEFINITIONS
 from app.core.deps import get_current_superadmin, get_db
 from app.models.plan import Plan, SiteSettings
 from app.models.user import User
+from app.routers.pages import get_or_create_page
 from app.schemas.admin import PlanCreate, PlanOut, PlanUpdate, SiteSettingsOut
+from app.schemas.site_page import SitePageAdminOut, SitePageUpdate
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -135,3 +138,41 @@ async def upload_logo(
     db.commit()
     db.refresh(settings_row)
     return settings_row
+
+
+def _page_to_admin_out(page, category: str) -> SitePageAdminOut:
+    return SitePageAdminOut(
+        slug=page.slug, title=page.title, content=page.content,
+        updated_at=page.updated_at, category=category,
+    )
+
+
+@router.get("/pages", response_model=list[SitePageAdminOut])
+def list_all_pages(
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    """Every known page slug, in a fixed order - lazily creates rows that were never opened yet."""
+    return [
+        _page_to_admin_out(get_or_create_page(db, slug), definition["category"])
+        for slug, definition in PAGE_DEFINITIONS.items()
+    ]
+
+
+@router.patch("/pages/{slug}", response_model=SitePageAdminOut)
+def update_page(
+    slug: str,
+    payload: SitePageUpdate,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    definition = PAGE_DEFINITIONS.get(slug)
+    if not definition:
+        raise HTTPException(status_code=404, detail="Seite nicht gefunden")
+
+    page = get_or_create_page(db, slug)
+    page.title = payload.title
+    page.content = payload.content
+    db.commit()
+    db.refresh(page)
+    return _page_to_admin_out(page, definition["category"])

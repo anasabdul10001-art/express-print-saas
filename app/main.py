@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import admin, auth, ebay, expenses, market_research, orders, plans, print_agents, print_jobs, products, tenants, uploads
+from app.routers import admin, auth, ebay, expenses, market_research, orders, pages, plans, print_agents, print_jobs, products, tenants, uploads
 
 app = FastAPI(title="eBay Seller SaaS API", version="0.1.0")
 
@@ -26,6 +26,7 @@ app.include_router(expenses.router)
 app.include_router(market_research.router)
 app.include_router(admin.router)
 app.include_router(plans.router)
+app.include_router(pages.router)
 
 
 @app.get("/health")
