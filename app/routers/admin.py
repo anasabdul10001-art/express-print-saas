@@ -569,6 +569,38 @@ def update_affiliate(
     return _with_referral_count(db, affiliate)
 
 
+@router.post("/affiliates/{affiliate_id}/resend-password-setup")
+def resend_affiliate_password_setup(
+    affiliate_id: str,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    """
+    Re-sends the "set your password" email - for an affiliate who never got
+    or lost the original one. Also works for an affiliate who already has a
+    password (the email just reads as a reset link instead), since there's
+    no other admin-facing way to get them a fresh link once the first one
+    has expired or gone missing.
+    """
+    affiliate = db.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
+    if not affiliate:
+        raise HTTPException(status_code=404, detail="Affiliate nicht gefunden")
+    if not affiliate.email:
+        raise HTTPException(status_code=400, detail="Dieser Affiliate hat keine E-Mail-Adresse hinterlegt.")
+
+    is_initial_setup = affiliate.password_hash is None
+    raw_token = _issue_set_password_token(db, affiliate)
+    db.commit()
+
+    set_password_link = f"{settings.frontend_url}/affiliate-set-password.html?token={raw_token}"
+    try:
+        send_affiliate_password_email(affiliate.email, set_password_link, is_initial_setup=is_initial_setup)
+    except RuntimeError as err:
+        raise HTTPException(status_code=502, detail=f"E-Mail-Versand fehlgeschlagen: {err}")
+
+    return {"message": "Link wurde erneut gesendet."}
+
+
 @router.get("/affiliates/{affiliate_id}/commissions", response_model=list[AffiliateCommissionOut])
 def list_affiliate_commissions(
     affiliate_id: str,
