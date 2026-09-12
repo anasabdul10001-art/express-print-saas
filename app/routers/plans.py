@@ -37,6 +37,16 @@ DEFAULT_SITE_PAGES = {
             "Telefon: [PLATZHALTER: Telefonnummer]"
         ),
     },
+    "faq": {
+        "title": "Häufige Fragen",
+        "content": (
+            "Frage: Wie verbinde ich mein eBay-Konto?\n"
+            "Antwort: Gehe im Dashboard auf \"Mit eBay verbinden\" und folge den Anweisungen.\n\n"
+            "Frage: Wie drucke ich ein Versandetikett?\n"
+            "Antwort: Öffne eine Bestellung in \"Bestellungen\" und klicke auf \"Etikett drucken\".\n\n"
+            "[PLATZHALTER: Weitere häufige Fragen und Antworten hier ergänzen.]"
+        ),
+    },
 }
 
 
