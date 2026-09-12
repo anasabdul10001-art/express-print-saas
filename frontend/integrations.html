@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Integrationen — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="site-logo.js"></script>
+    <script src="cookie-notice.js"></script>
+</head>
+<body class="bg-white text-slate-900 min-h-screen">
+    <nav class="bg-white border-b border-slate-200 px-6 py-4">
+        <a href="index.html" class="flex items-center gap-2 w-fit">
+            <svg class="brand-logo" width="26" height="26" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+    </nav>
+
+    <main class="max-w-3xl mx-auto p-6 py-12 space-y-4 text-slate-600 text-sm leading-relaxed">
+        <h1 id="page-title" class="text-3xl font-bold text-slate-900">Wird geladen...</h1>
+        <div id="page-content" class="space-y-4"></div>
+        <p id="page-error" class="hidden text-red-600">Seite konnte nicht geladen werden. Bitte später erneut versuchen.</p>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+        const SLUG = "integrations";
+
+        function renderContent(text) {
+            const container = document.getElementById("page-content");
+            container.innerHTML = "";
+            text.split(/\n\s*\n/).forEach(paragraph => {
+                if (!paragraph.trim()) return;
+                const p = document.createElement("p");
+                p.innerText = paragraph.trim();
+                container.appendChild(p);
+            });
+        }
+
+        async function loadPage() {
+            try {
+                const response = await fetch(`${API_URL}/pages/${SLUG}`);
+                if (!response.ok) throw new Error("failed");
+                const data = await response.json();
+                document.getElementById("page-title").innerText = data.title;
+                document.title = `${data.title} — ShipSync`;
+                renderContent(data.content);
+            } catch (err) {
+                document.getElementById("page-title").innerText = "—";
+                document.getElementById("page-error").classList.remove("hidden");
+            }
+        }
+        loadPage();
+    </script>
+</body>
+</html>

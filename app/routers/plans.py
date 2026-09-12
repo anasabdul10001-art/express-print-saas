@@ -157,6 +157,124 @@ DEFAULT_SITE_PAGES = {
             "[PLATZHALTER: Weitere häufige Fragen und Antworten hier ergänzen.]"
         ),
     },
+    "impressum": {
+        "title": "Impressum",
+        "content": (
+            "Angaben gemäß § 5 TMG\n\n"
+            "[PLATZHALTER: Vor- und Nachname bzw. Firmenname]\n"
+            "[PLATZHALTER: Straße und Hausnummer]\n"
+            "[PLATZHALTER: PLZ und Ort]\n"
+            "[PLATZHALTER: Land]\n\n"
+            "Kontakt\n\n"
+            "E-Mail: [PLATZHALTER: Kontakt-E-Mail]\n"
+            "Telefon: [PLATZHALTER: Telefonnummer]\n\n"
+            "Umsatzsteuer-ID\n\n"
+            "[PLATZHALTER: Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG, falls vorhanden]\n\n"
+            "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV\n\n"
+            "[PLATZHALTER: Name und Anschrift]\n\n"
+            "Streitschlichtung\n\n"
+            "Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) "
+            "bereit: https://ec.europa.eu/consumers/odr/. Wir sind nicht verpflichtet und nicht "
+            "bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle "
+            "teilzunehmen."
+        ),
+    },
+    "cookies": {
+        "title": "Cookie-Hinweis",
+        "content": (
+            "Diese Website verwendet ausschließlich technisch notwendige Speicherung im Browser, "
+            "die für den Betrieb und die Sicherheit des Dienstes erforderlich ist - insbesondere "
+            "zur Aufrechterhaltung deiner Anmeldesitzung und deiner Spracheinstellung.\n\n"
+            "Wir setzen keine Analyse-, Tracking- oder Werbe-Cookies Dritter ein. Weitere "
+            "Informationen findest du in unserer Datenschutzerklärung (/privacy.html)."
+        ),
+    },
+    "careers": {
+        "title": "Karriere",
+        "content": (
+            "ShipSync wächst - aktuell haben wir keine offenen Stellen ausgeschrieben, freuen "
+            "uns aber jederzeit über Initiativbewerbungen.\n\n"
+            "Warum bei uns arbeiten?\n\n"
+            "Direkter Einfluss auf ein Produkt, das echten eBay-Verkäufern täglich Zeit spart. "
+            "Kurze Entscheidungswege, keine Bürokratie. Remote-freundlich.\n\n"
+            "Interesse? Schreib uns an [PLATZHALTER: Kontakt-E-Mail] - gerne mit ein paar Zeilen "
+            "zu dir und was dich reizt."
+        ),
+    },
+    "help": {
+        "title": "Hilfe-Center",
+        "content": (
+            "Hier findest du die schnellsten Wege zu Antworten:\n\n"
+            "Häufige Fragen (/faq.html) - Antworten auf die häufigsten Fragen.\n\n"
+            "Systemstatus (/status.html) - aktueller Betriebsstatus von ShipSync.\n\n"
+            "Änderungsprotokoll (/changelog.html) - was sich zuletzt geändert hat.\n\n"
+            "Direkter E-Mail-Support: [PLATZHALTER: Kontakt-E-Mail] - für alles, was hier nicht "
+            "beantwortet wird."
+        ),
+    },
+    "status": {
+        "title": "Systemstatus",
+        "content": (
+            "Alle Systeme funktionieren normal.\n\n"
+            "Diese Seite wird manuell durch das ShipSync-Team aktualisiert. Bei größeren "
+            "Störungen informieren wir hier sowie per E-Mail an betroffene Nutzer.\n\n"
+            "Komponenten: API & Dashboard - Betriebsbereit. eBay-Synchronisierung - "
+            "Betriebsbereit. Print-Agent-Verbindungen - Betriebsbereit.\n\n"
+            "Hinweis: Der API-Server läuft im Free Tier von Render und kann nach Inaktivität "
+            "einige Sekunden zum Aufwachen benötigen - das ist kein Ausfall."
+        ),
+    },
+    "changelog": {
+        "title": "Änderungsprotokoll",
+        "content": (
+            "[PLATZHALTER: Diese Seite über die Seitenverwaltung im Super-Admin-Bereich laufend "
+            "mit den jeweils neuesten Änderungen aktualisieren.]\n\n"
+            "Bald verfügbar: weitere Marktplatz-Integrationen, erweiterte "
+            "Marktrecherche-Funktionen."
+        ),
+    },
+    "integrations": {
+        "title": "Integrationen",
+        "content": (
+            "ShipSync verbindet sich direkt mit den Werkzeugen, die du als eBay-Verkäufer "
+            "bereits nutzt.\n\n"
+            "Verfügbar: eBay (automatische Synchronisierung deiner Bestellungen über die "
+            "offizielle eBay-API), DHL (Versandetiketten direkt aus ShipSync), lokale "
+            "Etikettendrucker über den ShipSync-Print-Agent.\n\n"
+            "Geplant: weitere Marktplatz- und Buchhaltungs-Integrationen. Wünsche? Schreib uns "
+            "an [PLATZHALTER: Kontakt-E-Mail]."
+        ),
+    },
+    "customers": {
+        "title": "Erfolgsgeschichten",
+        "content": (
+            "[PLATZHALTER: Platzhalter-Inhalt - hier können echte Kundenstimmen ergänzt werden, "
+            "sobald verfügbar.]\n\n"
+            "\"ShipSync hat uns pro Tag mehrere Stunden manuellen Etikettendruck erspart.\" - "
+            "[PLATZHALTER: Kundenname, Unternehmen]\n\n"
+            "Bist du Kunde und möchtest deine Geschichte teilen? Schreib uns an "
+            "[PLATZHALTER: Kontakt-E-Mail]."
+        ),
+    },
+    "partners": {
+        "title": "Partnerprogramm",
+        "content": (
+            "Du berätst eBay-Verkäufer oder betreibst eine Agentur im E-Commerce-Umfeld? Als "
+            "ShipSync-Partner empfiehlst du unseren Dienst weiter und profitierst davon.\n\n"
+            "Wie es funktioniert: Du empfiehlst ShipSync an deine Kunden oder dein Netzwerk, "
+            "wir stimmen die Konditionen individuell mit dir ab.\n\n"
+            "Interesse? Melde dich unter [PLATZHALTER: Kontakt-E-Mail] - wir melden uns zeitnah "
+            "zurück."
+        ),
+    },
+    "blog": {
+        "title": "Blog",
+        "content": (
+            "[PLATZHALTER: Der Blog startet in Kürze.]\n\n"
+            "Hier werden künftig Tipps rund um eBay-Verkauf, Versand und Lagerverwaltung sowie "
+            "Produkt-Neuigkeiten geteilt."
+        ),
+    },
 }
 
 
