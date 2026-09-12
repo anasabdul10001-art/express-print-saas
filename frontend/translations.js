@@ -659,6 +659,8 @@ window.TRANSLATIONS = {
         "admin.affiliatePayoutRecorded": "Auszahlung erfasst.",
         "admin.affiliateLedgerLoading": "Wird geladen...",
         "admin.affiliateLedgerEmpty": "Noch keine Provisionen.",
+        "admin.affiliateResendPasswordLink": "Link erneut senden",
+        "admin.affiliatePasswordLinkResent": "Link wurde erneut gesendet.",
 
         "admin.pagesTitle": "Seiteninhalte",
         "admin.pagesDesc": "Diese Texte erscheinen öffentlich auf der Website (verlinkt in der Fußzeile der Startseite).",
@@ -1340,6 +1342,8 @@ window.TRANSLATIONS = {
         "admin.affiliatePayoutRecorded": "Payout recorded.",
         "admin.affiliateLedgerLoading": "Loading...",
         "admin.affiliateLedgerEmpty": "No commissions yet.",
+        "admin.affiliateResendPasswordLink": "Resend link",
+        "admin.affiliatePasswordLinkResent": "Link has been resent.",
 
         "admin.pagesTitle": "Page content",
         "admin.pagesDesc": "This text appears publicly on the website (linked in the homepage footer).",

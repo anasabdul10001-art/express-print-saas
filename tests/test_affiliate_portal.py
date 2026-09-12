@@ -178,6 +178,60 @@ def test_disabled_affiliate_cannot_login(client, register):
     assert response.status_code == 403
 
 
+def test_resend_password_setup_requires_superadmin(client, register):
+    headers, _ = register(email="notadmin@example.com")
+    response = client.post(f"/admin/affiliates/{uuid.uuid4()}/resend-password-setup", headers=headers)
+    assert response.status_code == 403
+
+
+def test_resend_password_setup_404_for_unknown_affiliate(client, register):
+    admin_headers, _ = register(email="portaladmin10@example.com")
+    _make_superadmin(admin_headers, client)
+
+    response = client.post(f"/admin/affiliates/{uuid.uuid4()}/resend-password-setup", headers=admin_headers)
+    assert response.status_code == 404
+
+
+def test_resend_password_setup_rejects_affiliate_without_email(client, register):
+    admin_headers, _ = register(email="portaladmin11@example.com")
+    _make_superadmin(admin_headers, client)
+    created = client.post("/admin/affiliates", headers=admin_headers, json={
+        "name": "No Email Partner", "commission_type": "FLAT_ONE_TIME", "commission_value": 10,
+    })
+    assert created.status_code == 201
+
+    response = client.post(f"/admin/affiliates/{created.json()['id']}/resend-password-setup", headers=admin_headers)
+    assert response.status_code == 400
+
+
+def test_resend_password_setup_issues_a_new_token(client, register):
+    """
+    No RESEND_API_KEY is configured in this test environment, so the email
+    step itself always fails here (502) - same as every other email-sending
+    endpoint in this test suite (see the module docstring and
+    test_affiliates.py). What matters is that a fresh token is issued
+    (committed) before that failure, so the admin's retry is never a no-op.
+    """
+    admin_headers, _ = register(email="portaladmin12@example.com")
+    _make_superadmin(admin_headers, client)
+    affiliate = _create_affiliate(client, admin_headers, "resendme@example.com")
+
+    engine = create_engine(settings.database_url)
+    with engine.begin() as conn:
+        before = conn.execute(
+            text("SELECT COUNT(*) FROM affiliate_password_tokens WHERE affiliate_id = :id"), {"id": affiliate["id"]}
+        ).scalar()
+
+    response = client.post(f"/admin/affiliates/{affiliate['id']}/resend-password-setup", headers=admin_headers)
+    assert response.status_code == 502
+
+    with engine.begin() as conn:
+        after = conn.execute(
+            text("SELECT COUNT(*) FROM affiliate_password_tokens WHERE affiliate_id = :id"), {"id": affiliate["id"]}
+        ).scalar()
+    assert after == before + 1
+
+
 def test_affiliate_sees_only_own_commissions_and_payouts(client, register):
     admin_headers, _ = register(email="portaladmin8@example.com")
     _make_superadmin(admin_headers, client)

@@ -1174,6 +1174,7 @@
                         <button onclick='toggleAffiliateStatus(${JSON.stringify(a.id)}, ${JSON.stringify(a.status)})' class="text-slate-600 hover:text-slate-900 font-semibold">${a.status === "ACTIVE" ? t("admin.affiliateDisable") : t("admin.affiliateEnable")}</button>
                         <button onclick='recordAffiliatePayout(${JSON.stringify(a.id)}, ${JSON.stringify(String(a.balance_owed))})' class="text-blue-600 hover:text-blue-700 font-semibold">${t("admin.affiliateRecordPayout")}</button>
                         <button onclick='showAffiliateCommissions(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)})' class="text-slate-600 hover:text-slate-900 font-semibold">${t("admin.affiliateViewLedger")}</button>
+                        ${a.email ? `<button onclick='resendAffiliatePasswordSetup(${JSON.stringify(a.id)})' class="text-blue-600 hover:text-blue-700 font-semibold">${t("admin.affiliateResendPasswordLink")}</button>` : ""}
                     </div>
                     <div id="affiliate-ledger-${a.id}" class="hidden border-t border-slate-100 pt-2 text-xs space-y-1"></div>
                 </div>
@@ -1237,6 +1238,24 @@
                 }
                 showBanner(t("admin.affiliatePayoutRecorded"), false);
                 loadAffiliates();
+            } catch (err) {
+                showBanner(t("admin.serverError"), true);
+            }
+        }
+
+        async function resendAffiliatePasswordSetup(affiliateId) {
+            try {
+                const response = await fetch(`${API_URL}/admin/affiliates/${affiliateId}/resend-password-setup`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) {
+                    showBanner(data.detail || t("admin.saveFailed"), true);
+                    return;
+                }
+                showBanner(t("admin.affiliatePasswordLinkResent"), false);
             } catch (err) {
                 showBanner(t("admin.serverError"), true);
             }
