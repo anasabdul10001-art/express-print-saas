@@ -32,11 +32,7 @@ def trial_expired(tenant: Tenant | None) -> bool:
     return tenant is not None and tenant.trial_ends_at is not None and tenant.trial_ends_at < datetime.now(timezone.utc)
 
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    """Authenticates a human user (dashboard/API) via JWT bearer token."""
+def _authenticate_user(token: str, db: Session) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -54,6 +50,16 @@ def get_current_user(
     if user is None or not user.is_active:
         raise credentials_exception
 
+    return user
+
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    """Authenticates a human user (dashboard/API) via JWT bearer token."""
+    user = _authenticate_user(token, db)
+
     # Superadmins run the platform - a trial deadline on their own tenant
     # (if they even have one) never applies to them.
     if not user.is_superadmin:
@@ -62,6 +68,19 @@ def get_current_user(
             raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=TRIAL_EXPIRED_DETAIL)
 
     return user
+
+
+def get_current_user_ignoring_trial(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    """
+    Same authentication as get_current_user but WITHOUT the trial-expiry
+    block - used only by the billing endpoints (app/routers/billing.py),
+    since paying is the one thing a trial-expired tenant must still be able
+    to do.
+    """
+    return _authenticate_user(token, db)
 
 
 def get_current_superadmin(current_user: User = Depends(get_current_user)) -> User:

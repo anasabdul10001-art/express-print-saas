@@ -154,6 +154,25 @@
             </button>
         </div>
 
+        <!-- Subscription (Stripe) -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="settings.subscriptionTitle">Abonnement</h3>
+            <div class="text-sm space-y-1">
+                <p><span class="text-slate-400" data-i18n="settings.subscriptionPlan">Plan:</span> <span id="subscription-plan-name">—</span></p>
+                <p id="subscription-trial-line" class="hidden"><span class="text-slate-400" data-i18n="settings.subscriptionTrialEnds">Testphase endet am:</span> <span id="subscription-trial-date"></span></p>
+                <p id="subscription-status-line" class="hidden"><span class="text-slate-400" data-i18n="settings.subscriptionStatus">Status:</span> <span id="subscription-status-value"></span></p>
+            </div>
+            <div id="subscription-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <div class="flex gap-3 flex-wrap">
+                <button id="subscription-manage-btn" onclick="openBillingPortal()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-900 font-semibold text-sm py-2 px-4 rounded-lg transition">
+                    <span data-i18n="settings.subscriptionManage">Abo verwalten</span>
+                </button>
+                <a href="../pricing.html" id="subscription-choose-link" class="hidden bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition">
+                    <span data-i18n="settings.subscriptionChoosePlan">Plan wählen</span>
+                </a>
+            </div>
+        </div>
+
         <!-- Profile: picture + name -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 class="text-lg font-bold" data-i18n="settings.profileTitle">Profil</h3>
@@ -456,8 +475,53 @@
 
                 const radio = document.querySelector(`input[name="print-mode"][value="${data.print_mode}"]`);
                 if (radio) radio.checked = true;
+
+                document.getElementById("subscription-plan-name").innerText = data.plan_name || t("settings.subscriptionNoPlan");
+
+                const trialLine = document.getElementById("subscription-trial-line");
+                if (data.trial_ends_at && data.subscription_status !== "active") {
+                    document.getElementById("subscription-trial-date").innerText = new Date(data.trial_ends_at).toLocaleDateString();
+                    trialLine.classList.remove("hidden");
+                } else {
+                    trialLine.classList.add("hidden");
+                }
+
+                const statusLine = document.getElementById("subscription-status-line");
+                if (data.subscription_status) {
+                    document.getElementById("subscription-status-value").innerText = data.subscription_status;
+                    statusLine.classList.remove("hidden");
+                } else {
+                    statusLine.classList.add("hidden");
+                }
+
+                // "Manage" (Stripe portal) once they've ever checked out;
+                // otherwise point them at the pricing page to pick a plan.
+                document.getElementById("subscription-manage-btn").classList.toggle("hidden", data.subscription_status !== "active");
+                document.getElementById("subscription-choose-link").classList.toggle("hidden", data.subscription_status === "active");
             } catch (err) {
                 showBanner(t("settings.loadError"), true);
+            }
+        }
+
+        async function openBillingPortal() {
+            const errorBox = document.getElementById("subscription-error");
+            errorBox.classList.add("hidden");
+            try {
+                const response = await fetch(`${API_URL}/billing/portal-session`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("settings.subscriptionPortalError");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+                window.location.href = data.url;
+            } catch (err) {
+                errorBox.innerText = t("settings.subscriptionPortalError");
+                errorBox.classList.remove("hidden");
             }
         }
 

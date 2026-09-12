@@ -1,9 +1,10 @@
 """
-Subscription plans, managed by the Super Admin. Deliberately has no
-enforcement logic yet and no payment fields wired up to anything real -
-this is the content/configuration side (what a plan is called, costs, and
-includes) built ahead of the actual Stripe checkout integration, which is
-being done as a separate, later piece of work.
+Subscription plans, managed by the Super Admin. `stripe_price_id_monthly`
+links a plan to a real Stripe Price for Checkout (see app/routers/billing.py) -
+a plan with it unset simply can't be checked out via Stripe (the manual
+"confirm payment" admin action still works regardless, for payment methods
+Stripe doesn't handle). Plan limits (order_limit/printer_limit/user_limit)
+are still not enforced anywhere.
 """
 
 import uuid
