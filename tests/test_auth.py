@@ -4,7 +4,7 @@
 def test_register_creates_tenant_and_returns_token(client):
     response = client.post("/auth/register", json={
         "email": "owner@example.com", "password": "testpass123",
-        "company_name": "Acme GmbH", "country_code": "DE",
+        "company_name": "Acme GmbH", "country_code": "DE", "early_service_consent": True,
     })
     assert response.status_code == 201
     body = response.json()
@@ -13,7 +13,10 @@ def test_register_creates_tenant_and_returns_token(client):
 
 
 def test_register_rejects_duplicate_email(client):
-    payload = {"email": "dupe@example.com", "password": "testpass123", "company_name": "Co A", "country_code": "DE"}
+    payload = {
+        "email": "dupe@example.com", "password": "testpass123", "company_name": "Co A",
+        "country_code": "DE", "early_service_consent": True,
+    }
     assert client.post("/auth/register", json=payload).status_code == 201
     response = client.post("/auth/register", json=payload)
     assert response.status_code == 400
@@ -21,9 +24,46 @@ def test_register_rejects_duplicate_email(client):
 
 def test_register_rejects_short_password(client):
     response = client.post("/auth/register", json={
-        "email": "shortpw@example.com", "password": "short", "company_name": "Co", "country_code": "DE",
+        "email": "shortpw@example.com", "password": "short", "company_name": "Co",
+        "country_code": "DE", "early_service_consent": True,
     })
     assert response.status_code == 422
+
+
+def test_register_requires_early_service_consent_field(client):
+    """Missing entirely (not just false) - Pydantic itself rejects it since
+    there's no default (see RegisterRequest.early_service_consent)."""
+    response = client.post("/auth/register", json={
+        "email": "noconsentfield@example.com", "password": "testpass123", "company_name": "Co",
+    })
+    assert response.status_code == 422
+
+
+def test_register_rejects_declined_early_service_consent(client):
+    """§ 356 Abs. 4 BGB: since ShipSync grants full access immediately, a
+    customer must affirmatively accept losing the 14-day withdrawal right -
+    declining it (false) blocks the registration rather than silently
+    proceeding."""
+    response = client.post("/auth/register", json={
+        "email": "declinedconsent@example.com", "password": "testpass123", "company_name": "Co",
+        "country_code": "DE", "early_service_consent": False,
+    })
+    assert response.status_code == 400
+
+
+def test_register_stores_consent_timestamp(client, register):
+    from sqlalchemy import create_engine, text
+    from app.config import settings
+
+    headers, _ = register(email="consenttimestamp@example.com")
+    me = client.get("/auth/me", headers=headers).json()
+
+    engine = create_engine(settings.database_url)
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("SELECT early_service_consent_at FROM users WHERE id = :id"), {"id": me["id"]}
+        ).first()
+    assert row.early_service_consent_at is not None
 
 
 def test_login_succeeds_with_correct_credentials(client, register):

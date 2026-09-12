@@ -78,7 +78,7 @@ def test_register_with_valid_referral_code_creates_referral(client, register):
     response = client.post("/auth/register", json={
         "email": "referred@example.com", "password": "testpass123",
         "company_name": "Referred Co", "country_code": "DE",
-        "referral_code": affiliate["referral_code"],
+        "referral_code": affiliate["referral_code"], "early_service_consent": True,
     })
     assert response.status_code == 201
 
@@ -91,7 +91,7 @@ def test_register_with_unknown_referral_code_is_ignored(client):
     response = client.post("/auth/register", json={
         "email": "noref@example.com", "password": "testpass123",
         "company_name": "No Ref Co", "country_code": "DE",
-        "referral_code": "DOES-NOT-EXIST",
+        "referral_code": "DOES-NOT-EXIST", "early_service_consent": True,
     })
     assert response.status_code == 201  # never blocks signup over a bad code
 
@@ -109,7 +109,7 @@ def test_flat_bonus_awarded_once_not_on_second_payment(client, register):
     client.post("/auth/register", json={
         "email": "flatref2@example.com", "password": "testpass123",
         "company_name": "Flat Ref Tenant", "country_code": "DE",
-        "referral_code": affiliate["referral_code"],
+        "referral_code": affiliate["referral_code"], "early_service_consent": True,
     })
     tenant_id = client.get("/admin/tenants", headers=admin_headers).json()
     referred_tenant = next(t for t in tenant_id if t["company_name"] == "Flat Ref Tenant")
@@ -139,7 +139,7 @@ def test_percentage_commission_awarded_every_payment(client, register):
     client.post("/auth/register", json={
         "email": "pctref@example.com", "password": "testpass123",
         "company_name": "Pct Ref Tenant", "country_code": "DE",
-        "referral_code": affiliate["referral_code"],
+        "referral_code": affiliate["referral_code"], "early_service_consent": True,
     })
     tenants = client.get("/admin/tenants", headers=admin_headers).json()
     referred_tenant = next(t for t in tenants if t["company_name"] == "Pct Ref Tenant")
@@ -171,7 +171,7 @@ def test_disabled_affiliate_earns_no_further_commission(client, register):
     client.post("/auth/register", json={
         "email": "disableref@example.com", "password": "testpass123",
         "company_name": "Disable Ref Tenant", "country_code": "DE",
-        "referral_code": affiliate["referral_code"],
+        "referral_code": affiliate["referral_code"], "early_service_consent": True,
     })
     tenants = client.get("/admin/tenants", headers=admin_headers).json()
     referred_tenant = next(t for t in tenants if t["company_name"] == "Disable Ref Tenant")
@@ -198,7 +198,7 @@ def test_payout_reduces_balance_but_not_total_earned(client, register):
     client.post("/auth/register", json={
         "email": "payoutref@example.com", "password": "testpass123",
         "company_name": "Payout Ref Tenant", "country_code": "DE",
-        "referral_code": affiliate["referral_code"],
+        "referral_code": affiliate["referral_code"], "early_service_consent": True,
     })
     tenants = client.get("/admin/tenants", headers=admin_headers).json()
     referred_tenant = next(t for t in tenants if t["company_name"] == "Payout Ref Tenant")
