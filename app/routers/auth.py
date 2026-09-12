@@ -43,6 +43,12 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    if not payload.early_service_consent:
+        raise HTTPException(
+            status_code=400,
+            detail="Bitte bestätige, dass die Nutzung sofort beginnen soll, um die Registrierung abzuschließen.",
+        )
+
     plan = None
     if payload.plan_name:
         plan = (
@@ -77,6 +83,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         password_hash=hash_password(payload.password),
         full_name=payload.full_name,
         role="owner",
+        early_service_consent_at=datetime.now(timezone.utc),
     )
     db.add(user)
 

@@ -81,6 +81,7 @@ def register(client):
             "password": "testpass123",
             "company_name": f"Test Co {counter['n']}",
             "country_code": "DE",
+            "early_service_consent": True,
         }
         payload.update(overrides)
         response = client.post("/auth/register", json=payload)

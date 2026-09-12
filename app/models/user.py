@@ -23,5 +23,11 @@ class User(Base):
     # Admin panel - plans, site logo, etc. Not settable via any tenant-
     # facing endpoint.
     is_superadmin = Column(Boolean, nullable=False, default=False)
+    # Timestamp of the customer's explicit consent, given at registration, that
+    # the service starts immediately and that they therefore lose the statutory
+    # 14-day withdrawal right once the service is fully performed (§ 356 Abs. 4
+    # BGB - see the "withdrawal" SitePage in app/routers/plans.py). Null would
+    # only happen for accounts created before this consent was required.
+    early_service_consent_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
