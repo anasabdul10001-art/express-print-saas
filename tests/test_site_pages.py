@@ -1,5 +1,5 @@
 """
-Admin-editable public content pages (About/Policies/Contact) - see
+Admin-editable public content pages (About/FAQ/Policies/Contact) - see
 app/models/site_page.py and app/routers/plans.py's DEFAULT_SITE_PAGES.
 """
 
@@ -28,6 +28,14 @@ def test_public_page_unknown_slug_returns_404(client):
     assert response.status_code == 404
 
 
+def test_faq_page_has_default_content(client):
+    response = client.get("/pages/faq")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["slug"] == "faq"
+    assert "Frage" in body["content"]
+
+
 def test_admin_pages_requires_superadmin(client, register):
     headers, _ = register()
     response = client.get("/admin/pages", headers=headers)
@@ -41,7 +49,7 @@ def test_admin_pages_lists_all_known_slugs(client, register):
     response = client.get("/admin/pages", headers=headers)
     assert response.status_code == 200
     slugs = {p["slug"] for p in response.json()}
-    assert slugs == {"about", "policies", "contact"}
+    assert slugs == {"about", "faq", "policies", "contact"}
 
 
 def test_update_page_reflects_on_public_endpoint(client, register):
