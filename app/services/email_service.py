@@ -46,6 +46,48 @@ def send_password_reset_email(to_email: str, reset_link: str) -> None:
         raise RuntimeError(f"resend_send_failed: {response.text}")
 
 
+def send_affiliate_password_email(to_email: str, set_password_link: str, is_initial_setup: bool) -> None:
+    """
+    Sent both when an admin first creates an affiliate with an email (initial
+    setup) and for the affiliate portal's own "forgot password" flow - both
+    land on the same set-password page/token, only the wording differs.
+    Raises RuntimeError on failure; see send_password_reset_email for why
+    callers treat that as non-fatal.
+    """
+    if not settings.resend_api_key:
+        raise RuntimeError("RESEND_API_KEY ist nicht konfiguriert.")
+
+    intro = (
+        "du wurdest als ShipSync-Partner (Affiliate) angelegt. Klicke auf den folgenden Link, "
+        "um dein Passwort für das Partner-Portal festzulegen:"
+        if is_initial_setup
+        else "klicke auf den folgenden Link, um dein Passwort für das Partner-Portal zurückzusetzen:"
+    )
+
+    response = httpx.post(
+        RESEND_API_URL,
+        headers={
+            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "from": settings.resend_from_email,
+            "to": [to_email],
+            "subject": "Partner-Portal — ShipSync",
+            "html": (
+                f"<p>{intro}</p>"
+                f'<p><a href="{set_password_link}">{set_password_link}</a></p>'
+                f"<p>Dieser Link ist 24 Stunden gültig. Falls du das nicht erwartet hast, "
+                f"kannst du diese E-Mail ignorieren.</p>"
+            ),
+        },
+        timeout=15.0,
+    )
+
+    if response.status_code not in (200, 201):
+        raise RuntimeError(f"resend_send_failed: {response.text}")
+
+
 def send_invoice_email(to_email: str, invoice_number: str, pdf_bytes: bytes, company_name: str | None) -> None:
     """
     Raises RuntimeError on failure - the caller (routers/admin.py) decides

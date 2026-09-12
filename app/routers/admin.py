@@ -41,8 +41,9 @@ from app.schemas.affiliate import (
     AffiliateUpdate,
 )
 from app.schemas.site_page import SitePageOut, SitePageUpdate
+from app.routers.affiliate_portal import _issue_set_password_token
 from app.routers.plans import DEFAULT_SITE_PAGES, _get_or_create_page
-from app.services.email_service import send_invoice_email
+from app.services.email_service import send_affiliate_password_email, send_invoice_email
 from app.services.invoice_service import generate_invoice_pdf
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -521,8 +522,21 @@ def create_affiliate(
         commission_value=payload.commission_value,
     )
     db.add(affiliate)
+    db.flush()  # assigns affiliate.id, needed for the token below
+
+    if affiliate.email:
+        raw_token = _issue_set_password_token(db, affiliate)
+
     db.commit()
     db.refresh(affiliate)
+
+    if affiliate.email:
+        set_password_link = f"{settings.frontend_url}/affiliate-set-password.html?token={raw_token}"
+        try:
+            send_affiliate_password_email(affiliate.email, set_password_link, is_initial_setup=True)
+        except RuntimeError:
+            pass  # affiliate is still created - admin can resend/reset the link later
+
     return _with_referral_count(db, affiliate)
 
 

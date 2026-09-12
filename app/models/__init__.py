@@ -14,6 +14,7 @@ from app.models.payment_method import PaymentMethod
 from app.models.invoice import Invoice
 from app.models.dhl_account import DhlAccount
 from app.models.affiliate import Affiliate, AffiliateReferral, AffiliateCommission, AffiliatePayout
+from app.models.affiliate_password_token import AffiliatePasswordToken
 from app.models.site_page import SitePage
 
 __all__ = [
@@ -21,5 +22,5 @@ __all__ = [
     "EbayAccount", "EbayOAuthState", "StockMovement", "Expense", "PasswordResetToken",
     "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings", "PaymentMethod", "Invoice",
     "DhlAccount", "Affiliate", "AffiliateReferral", "AffiliateCommission", "AffiliatePayout",
-    "SitePage",
+    "AffiliatePasswordToken", "SitePage",
 ]

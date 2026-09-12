@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Partner-Dashboard — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../site-logo.js"></script>
+    <script src="../translations.js"></script>
+    <script src="../i18n.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <nav class="bg-white border-b border-slate-200 px-6 py-4">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <a href="../index.html" class="flex items-center gap-2">
+                <svg class="brand-logo" width="26" height="26" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="font-bold text-sm" data-i18n="affiliateDashboard.brandLabel">Partner-Portal</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <button onclick="logout()" class="text-slate-500 hover:text-red-600 text-sm font-semibold transition" data-i18n="affiliateDashboard.logout">Abmelden</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto p-6 py-10 space-y-6">
+        <div id="loading-state" class="text-slate-400 text-sm" data-i18n="affiliateDashboard.loading">Wird geladen...</div>
+        <div id="error-state" class="hidden bg-red-50 text-red-700 border border-red-200 p-3 rounded-lg text-sm"></div>
+
+        <div id="dashboard-content" class="hidden space-y-6">
+            <div>
+                <h1 class="text-2xl font-bold" id="affiliate-name">—</h1>
+                <span id="disabled-badge" class="hidden inline-block bg-slate-100 text-slate-500 text-xs font-semibold px-2 py-1 rounded mt-1" data-i18n="affiliateDashboard.disabled">Konto deaktiviert</span>
+            </div>
+
+            <!-- Referral link -->
+            <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
+                <h2 class="text-sm font-semibold text-slate-500" data-i18n="affiliateDashboard.referralLinkTitle">Dein Empfehlungslink</h2>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input id="referral-link-input" type="text" readonly class="flex-1 min-w-0 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-sm font-mono text-slate-700">
+                    <button onclick="copyReferralLink()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition flex-shrink-0" data-i18n="affiliateDashboard.copyLink">Link kopieren</button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <p class="text-xs text-slate-400" data-i18n="affiliateDashboard.statReferrals">Empfehlungen</p>
+                    <p id="stat-referrals" class="text-xl font-bold mt-1">—</p>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <p class="text-xs text-slate-400" data-i18n="affiliateDashboard.statBalance">Guthaben</p>
+                    <p id="stat-balance" class="text-xl font-bold mt-1 text-red-600">—</p>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <p class="text-xs text-slate-400" data-i18n="affiliateDashboard.statTotalEarned">Gesamt verdient</p>
+                    <p id="stat-total-earned" class="text-xl font-bold mt-1">—</p>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <p class="text-xs text-slate-400" data-i18n="affiliateDashboard.statCommission">Provisionsmodell</p>
+                    <p id="stat-commission" class="text-sm font-bold mt-1">—</p>
+                </div>
+            </div>
+
+            <!-- Commission history -->
+            <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                <h2 class="text-sm font-semibold text-slate-500 mb-3" data-i18n="affiliateDashboard.commissionsTitle">Provisionsverlauf</h2>
+                <div id="commissions-empty" class="hidden text-slate-400 text-sm" data-i18n="affiliateDashboard.commissionsEmpty">Noch keine Provisionen.</div>
+                <div id="commissions-list" class="divide-y divide-slate-100"></div>
+            </div>
+
+            <!-- Payout history -->
+            <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                <h2 class="text-sm font-semibold text-slate-500 mb-3" data-i18n="affiliateDashboard.payoutsTitle">Auszahlungsverlauf</h2>
+                <div id="payouts-empty" class="hidden text-slate-400 text-sm" data-i18n="affiliateDashboard.payoutsEmpty">Noch keine Auszahlungen.</div>
+                <div id="payouts-list" class="divide-y divide-slate-100"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("affiliate_access_token");
+
+        if (!token) {
+            window.location.href = "../affiliate-login.html";
+        }
+
+        function authHeaders() {
+            return { "Authorization": `Bearer ${token}` };
+        }
+
+        function logout() {
+            localStorage.removeItem("affiliate_access_token");
+            window.location.href = "../affiliate-login.html";
+        }
+
+        function euro(value) {
+            if (value === null || value === undefined) return "—";
+            return `${Number(value).toFixed(2)} €`;
+        }
+
+        function commissionLabel(affiliate) {
+            return affiliate.commission_type === "FLAT_ONE_TIME"
+                ? `${euro(affiliate.commission_value)} ${t("affiliateDashboard.typeFlatSuffix")}`
+                : `${affiliate.commission_value}% ${t("affiliateDashboard.typePercentageSuffix")}`;
+        }
+
+        async function copyReferralLink() {
+            const link = document.getElementById("referral-link-input").value;
+            try {
+                await navigator.clipboard.writeText(link);
+                alert(t("affiliateDashboard.linkCopied"));
+            } catch (err) {
+                prompt(t("affiliateDashboard.linkCopyManual"), link);
+            }
+        }
+
+        function renderCommissions(commissions) {
+            const list = document.getElementById("commissions-list");
+            const emptyState = document.getElementById("commissions-empty");
+            if (commissions.length === 0) {
+                list.innerHTML = "";
+                emptyState.classList.remove("hidden");
+                return;
+            }
+            emptyState.classList.add("hidden");
+            list.innerHTML = commissions.map(c => `
+                <div class="py-2 flex items-center justify-between text-sm">
+                    <div>
+                        <p>${c.description || "—"}</p>
+                        <p class="text-xs text-slate-400">${new Date(c.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <p class="font-semibold text-emerald-600">+${euro(c.amount)}</p>
+                </div>
+            `).join("");
+        }
+
+        function renderPayouts(payouts) {
+            const list = document.getElementById("payouts-list");
+            const emptyState = document.getElementById("payouts-empty");
+            if (payouts.length === 0) {
+                list.innerHTML = "";
+                emptyState.classList.remove("hidden");
+                return;
+            }
+            emptyState.classList.add("hidden");
+            list.innerHTML = payouts.map(p => `
+                <div class="py-2 flex items-center justify-between text-sm">
+                    <div>
+                        <p>${p.note || "—"}</p>
+                        <p class="text-xs text-slate-400">${new Date(p.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <p class="font-semibold text-slate-600">-${euro(p.amount)}</p>
+                </div>
+            `).join("");
+        }
+
+        async function loadDashboard() {
+            const loadingState = document.getElementById("loading-state");
+            const errorState = document.getElementById("error-state");
+            const content = document.getElementById("dashboard-content");
+
+            try {
+                const meResponse = await fetch(`${API_URL}/affiliate/me`, { headers: authHeaders() });
+                if (meResponse.status === 401) { logout(); return; }
+                if (!meResponse.ok) throw new Error("failed");
+                const affiliate = await meResponse.json();
+
+                document.getElementById("affiliate-name").innerText = affiliate.name;
+                document.getElementById("disabled-badge").classList.toggle("hidden", affiliate.status === "ACTIVE");
+                document.getElementById("referral-link-input").value = `${window.location.origin}/register.html?ref=${affiliate.referral_code}`;
+                document.getElementById("stat-referrals").innerText = affiliate.referral_count;
+                document.getElementById("stat-balance").innerText = euro(affiliate.balance_owed);
+                document.getElementById("stat-total-earned").innerText = euro(affiliate.total_earned);
+                document.getElementById("stat-commission").innerText = commissionLabel(affiliate);
+
+                const [commissionsResponse, payoutsResponse] = await Promise.all([
+                    fetch(`${API_URL}/affiliate/commissions`, { headers: authHeaders() }),
+                    fetch(`${API_URL}/affiliate/payouts`, { headers: authHeaders() }),
+                ]);
+                renderCommissions(commissionsResponse.ok ? await commissionsResponse.json() : []);
+                renderPayouts(payoutsResponse.ok ? await payoutsResponse.json() : []);
+
+                loadingState.classList.add("hidden");
+                content.classList.remove("hidden");
+            } catch (err) {
+                loadingState.classList.add("hidden");
+                errorState.innerText = t("affiliateDashboard.loadError");
+                errorState.classList.remove("hidden");
+            }
+        }
+
+        if (token) loadDashboard();
+    </script>
+</body>
+</html>

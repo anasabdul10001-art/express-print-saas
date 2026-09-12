@@ -10,7 +10,7 @@ from app.core.rate_limit import limiter
 from app.core.sentry import init_sentry
 from app.database import Base, engine
 from app import models  # noqa: F401 - import registers all models with Base, needed for create_all() below
-from app.routers import admin, auth, dhl, ebay, expenses, market_research, orders, plans, print_agents, print_jobs, products, tenants, uploads
+from app.routers import admin, affiliate_portal, auth, dhl, ebay, expenses, market_research, orders, plans, print_agents, print_jobs, products, tenants, uploads
 
 # Before the app is created: a no-op until settings.sentry_dsn is set (see
 # app/core/sentry.py) - safe to always call.
@@ -57,6 +57,7 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number VARCHAR(50)"))
     connection.execute(text("ALTER TABLE print_jobs ADD COLUMN IF NOT EXISTS label_pdf_data BYTEA"))
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS early_service_consent_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS password_hash VARCHAR"))
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -95,6 +96,7 @@ app.include_router(market_research.router)
 app.include_router(admin.router)
 app.include_router(plans.router)
 app.include_router(dhl.router)
+app.include_router(affiliate_portal.router)
 
 
 @app.get("/health")
