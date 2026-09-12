@@ -2,11 +2,12 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.deps import TRIAL_EXPIRED_DETAIL, get_current_user, get_db, trial_expired
+from app.core.rate_limit import limiter
 from app.core.security import create_access_token, generate_api_key, hash_api_key, hash_password, verify_password
 from app.models.affiliate import Affiliate, AffiliateReferral
 from app.models.password_reset_token import PasswordResetToken
@@ -106,7 +107,8 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -126,7 +128,8 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/admin-login", response_model=TokenResponse)
-def admin_login(payload: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def admin_login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)):
     """
     Separate sign-in for the Super Admin panel, deliberately not reachable
     from the regular /auth/login used by tenant users (see there) or linked
