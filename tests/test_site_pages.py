@@ -58,7 +58,11 @@ def test_admin_pages_lists_all_known_slugs(client, register):
     response = client.get("/admin/pages", headers=headers)
     assert response.status_code == 200
     slugs = {p["slug"] for p in response.json()}
-    assert slugs == {"about", "faq", "policies", "contact", "withdrawal"}
+    assert slugs == {
+        "about", "faq", "policies", "contact", "withdrawal",
+        "impressum", "cookies", "careers", "help", "status",
+        "changelog", "integrations", "customers", "partners", "blog",
+    }
 
 
 def test_update_page_reflects_on_public_endpoint(client, register):

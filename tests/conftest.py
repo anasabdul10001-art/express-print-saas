@@ -41,6 +41,7 @@ with _bootstrap_engine.begin() as _conn:
     _conn.execute(text("CREATE SCHEMA public"))
 _bootstrap_engine.dispose()
 
+from app.core.rate_limit import limiter  # noqa: E402
 from app.database import Base, engine  # noqa: E402
 from app.main import app  # noqa: E402 - importing builds the schema, see above
 
@@ -57,6 +58,11 @@ def _clean_tables():
     with engine.begin() as conn:
         table_names = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables)
         conn.execute(text(f"TRUNCATE TABLE {table_names} RESTART IDENTITY CASCADE"))
+    # The rate limiter (app/core/rate_limit.py) keeps its counters in-process,
+    # keyed by client IP - TestClient always looks like the same IP, so
+    # without a reset here, login-rate-limit tests would bleed into whatever
+    # other test happens to run next.
+    limiter.reset()
     yield
 
 

@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 
+from app.config import settings
+from app.core.rate_limit import limiter
 from app.core.sentry import init_sentry
 from app.database import Base, engine
 from app import models  # noqa: F401 - import registers all models with Base, needed for create_all() below
@@ -54,10 +58,26 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE print_jobs ADD COLUMN IF NOT EXISTS label_pdf_data BYTEA"))
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS early_service_consent_at TIMESTAMPTZ"))
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Restricted to known frontend origins rather than "*". In production the
+# frontend is served from this same app (see the StaticFiles mount below),
+# so this mainly matters for local development and testing against a
+# separately-hosted frontend. No cookies are used for auth (JWT goes in the
+# Authorization header - see app/core/deps.py), so allow_credentials stays
+# False; there's nothing it would protect anyway.
+ALLOWED_ORIGINS = [
+    settings.frontend_url,
+    "https://express-print-saas.onrender.com",
+    "http://localhost:5500",
+    "http://localhost:8899",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=list(dict.fromkeys(ALLOWED_ORIGINS)),  # de-dup, keep order
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -103,6 +103,35 @@ def test_superadmin_cannot_use_regular_login(client, register):
     assert admin_response.status_code == 200
 
 
+def test_login_rate_limited_after_repeated_failures(client, register):
+    register(email="ratelimited@example.com")
+
+    for _ in range(5):
+        response = client.post("/auth/login", json={"email": "ratelimited@example.com", "password": "wrongpassword"})
+        assert response.status_code == 401
+
+    blocked = client.post("/auth/login", json={"email": "ratelimited@example.com", "password": "wrongpassword"})
+    assert blocked.status_code == 429
+
+
+def test_admin_login_rate_limited_after_repeated_failures(client, register):
+    headers, payload = register(email="ratelimitedadmin@example.com")
+    from sqlalchemy import create_engine, text
+    from app.config import settings
+
+    me = client.get("/auth/me", headers=headers).json()
+    engine = create_engine(settings.database_url)
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE users SET is_superadmin = true WHERE id = :id"), {"id": me["id"]})
+
+    for _ in range(5):
+        response = client.post("/auth/admin-login", json={"email": "ratelimitedadmin@example.com", "password": "wrongpassword"})
+        assert response.status_code == 401
+
+    blocked = client.post("/auth/admin-login", json={"email": "ratelimitedadmin@example.com", "password": "wrongpassword"})
+    assert blocked.status_code == 429
+
+
 def test_me_requires_authentication(client):
     response = client.get("/auth/me")
     assert response.status_code == 401
