@@ -16,6 +16,7 @@ from app.models.affiliate import Affiliate, AffiliateCommission, AffiliatePayout
 from app.models.invoice import Invoice
 from app.models.payment_method import PaymentMethod
 from app.models.plan import Plan, SiteSettings
+from app.models.site_page import SitePage
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.schemas.admin import (
@@ -39,6 +40,8 @@ from app.schemas.affiliate import (
     AffiliatePayoutOut,
     AffiliateUpdate,
 )
+from app.schemas.site_page import SitePageOut, SitePageUpdate
+from app.routers.plans import DEFAULT_SITE_PAGES, _get_or_create_page
 from app.services.email_service import send_invoice_email
 from app.services.invoice_service import generate_invoice_pdf
 
@@ -598,3 +601,32 @@ def record_affiliate_payout(
     db.commit()
     db.refresh(affiliate)
     return _with_referral_count(db, affiliate)
+
+
+@router.get("/pages", response_model=list[SitePageOut])
+def list_site_pages(
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    """The fixed set of public content pages (see DEFAULT_SITE_PAGES in
+    app/routers/plans.py) - creates any that don't exist yet with placeholder
+    content, so this always returns all of them."""
+    return [_get_or_create_page(db, slug) for slug in DEFAULT_SITE_PAGES]
+
+
+@router.patch("/pages/{slug}", response_model=SitePageOut)
+def update_site_page(
+    slug: str,
+    payload: SitePageUpdate,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    page = _get_or_create_page(db, slug)  # 404s if slug isn't one of the known pages
+
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(page, field, value)
+
+    db.commit()
+    db.refresh(page)
+    return page

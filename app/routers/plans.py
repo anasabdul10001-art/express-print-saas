@@ -1,12 +1,63 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db
 from app.models.payment_method import PaymentMethod
 from app.models.plan import Plan, SiteSettings
+from app.models.site_page import SitePage
 from app.schemas.admin import PaymentMethodOut, PlanOut, SiteSettingsOut
+from app.schemas.site_page import SitePageOut
 
 router = APIRouter(tags=["public"])
+
+# The fixed, known set of admin-editable content pages (see app/models/site_page.py's
+# docstring for why this isn't an open-ended CMS). Placeholder copy, meant to
+# be rewritten from the Super Admin panel before real customers see it.
+DEFAULT_SITE_PAGES = {
+    "about": {
+        "title": "Über uns",
+        "content": (
+            "ShipSync hilft eBay-Verkäufern, Bestellungen, Produkte und den Versand an einem Ort zu verwalten.\n\n"
+            "[PLATZHALTER: Erzähle hier, wer ihr seid und warum ihr ShipSync gebaut habt.]"
+        ),
+    },
+    "policies": {
+        "title": "Richtlinien & Nutzungsbedingungen",
+        "content": (
+            "Diese Seite beschreibt, wie ShipSync genutzt werden darf.\n\n"
+            "[PLATZHALTER: Nutzungsbedingungen, Kündigungsfristen, erlaubte/verbotene Nutzung usw. "
+            "Vor Veröffentlichung juristisch prüfen lassen.]"
+        ),
+    },
+    "contact": {
+        "title": "Kontakt",
+        "content": (
+            "Wir helfen dir gerne weiter.\n\n"
+            "E-Mail: [PLATZHALTER: Kontakt-E-Mail]\n"
+            "Telefon: [PLATZHALTER: Telefonnummer]"
+        ),
+    },
+}
+
+
+def _get_or_create_page(db: Session, slug: str) -> SitePage:
+    if slug not in DEFAULT_SITE_PAGES:
+        raise HTTPException(status_code=404, detail="Seite nicht gefunden")
+
+    page = db.query(SitePage).filter(SitePage.slug == slug).first()
+    if not page:
+        defaults = DEFAULT_SITE_PAGES[slug]
+        page = SitePage(slug=slug, title=defaults["title"], content=defaults["content"])
+        db.add(page)
+        db.commit()
+        db.refresh(page)
+    return page
+
+
+@router.get("/pages/{slug}", response_model=SitePageOut)
+def get_site_page(slug: str, db: Session = Depends(get_db)):
+    """Deliberately no auth dependency - these are public marketing pages."""
+    return _get_or_create_page(db, slug)
 
 
 @router.get("/plans", response_model=list[PlanOut])

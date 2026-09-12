@@ -378,6 +378,31 @@
             <div id="affiliates-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.affiliatesEmpty">Noch keine Affiliates angelegt.</div>
             <div id="affiliates-list" class="space-y-3 pt-2"></div>
         </div>
+
+        <!-- Site pages (About / Policies / Contact) -->
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold" data-i18n="admin.pagesTitle">Seiteninhalte</h3>
+            <p class="text-slate-500 text-sm" data-i18n="admin.pagesDesc">Diese Texte erscheinen öffentlich auf der Website (verlinkt in der Fußzeile der Startseite).</p>
+
+            <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" onclick="selectSitePage('about')" data-page-tab="about" class="px-3 py-1.5 rounded-lg text-sm font-semibold border" data-i18n="admin.pageAbout">Über uns</button>
+                <button type="button" onclick="selectSitePage('policies')" data-page-tab="policies" class="px-3 py-1.5 rounded-lg text-sm font-semibold border" data-i18n="admin.pagePolicies">Richtlinien</button>
+                <button type="button" onclick="selectSitePage('contact')" data-page-tab="contact" class="px-3 py-1.5 rounded-lg text-sm font-semibold border" data-i18n="admin.pageContact">Kontakt</button>
+                <a id="page-preview-link" href="#" target="_blank" class="text-blue-600 hover:text-blue-700 text-xs font-semibold ml-auto" data-i18n="admin.pagePreview">Live ansehen ↗</a>
+            </div>
+
+            <div>
+                <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.pageFieldTitle">Titel</label>
+                <input type="text" id="site-page-title" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-xs text-slate-500 mb-1" data-i18n="admin.pageFieldContent">Inhalt (Absätze durch eine Leerzeile trennen)</label>
+                <textarea id="site-page-content" rows="8" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none"></textarea>
+            </div>
+
+            <div id="site-page-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
+            <button onclick="saveSitePage()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.pageSave">Speichern</span></button>
+        </div>
     </main>
     </div>
     </div>
@@ -1235,8 +1260,76 @@
             }
         }
 
+        let sitePages = {};
+        let currentPageSlug = "about";
+
+        function updatePageTabStyles() {
+            document.querySelectorAll("[data-page-tab]").forEach(btn => {
+                const active = btn.dataset.pageTab === currentPageSlug;
+                btn.className = `px-3 py-1.5 rounded-lg text-sm font-semibold border transition ${active ? "bg-red-600 text-white border-red-600" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`;
+            });
+        }
+
+        function selectSitePage(slug) {
+            currentPageSlug = slug;
+            updatePageTabStyles();
+            const page = sitePages[slug];
+            document.getElementById("site-page-title").value = page ? page.title : "";
+            document.getElementById("site-page-content").value = page ? page.content : "";
+            document.getElementById("page-preview-link").href = `../${slug}.html`;
+        }
+
+        async function loadSitePages() {
+            try {
+                const response = await fetch(`${API_URL}/admin/pages`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                sitePages = {};
+                data.forEach(p => { sitePages[p.slug] = p; });
+                selectSitePage(currentPageSlug);
+            } catch (err) {
+                // Non-critical - the editor just starts empty without this.
+            }
+        }
+
+        async function saveSitePage() {
+            const errorBox = document.getElementById("site-page-error");
+            errorBox.classList.add("hidden");
+
+            const title = document.getElementById("site-page-title").value.trim();
+            const content = document.getElementById("site-page-content").value.trim();
+
+            if (!title || !content) {
+                errorBox.innerText = t("admin.pageFieldsRequired");
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/admin/pages/${currentPageSlug}`, {
+                    method: "PATCH",
+                    headers: authHeaders(true),
+                    body: JSON.stringify({ title, content }),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) {
+                    errorBox.innerText = data.detail || t("admin.saveFailed");
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+                sitePages[currentPageSlug] = data;
+                showBanner(t("admin.pageSaved"), false);
+            } catch (err) {
+                errorBox.innerText = t("admin.serverError");
+                errorBox.classList.remove("hidden");
+            }
+        }
+
         verifyAccess();
         loadAffiliates();
+        updatePageTabStyles();
+        loadSitePages();
         document.addEventListener("langchange", () => {
             if (lastPlans) renderPlans(lastPlans);
             if (lastPaymentMethods) renderPaymentMethods(lastPaymentMethods);
