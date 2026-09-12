@@ -18,6 +18,7 @@ class PlanCreate(BaseModel):
     is_active: bool = True
     is_recommended: bool = False
     display_order: int = 0
+    stripe_price_id_monthly: str | None = None
 
 
 class PlanUpdate(BaseModel):
@@ -33,6 +34,7 @@ class PlanUpdate(BaseModel):
     is_active: bool | None = None
     is_recommended: bool | None = None
     display_order: int | None = None
+    stripe_price_id_monthly: str | None = None
 
 
 class PlanOut(BaseModel):
@@ -49,6 +51,7 @@ class PlanOut(BaseModel):
     is_active: bool
     is_recommended: bool
     display_order: int
+    stripe_price_id_monthly: str | None
     created_at: datetime
 
     class Config:

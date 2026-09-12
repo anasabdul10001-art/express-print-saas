@@ -118,11 +118,43 @@
                         ${limits}
                         ${features}
                     </ul>
-                    <a href="register.html?plan=${encodeURIComponent(plan.name)}"
-                       class="mt-8 block text-center font-semibold py-2.5 rounded-lg transition ${highlight ? "bg-red-600 hover:bg-red-700 text-white shadow-sm shadow-red-600/20" : "bg-slate-100 hover:bg-slate-200 text-slate-900"}">
-                        ${t("pricing.cta")}
-                    </a>
+                    ${planCta(plan, highlight)}
                 </div>`;
+        }
+
+        // Logged-in tenants (typically arriving here from a trial-expired
+        // redirect) subscribe directly via Stripe instead of registering
+        // again; a logged-out visitor gets the normal signup CTA.
+        function planCta(plan, highlight) {
+            const ctaClasses = `mt-8 block text-center font-semibold py-2.5 rounded-lg transition ${highlight ? "bg-red-600 hover:bg-red-700 text-white shadow-sm shadow-red-600/20" : "bg-slate-100 hover:bg-slate-200 text-slate-900"}`;
+            const isLoggedIn = !!localStorage.getItem("access_token");
+
+            if (!isLoggedIn) {
+                return `<a href="register.html?plan=${encodeURIComponent(plan.name)}" class="${ctaClasses}">${t("pricing.cta")}</a>`;
+            }
+            if (!plan.stripe_price_id_monthly) {
+                return `<p class="mt-8 text-center text-slate-400 text-xs">${t("pricing.stripeUnavailable")}</p>`;
+            }
+            return `<button onclick='subscribeViaStripe(${JSON.stringify(plan.id)})' class="${ctaClasses}">${t("pricing.subscribeCta")}</button>`;
+        }
+
+        async function subscribeViaStripe(planId) {
+            const token = localStorage.getItem("access_token");
+            try {
+                const response = await fetch(`${API_URL}/billing/checkout-session`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ plan_id: planId }),
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    alert(data.detail || t("pricing.subscribeError"));
+                    return;
+                }
+                window.location.href = data.url;
+            } catch (err) {
+                alert(t("pricing.subscribeError"));
+            }
         }
 
         // Cached so a language switch can re-render the cards (translated

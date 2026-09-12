@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -29,6 +30,12 @@ class TenantOut(BaseModel):
     default_package_length_cm: int
     default_package_width_cm: int
     default_package_height_cm: int
+    # Billing (see app/routers/billing.py) - plan_name is computed, not
+    # stored, same pattern as app/schemas/admin.py's TenantAdminOut.
+    plan_id: uuid.UUID | None = None
+    plan_name: str | None = None
+    trial_ends_at: datetime | None = None
+    subscription_status: str | None = None
 
     class Config:
         from_attributes = True

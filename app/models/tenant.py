@@ -21,6 +21,17 @@ class Tenant(Base):
     # requests until a real subscription exists - see deps.py.
     trial_ends_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Set once this tenant has checked out via Stripe at least once (see
+    # app/routers/billing.py) - null for a tenant still on trial or paying
+    # by a manual method (bank transfer, PayPal, ...).
+    stripe_customer_id = Column(String(255), nullable=True)
+    stripe_subscription_id = Column(String(255), nullable=True)
+    # Mirrors Stripe's own subscription status strings (active, past_due,
+    # canceled, unpaid, ...) - set from webhook events, not enforced
+    # anywhere yet (same "not wired to real limits" spirit as Plan's own
+    # order/printer/user limits).
+    subscription_status = Column(String(30), nullable=True)
+
     # Controls how shipping labels get printed for this tenant's orders:
     #   INSTANT           - auto-print the moment an order arrives
     #   DASHBOARD_MANUAL   - order sits in a list; user clicks "Print" per order

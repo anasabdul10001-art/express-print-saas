@@ -47,5 +47,11 @@ class Settings(BaseSettings):
     # (error capture is NOT gated by this setting - it's always on once a DSN
     # is set). Raise this later if request tracing becomes useful.
     sentry_traces_sample_rate: float = 0.0
+    # --- Stripe (subscription billing) ---
+    # Empty by default = billing endpoints return a clear "not configured"
+    # error instead of crashing - same off-by-default pattern as Sentry.
+    # See app/routers/billing.py.
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 settings = Settings()

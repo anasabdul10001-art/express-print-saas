@@ -2,7 +2,6 @@ import re
 import secrets
 import uuid
 from datetime import datetime, timezone
-from decimal import Decimal
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
@@ -43,12 +42,11 @@ from app.schemas.affiliate import (
 from app.schemas.site_page import SitePageOut, SitePageUpdate
 from app.routers.affiliate_portal import _issue_set_password_token
 from app.routers.plans import DEFAULT_SITE_PAGES, _get_or_create_page
+from app.services.billing_service import issue_invoice
 from app.services.email_service import send_affiliate_password_email, send_invoice_email
 from app.services.invoice_service import generate_invoice_pdf
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-
-INVOICE_VAT_RATE = Decimal("19.00")
 
 # Reuses the same Supabase bucket product images already go into (see
 # app/routers/uploads.py) rather than requiring a second bucket to be
@@ -134,52 +132,6 @@ def _generate_referral_code(db: Session, name: str) -> str:
         if not db.query(Affiliate).filter(Affiliate.referral_code == code).first():
             return code
     raise HTTPException(status_code=500, detail="Konnte keinen eindeutigen Referral-Code erzeugen.")
-
-
-def _award_affiliate_commission(db: Session, tenant: Tenant, invoice: Invoice) -> None:
-    """
-    Called right after a payment is confirmed (invoice already committed -
-    see confirm_payment below). Best-effort and isolated in its own
-    try/except at the call site: a bug here must never take down billing,
-    which already succeeded by the time this runs.
-
-    FLAT_ONE_TIME affiliates are paid exactly once per referred tenant
-    (guarded by AffiliateReferral.bonus_awarded); PERCENTAGE_RECURRING
-    affiliates earn a cut of every confirmed payment, for as long as the
-    referral relationship exists.
-    """
-    referral = db.query(AffiliateReferral).filter(AffiliateReferral.referred_tenant_id == tenant.id).first()
-    if not referral:
-        return
-
-    affiliate = db.query(Affiliate).filter(Affiliate.id == referral.affiliate_id).first()
-    if not affiliate or affiliate.status != "ACTIVE":
-        return
-
-    if affiliate.commission_type == "FLAT_ONE_TIME":
-        if referral.bonus_awarded:
-            return
-        amount = affiliate.commission_value
-        description = f"Einmalige Provision für Empfehlung von {tenant.company_name}"
-        referral.bonus_awarded = True
-    else:  # PERCENTAGE_RECURRING
-        amount = (invoice.gross_amount * affiliate.commission_value / 100).quantize(Decimal("0.01"))
-        description = f"{affiliate.commission_value}% Provision auf Rechnung {invoice.invoice_number}"
-
-    if amount <= 0:
-        return
-
-    db.add(AffiliateCommission(
-        affiliate_id=affiliate.id,
-        referral_id=referral.id,
-        invoice_id=invoice.id,
-        amount=amount,
-        commission_type=affiliate.commission_type,
-        description=description,
-    ))
-    affiliate.balance_owed = (affiliate.balance_owed or Decimal("0")) + amount
-    affiliate.total_earned = (affiliate.total_earned or Decimal("0")) + amount
-    db.commit()
 
 
 @router.get("/settings", response_model=SiteSettingsOut)
@@ -352,9 +304,11 @@ def confirm_payment(
     Manually confirming that a tenant's payment (bank transfer, PayPal, ...
     - see the Payment Methods section) has arrived. Issues a German
     §14-UStG-compliant invoice (sequential number, seller/customer details,
-    19% USt) as a PDF, and emails it to the tenant's account owner - this
-    is the ONLY way an invoice gets created; there is no automatic billing
-    yet (see app/models/plan.py's module docstring).
+    19% USt) as a PDF, and emails it to the tenant's account owner - via the
+    exact same app/services/billing_service.py path a real Stripe payment
+    triggers automatically (see app/routers/billing.py's webhook). This is
+    the manual fallback for payment methods Stripe doesn't handle (bank
+    transfer, PayPal, ...).
     """
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
     if not tenant:
@@ -377,58 +331,18 @@ def confirm_payment(
 
     description = payload.description or (plan.name if plan else "Abonnement")
     currency = plan.currency if plan else "EUR"
-
     settings_row = _get_or_create_settings(db)
-    if not settings_row.company_legal_name or not settings_row.company_address:
-        raise HTTPException(
-            status_code=400,
-            detail="Bitte zuerst die Rechnungsdaten (Firmenname, Adresse) in den Einstellungen ausfüllen.",
-        )
-
-    vat_amount = (net_amount * INVOICE_VAT_RATE / 100).quantize(Decimal("0.01"))
-    gross_amount = net_amount + vat_amount
-
-    # Sequential + gapless per §14 UStG: reserved by incrementing the
-    # counter in the SAME transaction as creating the invoice row below,
-    # so a failed commit rolls back both together rather than burning a
-    # number with no invoice behind it.
-    settings_row.last_invoice_number = (settings_row.last_invoice_number or 0) + 1
-    invoice_number = f"{datetime.now(timezone.utc).year}-{settings_row.last_invoice_number:04d}"
-
-    invoice = Invoice(
-        tenant_id=tenant.id,
-        invoice_number=invoice_number,
-        issue_date=datetime.now(timezone.utc).date(),
-        description=description,
-        net_amount=net_amount,
-        vat_rate=INVOICE_VAT_RATE,
-        vat_amount=vat_amount,
-        gross_amount=gross_amount,
-        currency=currency,
-        customer_name=tenant.company_name,
-        customer_email=owner.email,
-    )
-    db.add(invoice)
-    db.commit()
-    db.refresh(invoice)
 
     try:
-        _award_affiliate_commission(db, tenant, invoice)
-    except Exception:  # noqa: BLE001 - the invoice already succeeded and must never roll back over an affiliate bug
-        db.rollback()
-
-    pdf_bytes = generate_invoice_pdf(invoice, settings_row)
-
-    try:
-        send_invoice_email(owner.email, invoice.invoice_number, pdf_bytes, settings_row.company_legal_name)
+        invoice = issue_invoice(db, tenant, owner, settings_row, net_amount, description, currency)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
     except RuntimeError as err:
         # The invoice itself is already committed (its number must never be
-        # reused) - only the email failed, so say so distinctly rather than
-        # a generic 500, and let the admin retry via the resend endpoint.
-        raise HTTPException(
-            status_code=502,
-            detail=f"Rechnung {invoice.invoice_number} wurde erstellt, aber der E-Mail-Versand ist fehlgeschlagen: {err}",
-        )
+        # reused, and the message names it) - only the email failed, so say
+        # so distinctly rather than a generic 500; the admin can retry via
+        # the resend endpoint.
+        raise HTTPException(status_code=502, detail=str(err))
 
     return invoice
 
