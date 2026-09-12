@@ -3,19 +3,26 @@ Calls DHL's Parcel DE Shipping API (Post & Parcel Germany v2) to create a
 real shipment and buy a label, for a tenant who has connected their own DHL
 Business Customer account (see app/models/dhl_account.py, app/routers/dhl.py).
 
-*** UNVERIFIED AGAINST A LIVE SANDBOX - READ BEFORE RELYING ON THIS FILE ***
-developer.dhl.com is unreachable from this environment's network, so the
+*** STILL UNVERIFIED AGAINST A LIVE CALL - READ BEFORE RELYING ON THIS FILE ***
+api-sandbox.dhl.com and developer.dhl.com are both unreachable from this
+environment's network (blocked by egress policy, confirmed directly - not
+just "didn't try"), so no live call has been made from here. However, the
 request/response shape below (billingNumber/shipper/consignee fields, the
-"V01PAK" product code, and the items[].label.b64 / items[].shipmentNo
-response fields) comes from DHL's public docs and third-party integration
-write-ups found via web search, NOT from an actual sandbox call. Treat the
-first real call made with a real DHL_API_KEY + a tenant's real sandbox
-account as a live test of this file's assumptions, not just of the
-credentials - check the actual response shape against what's assumed here
-(see _parse_response below) before trusting it in production.
+"profile" field, the "V01PAK" product code, and the items[].label.b64 /
+items[].shipmentNo response fields) has been cross-checked against DHL's
+own published OpenAPI spec (Parcel DE Shipping v2.1.10) rather than only
+blog write-ups, which is a meaningfully higher confidence level than the
+previous version of this file had - but "matches the spec" is still not
+"confirmed working against a real sandbox response". Known real sandbox
+test credentials (from DHL's own docs): username "user-valid", password
+"SandboxPasswort2023!", billing numbers "22222222220801"/"22222222220101" -
+connect those via the app's own DHL settings UI and trigger one real print
+job as the actual live test, then fix _parse_response below against
+whatever DHL's real response turns out to look like.
 """
 
 import base64
+import re
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -35,6 +42,47 @@ DHL_API_BASE = {
 # requests. DHL has many other product codes (Warenpost, international
 # Paket, Päckchen, ...) that a later phase could let the tenant choose.
 DEFAULT_PRODUCT_CODE = "V01PAK"
+
+# Required at the root of every /orders request - controls which billing
+# numbers the request is even allowed to use. DHL's own docs say to use
+# this standard profile whenever no dedicated one has been set up, which is
+# every tenant here (nothing in this app ever configures a custom one).
+DEFAULT_PROFILE = "STANDARD_GRUPPENPROFIL"
+
+# DHL's API requires ISO 3166-1 ALPHA-3 country codes ("DEU", not "DE"), but
+# every country code already stored in this app (DhlAccount.sender_country,
+# Order.recipient_country_code) is ISO alpha-2, matching eBay's own data and
+# the rest of this codebase - so the conversion happens only here, at the
+# DHL-payload boundary, rather than changing what's stored everywhere else.
+# Covers the EU/EEA + UK/CH + a few other common shipping destinations;
+# extend as needed if tenants ship further afield.
+_ALPHA2_TO_ALPHA3 = {
+    "DE": "DEU", "AT": "AUT", "CH": "CHE", "FR": "FRA", "NL": "NLD", "BE": "BEL",
+    "LU": "LUX", "PL": "POL", "CZ": "CZE", "DK": "DNK", "IT": "ITA", "ES": "ESP",
+    "GB": "GBR", "IE": "IRL", "SE": "SWE", "PT": "PRT", "FI": "FIN", "NO": "NOR",
+    "HU": "HUN", "SK": "SVK", "SI": "SVN", "HR": "HRV", "RO": "ROU", "BG": "BGR",
+    "GR": "GRC", "EE": "EST", "LV": "LVA", "LT": "LTU", "MT": "MLT", "CY": "CYP",
+    "US": "USA", "CA": "CAN", "AU": "AUS", "CN": "CHN", "JP": "JPN",
+}
+
+# Best-effort split of a German-style "Straße Hausnummer" line (e.g.
+# "Hauptstraße 12a") into DHL's separate addressStreet/addressHouse fields -
+# neither this app's own address fields nor eBay's shipping address data
+# keep the house number separate, so this is inferred rather than stored.
+_HOUSE_NUMBER_RE = re.compile(r"^(.*?)\s+(\d+\s*[a-zA-Z]?)$")
+
+
+def _to_alpha3(country_code: str | None) -> str:
+    code = (country_code or "DE").upper()
+    return _ALPHA2_TO_ALPHA3.get(code, code)
+
+
+def _split_street_and_house(full_street: str | None) -> tuple[str, str | None]:
+    full_street = (full_street or "").strip()
+    match = _HOUSE_NUMBER_RE.match(full_street)
+    if match:
+        return match.group(1).strip(), match.group(2).strip()
+    return full_street, None
 
 
 class DhlShipmentError(Exception):
@@ -77,7 +125,11 @@ def create_shipment_label(
     password = decrypt_token(dhl_account.api_password_encrypted)
     base_url = DHL_API_BASE.get(dhl_account.environment, DHL_API_BASE["SANDBOX"])
 
+    shipper_street, shipper_house = _split_street_and_house(dhl_account.sender_street)
+    consignee_street, consignee_house = _split_street_and_house(order.recipient_street1)
+
     payload = {
+        "profile": DEFAULT_PROFILE,
         "shipments": [
             {
                 "product": DEFAULT_PRODUCT_CODE,
@@ -85,19 +137,21 @@ def create_shipment_label(
                 "refNo": str(order.id),
                 "shipper": {
                     "name1": dhl_account.sender_name,
-                    "addressStreet": dhl_account.sender_street,
+                    "addressStreet": shipper_street,
+                    "addressHouse": shipper_house,
                     "postalCode": dhl_account.sender_zip,
                     "city": dhl_account.sender_city,
-                    "country": dhl_account.sender_country,
+                    "country": _to_alpha3(dhl_account.sender_country),
                 },
                 "consignee": {
                     "name1": order.recipient_name or "Empfänger",
-                    "addressStreet": order.recipient_street1,
+                    "addressStreet": consignee_street,
+                    "addressHouse": consignee_house,
                     "additionalAddressInformation1": order.recipient_street2,
                     "postalCode": order.recipient_zip,
                     "city": order.recipient_city,
                     "state": order.recipient_state,
-                    "country": order.recipient_country_code or "DE",
+                    "country": _to_alpha3(order.recipient_country_code),
                     "phone": order.recipient_phone,
                 },
                 "details": {
