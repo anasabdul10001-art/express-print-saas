@@ -69,6 +69,26 @@ def test_deactivate_product_is_soft_delete(client, register):
     assert fetched["active"] is False
 
 
+def test_source_url_roundtrips_and_defaults_to_unset(client, register):
+    """Dropshipping source monitoring fields (see
+    app/services/source_monitor_service.py) - source_url is settable by the
+    seller, everything else starts null until a check actually runs."""
+    headers, _ = register()
+    created = client.post("/products", headers=headers, json={
+        "sku": "SKU-SRC", "title": "Monitored thing",
+        "source_url": "https://www.amazon.de/dp/B000EXAMPLE",
+    }).json()
+    assert created["source_url"] == "https://www.amazon.de/dp/B000EXAMPLE"
+    assert created["source_price"] is None
+    assert created["last_checked_at"] is None
+    assert created["last_check_status"] is None
+
+    updated = client.patch(f"/products/{created['id']}", headers=headers, json={
+        "source_url": "https://www.otto.de/p/example-12345/",
+    }).json()
+    assert updated["source_url"] == "https://www.otto.de/p/example-12345/"
+
+
 def test_products_are_isolated_per_tenant(client, register):
     headers_a, _ = register()
     headers_b, _ = register()

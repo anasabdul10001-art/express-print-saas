@@ -61,6 +61,11 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(30)"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS source_url VARCHAR(1000)"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS source_price DECIMAL(10,2)"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS last_checked_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS last_check_status VARCHAR(20)"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS last_check_message VARCHAR(500)"))
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
