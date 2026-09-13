@@ -32,5 +32,19 @@ class Product(Base):
     width_cm = Column(Integer)
     height_cm = Column(Integer)
     active = Column(Boolean, nullable=False, default=True)
+
+    # Dropshipping source monitoring (Phase 1 - see
+    # app/services/source_monitor_service.py). source_url is the supplier's
+    # own product page (Amazon.de, Otto.de, ...); null means this product
+    # isn't monitored at all. The rest are filled in by the monitor itself,
+    # never set directly by a seller.
+    source_url = Column(String(1000))
+    source_price = Column(DECIMAL(10, 2))  # last price the monitor observed at the supplier
+    last_checked_at = Column(DateTime(timezone=True))
+    # OK / PRICE_TOO_HIGH / OUT_OF_STOCK / BLOCKED / ERROR - see
+    # source_monitor_service.CheckStatus. Null = never checked yet.
+    last_check_status = Column(String(20))
+    last_check_message = Column(String(500))  # human-readable detail for the seller
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
