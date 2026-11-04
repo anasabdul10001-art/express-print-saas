@@ -5,7 +5,7 @@ import httpx
 from app.core.crypto import encrypt_token
 from app.models.ebay_account import EbayAccount
 from app.services import ebay_oauth_service
-from app.services.ebay_oauth_service import LEGACY_SCOPES, SCOPES, _fetch_username, _refresh_access_token
+from app.services.ebay_oauth_service import LEGACY_SCOPES, SCOPES, _fetch_identity, _refresh_access_token
 
 
 class _FakeDb:
@@ -13,24 +13,24 @@ class _FakeDb:
         pass
 
 
-def test_fetch_username_returns_username(monkeypatch):
+def test_fetch_identity_returns_username_and_id(monkeypatch):
     def fake_get(url, **kwargs):
         assert url == "https://apiz.ebay.com/commerce/identity/v1/user/"
-        return httpx.Response(200, json={"username": "lamarconnect"})
+        return httpx.Response(200, json={"username": "lamarconnect", "userId": "abc123"})
 
     monkeypatch.setattr(ebay_oauth_service.httpx, "get", fake_get)
-    assert _fetch_username("token", "PRODUCTION") == "lamarconnect"
+    assert _fetch_identity("token", "PRODUCTION") == ("lamarconnect", "abc123")
 
 
-def test_fetch_username_failure_does_not_raise(monkeypatch):
+def test_fetch_identity_failure_does_not_raise(monkeypatch):
     monkeypatch.setattr(ebay_oauth_service.httpx, "get", lambda url, **kwargs: httpx.Response(403, text="denied"))
-    assert _fetch_username("token", "PRODUCTION") is None
+    assert _fetch_identity("token", "PRODUCTION") == (None, None)
 
     def network_down(url, **kwargs):
         raise httpx.ConnectError("down")
 
     monkeypatch.setattr(ebay_oauth_service.httpx, "get", network_down)
-    assert _fetch_username("token", "PRODUCTION") is None
+    assert _fetch_identity("token", "PRODUCTION") == (None, None)
 
 
 def test_refresh_falls_back_to_legacy_scopes(monkeypatch):
