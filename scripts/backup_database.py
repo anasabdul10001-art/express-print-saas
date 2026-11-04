@@ -98,7 +98,7 @@ def prune_old_backups(supabase_url: str, service_key: str, retention_days: int) 
         response = httpx.post(
             f"{supabase_url}/storage/v1/object/list/{BUCKET}",
             headers=headers,
-            json={"limit": 1000, "sortBy": {"column": "name", "order": "asc"}},
+            json={"prefix": "", "limit": 1000, "sortBy": {"column": "name", "order": "asc"}},
             timeout=30.0,
         )
         response.raise_for_status()
