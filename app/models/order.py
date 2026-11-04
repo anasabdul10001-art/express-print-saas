@@ -17,6 +17,11 @@ class Order(Base):
     external_order_ref = Column(String(100))  # e.g. eBay order ID, once that integration exists
     status = Column(String(20), nullable=False, default="new")
 
+    # The eBay buyer behind an imported order. It's how an account-deletion
+    # notification from eBay finds this buyer's data (see
+    # app/services/ebay_deletion_service.py).
+    buyer_username = Column(String(255), index=True)
+
     # Recipient shipping address - needed to actually create a DHL shipment
     # label later (see app/routers/dhl.py). Null for orders created manually
     # in the dashboard (no address to capture); populated from eBay's

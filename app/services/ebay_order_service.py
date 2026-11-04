@@ -39,6 +39,7 @@ from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
 from app.services import ebay_oauth_service
+from app.services.ebay_deletion_service import deleted_order_ref
 
 EBAY_API_BASE = {
     "SANDBOX": "https://api.sandbox.ebay.com",
@@ -104,13 +105,23 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
         ebay_order_id = ebay_order.get("orderId")
         if not ebay_order_id:
             continue
+        buyer_username = (ebay_order.get("buyer") or {}).get("username")
 
         already_imported = (
             db.query(Order)
-            .filter(Order.tenant_id == tenant_id, Order.external_order_ref == ebay_order_id)
+            .filter(
+                Order.tenant_id == tenant_id,
+                # The second form means this buyer's data was deleted at
+                # eBay's request, so it must not be imported again.
+                Order.external_order_ref.in_([ebay_order_id, deleted_order_ref(ebay_order_id)]),
+            )
             .first()
         )
         if already_imported:
+            # Orders imported before buyer_username existed can't be found by
+            # a deletion notification until they get it.
+            if not already_imported.buyer_username and already_imported.external_order_ref == ebay_order_id:
+                already_imported.buyer_username = buyer_username
             continue  # silently skip - this is the normal case on repeat syncs
 
         line_items = ebay_order.get("lineItems", [])
@@ -144,6 +155,7 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             tenant_id=tenant_id,
             external_order_ref=ebay_order_id,
             status="new",
+            buyer_username=buyer_username,
             **_extract_ship_to(ebay_order),
         )
         db.add(order)

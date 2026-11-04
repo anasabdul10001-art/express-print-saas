@@ -23,7 +23,9 @@ class EbayAccount(Base):
         unique=True,  # one eBay connection per tenant for now
     )
 
-    ebay_user_id = Column(String(255), nullable=True)
+    ebay_user_id = Column(String(255), nullable=True)  # the eBay username
+    # eBay's permanent user id. Usernames can change, this can't.
+    ebay_immutable_id = Column(String(255), nullable=True)
     access_token_encrypted = Column(Text, nullable=True)
     refresh_token_encrypted = Column(Text, nullable=True)
     access_token_expires_at = Column(DateTime(timezone=True), nullable=True)

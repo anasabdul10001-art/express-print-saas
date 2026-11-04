@@ -9,6 +9,11 @@ class Settings(BaseSettings):
     ebay_client_secret: str = ""
     ebay_ru_name: str = ""  # the "RuName" eBay generates for your redirect URL, not a raw URL
     ebay_environment: str = "SANDBOX"  # SANDBOX or PRODUCTION
+    # Marketplace Account Deletion notifications. The token and the endpoint
+    # must match what's saved on eBay's Alerts & Notifications page exactly,
+    # because both are part of the challenge hash.
+    ebay_deletion_verification_token: str = ""
+    ebay_deletion_endpoint: str = "https://express-print-saas.onrender.com/ebay/account-deletion"
     # Fernet key used to encrypt eBay tokens at rest. Generate with:
     # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     token_encryption_key: str = ""

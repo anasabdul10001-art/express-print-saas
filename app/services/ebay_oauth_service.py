@@ -109,8 +109,8 @@ def handle_callback(code: str, state: str, db: Session) -> EbayAccount:
     account = _store_tokens(tenant_id, payload, db)
 
     # Always overwritten, so reconnecting with a different eBay account can
-    # never keep showing the previous account's name.
-    account.ebay_user_id = _fetch_username(payload["access_token"], account.environment)
+    # never keep the previous account's identity.
+    account.ebay_user_id, account.ebay_immutable_id = _fetch_identity(payload["access_token"], account.environment)
     db.commit()
     db.refresh(account)
     return account
@@ -165,10 +165,12 @@ def _exchange_code_for_tokens(code: str) -> dict:
     return resp.json()
 
 
-def _fetch_username(access_token: str, environment: str) -> str | None:
+def _fetch_identity(access_token: str, environment: str) -> tuple[str | None, str | None]:
     """
-    The connected eBay account's username, or None if eBay won't say. Purely
-    informational, so a failure here must never fail the connection itself.
+    The connected account's (username, permanent user id), or Nones if eBay
+    won't say. Showing the name is informational and the deletion flow can
+    still match on what sync fills in, so a failure must never fail the
+    connection itself.
     """
     try:
         resp = httpx.get(
@@ -177,10 +179,11 @@ def _fetch_username(access_token: str, environment: str) -> str | None:
             timeout=10.0,
         )
         if resp.status_code != 200:
-            return None
-        return resp.json().get("username")
+            return None, None
+        body = resp.json()
+        return body.get("username"), body.get("userId")
     except (httpx.HTTPError, ValueError):
-        return None
+        return None, None
 
 
 def _store_tokens(tenant_id: UUID, payload: dict, db: Session) -> EbayAccount:

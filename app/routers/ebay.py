@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import RedirectResponse
+import json
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -7,7 +9,7 @@ from app.core.deps import get_current_user, get_db
 from app.models.ebay_account import EbayAccount
 from app.models.user import User
 from app.schemas.ebay import AuthorizeUrlOut, EbayAccountOut
-from app.services import ebay_oauth_service, ebay_order_service
+from app.services import ebay_deletion_service, ebay_oauth_service, ebay_order_service
 
 router = APIRouter(prefix="/ebay", tags=["ebay"])
 
@@ -104,3 +106,45 @@ def sync_orders(
         raise HTTPException(status_code=502, detail=f"eBay-Synchronisierung fehlgeschlagen: {exc}")
 
     return result
+
+
+@router.get("/account-deletion")
+def account_deletion_challenge(challenge_code: str):
+    """eBay's ownership check, run when this endpoint is saved on its site."""
+    if not settings.ebay_deletion_verification_token:
+        raise HTTPException(status_code=503, detail="Verification token is not configured")
+    return JSONResponse({"challengeResponse": ebay_deletion_service.challenge_response(challenge_code)})
+
+
+@router.post("/account-deletion", status_code=204)
+async def account_deletion_notification(
+    request: Request,
+    x_ebay_signature: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
+    """
+    eBay telling us a user asked for their data to be deleted. Unauthenticated
+    by nature, so the signature is what stops anyone else triggering a delete.
+    Deleting before acknowledging means a failure returns 500 and eBay retries,
+    rather than the request being acknowledged and then lost.
+    """
+    body = await request.body()
+
+    try:
+        valid = ebay_deletion_service.signature_is_valid(body, x_ebay_signature)
+    except ebay_deletion_service.PublicKeyUnavailable:
+        # Our problem or eBay's, not a bad request: let eBay retry.
+        raise HTTPException(status_code=503, detail="Could not verify the signature right now")
+    if not valid:
+        raise HTTPException(status_code=412, detail="Invalid signature")
+
+    try:
+        payload = json.loads(body)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    if payload.get("metadata", {}).get("topic") == ebay_deletion_service.DELETION_TOPIC:
+        data = payload.get("notification", {}).get("data", {})
+        ebay_deletion_service.delete_user_data(data.get("username"), data.get("userId"), db)
+
+    return Response(status_code=204)
