@@ -45,8 +45,25 @@ SCOPES = " ".join(
     [
         "https://api.ebay.com/oauth/api_scope/sell.fulfillment",
         "https://api.ebay.com/oauth/api_scope/sell.inventory",
+        # Lets us show which eBay account is connected next to "Connected".
+        "https://api.ebay.com/oauth/api_scope/commerce.identity.readonly",
     ]
 )
+
+# Accounts connected before the identity scope existed hold refresh tokens
+# that eBay rejects with invalid_scope when asked for SCOPES above. Refreshing
+# with this narrower list keeps them working until they reconnect.
+LEGACY_SCOPES = " ".join(
+    [
+        "https://api.ebay.com/oauth/api_scope/sell.fulfillment",
+        "https://api.ebay.com/oauth/api_scope/sell.inventory",
+    ]
+)
+
+IDENTITY_USER_URLS = {
+    "SANDBOX": "https://apiz.sandbox.ebay.com/commerce/identity/v1/user/",
+    "PRODUCTION": "https://apiz.ebay.com/commerce/identity/v1/user/",
+}
 
 STATE_TTL_MINUTES = 10
 
@@ -89,7 +106,14 @@ def handle_callback(code: str, state: str, db: Session) -> EbayAccount:
         raise ValueError("authorization_request_expired")
 
     payload = _exchange_code_for_tokens(code)
-    return _store_tokens(tenant_id, payload, db)
+    account = _store_tokens(tenant_id, payload, db)
+
+    # Always overwritten, so reconnecting with a different eBay account can
+    # never keep showing the previous account's name.
+    account.ebay_user_id = _fetch_username(payload["access_token"], account.environment)
+    db.commit()
+    db.refresh(account)
+    return account
 
 
 def get_valid_access_token(account: EbayAccount, db: Session) -> str:
@@ -141,6 +165,24 @@ def _exchange_code_for_tokens(code: str) -> dict:
     return resp.json()
 
 
+def _fetch_username(access_token: str, environment: str) -> str | None:
+    """
+    The connected eBay account's username, or None if eBay won't say. Purely
+    informational, so a failure here must never fail the connection itself.
+    """
+    try:
+        resp = httpx.get(
+            IDENTITY_USER_URLS[environment],
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10.0,
+        )
+        if resp.status_code != 200:
+            return None
+        return resp.json().get("username")
+    except (httpx.HTTPError, ValueError):
+        return None
+
+
 def _store_tokens(tenant_id: UUID, payload: dict, db: Session) -> EbayAccount:
     account = db.query(EbayAccount).filter(EbayAccount.tenant_id == tenant_id).first()
     if not account:
@@ -174,16 +216,22 @@ def _refresh_access_token(account: EbayAccount, db: Session) -> str:
 
     refresh_token = decrypt_token(account.refresh_token_encrypted)
     token_url = EBAY_URLS[account.environment]["token"]
-    resp = httpx.post(
-        token_url,
-        headers={**_basic_auth_header(), "Content-Type": "application/x-www-form-urlencoded"},
-        data={
-            "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
-            "scope": SCOPES,
-        },
-        timeout=15.0,
-    )
+
+    def request_refresh(scopes: str) -> httpx.Response:
+        return httpx.post(
+            token_url,
+            headers={**_basic_auth_header(), "Content-Type": "application/x-www-form-urlencoded"},
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token,
+                "scope": scopes,
+            },
+            timeout=15.0,
+        )
+
+    resp = request_refresh(SCOPES)
+    if resp.status_code != 200 and "invalid_scope" in resp.text:
+        resp = request_refresh(LEGACY_SCOPES)
     if resp.status_code != 200:
         account.status = "ERROR"
         db.commit()

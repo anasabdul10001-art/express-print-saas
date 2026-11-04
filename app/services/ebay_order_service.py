@@ -91,6 +91,11 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
 
     ebay_orders = resp.json().get("orders", [])
 
+    # Accounts connected before the identity scope existed have no stored
+    # username; every order names its seller, so fill it in from there.
+    if not account.ebay_user_id and ebay_orders:
+        account.ebay_user_id = ebay_orders[0].get("sellerId")
+
     created_count = 0
     skipped_count = 0
     skipped_reasons: list[str] = []
