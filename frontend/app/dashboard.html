@@ -255,7 +255,7 @@
             const descEl = document.getElementById("ebay-desc");
             descEl.removeAttribute("data-i18n");
             if (ebayStatus) {
-                descEl.innerText = `${t("dashboard.ebayConnectedAs")} ${ebayStatus.ebay_username || t("dashboard.ebaySeller")}.`;
+                descEl.innerText = `${t("dashboard.ebayConnectedAs")} ${ebayStatus.ebay_user_id || t("dashboard.ebaySeller")}.`;
             } else {
                 descEl.innerText = t("dashboard.ebayNotConnected");
             }
