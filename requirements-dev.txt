@@ -1,2 +1,4 @@
 -r requirements.txt
 pytest>=8.0.0
+pypdf>=4.2.0
+pypdfium2>=4.30.0

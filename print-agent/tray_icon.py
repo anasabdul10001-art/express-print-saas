@@ -46,7 +46,8 @@ def run_tray_app(config: dict) -> None:
             watcher.stop()
             watcher = None
         if cfg.get("watch_folder"):
-            watcher = FolderWatcher(cfg["watch_folder"], cfg["printer_name"], cfg.get("watch_rotation", 0), on_status)
+            paper_mm = (cfg.get("paper_width_mm", 100), cfg.get("paper_height_mm", 150))
+            watcher = FolderWatcher(cfg["watch_folder"], cfg["printer_name"], cfg.get("watch_rotation", 0), on_status, paper_mm)
             watcher.start()
 
     def status_menu_text(_item):

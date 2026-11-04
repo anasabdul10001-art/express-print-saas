@@ -13,9 +13,11 @@ new files a day isn't worth it, and polling is trivial to reason about.
 """
 
 import os
+import tempfile
 import threading
 import time
 
+from label_fit import DEFAULT_PAPER_MM, fit_label_to_paper
 from printing import print_pdf
 
 POLL_INTERVAL_SECONDS = 3
@@ -25,11 +27,12 @@ FAILED_SUBFOLDER = "Fehler"
 
 
 class FolderWatcher:
-    def __init__(self, folder: str, printer_name: str, rotation_degrees: int, on_status):
+    def __init__(self, folder: str, printer_name: str, rotation_degrees: int, on_status, paper_mm=DEFAULT_PAPER_MM):
         self.folder = folder
         self.printer_name = printer_name
         self.rotation_degrees = rotation_degrees
         self.on_status = on_status
+        self.paper_mm = paper_mm
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
         self._pending_sizes: dict[str, tuple[int, int]] = {}  # filename -> (size, stable_count)
@@ -86,13 +89,20 @@ class FolderWatcher:
 
     def _handle_new_label(self, full_path: str, name: str) -> None:
         self.on_status(f"Drucke Etikett: {name}")
+        fitted_path = None
         try:
-            print_pdf(full_path, self.printer_name, self.rotation_degrees, fit_to_page=True)
+            fd, fitted_path = tempfile.mkstemp(suffix=".pdf", prefix="express_print_")
+            os.close(fd)
+            fit_label_to_paper(full_path, fitted_path, self.paper_mm)
+            print_pdf(fitted_path, self.printer_name, self.rotation_degrees, fit_to_page=True)
             self._move_to(full_path, name, PRINTED_SUBFOLDER)
             self.on_status("Verbunden - überwacht Download-Ordner.")
         except Exception as exc:  # noqa: BLE001 - a bad PDF must not stop watching the rest
             self._move_to(full_path, name, FAILED_SUBFOLDER)
             self.on_status(f"Etikett-Druck fehlgeschlagen: {exc}")
+        finally:
+            if fitted_path and os.path.exists(fitted_path):
+                os.remove(fitted_path)
 
     def _move_to(self, full_path: str, name: str, subfolder: str) -> None:
         destination = os.path.join(self.folder, subfolder, name)

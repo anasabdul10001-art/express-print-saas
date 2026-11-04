@@ -116,6 +116,7 @@ def run_setup_wizard(on_saved) -> None:
         folder_entry.config(state=state)
         browse_button.config(state=state)
         rotation_dropdown.config(state="readonly" if watch_enabled_var.get() else "disabled")
+        paper_dropdown.config(state="readonly" if watch_enabled_var.get() else "disabled")
 
     ttk.Checkbutton(
         frame,
@@ -131,13 +132,16 @@ def run_setup_wizard(on_saved) -> None:
     ).pack(anchor="w", pady=(0, 8))
 
     folder_row = ttk.Frame(frame)
-    default_downloads = os.path.join(os.path.expanduser("~"), "Downloads")
+    # Its own folder rather than Downloads itself, because every PDF in the
+    # watched folder gets printed - and an invoice shouldn't be.
+    default_downloads = os.path.join(os.path.expanduser("~"), "Downloads", "Etiketten")
     folder_var = tk.StringVar(value=existing.get("watch_folder") or default_downloads)
     folder_entry = ttk.Entry(folder_row, textvariable=folder_var, width=38)
     folder_entry.pack(side="left", fill="x", expand=True)
 
     def browse_folder():
-        chosen = filedialog.askdirectory(initialdir=folder_var.get() or default_downloads)
+        start_dir = folder_var.get()
+        chosen = filedialog.askdirectory(initialdir=start_dir if os.path.isdir(start_dir) else os.path.expanduser("~"))
         if chosen:
             folder_var.set(chosen)
 
@@ -153,7 +157,18 @@ def run_setup_wizard(on_saved) -> None:
         state="readonly", width=6,
     )
     rotation_dropdown.pack(side="left", padx=(8, 0))
-    rotation_row.pack(anchor="w", pady=(0, 12))
+    rotation_row.pack(anchor="w", pady=(0, 8))
+
+    paper_row = ttk.Frame(frame)
+    ttk.Label(paper_row, text="Papiergröße des Druckers (mm):").pack(side="left")
+    saved_paper = f"{existing.get('paper_width_mm', 100)}x{existing.get('paper_height_mm', 150)}"
+    paper_var = tk.StringVar(value=saved_paper)
+    paper_dropdown = ttk.Combobox(
+        paper_row, textvariable=paper_var, values=["100x150", "105x148", "100x200", "62x100", "210x297"],
+        state="readonly", width=9,
+    )
+    paper_dropdown.pack(side="left", padx=(8, 0))
+    paper_row.pack(anchor="w", pady=(0, 12))
 
     toggle_watch_fields()
 
@@ -173,9 +188,12 @@ def run_setup_wizard(on_saved) -> None:
             return
 
         watch_folder = folder_var.get().strip() if watch_enabled_var.get() else None
-        if watch_enabled_var.get() and not os.path.isdir(watch_folder):
-            status_label.config(text=f"Ordner nicht gefunden: {watch_folder}")
-            return
+        if watch_enabled_var.get():
+            try:
+                os.makedirs(watch_folder, exist_ok=True)
+            except OSError:
+                status_label.config(text=f"Ordner konnte nicht angelegt werden: {watch_folder}")
+                return
         watch_rotation = int(rotation_var.get()) if watch_enabled_var.get() else 0
 
         save_button.config(state="disabled", text="Prüfe Verbindung...")
@@ -188,7 +206,8 @@ def run_setup_wizard(on_saved) -> None:
             status_label.config(text=error)
             return
 
-        save_config(agent_id, api_key, printer_name, watch_folder, watch_rotation)
+        paper_width_mm, paper_height_mm = (int(part) for part in paper_var.get().split("x"))
+        save_config(agent_id, api_key, printer_name, watch_folder, watch_rotation, paper_width_mm, paper_height_mm)
         messagebox.showinfo("ShipSync Agent", "Einrichtung abgeschlossen. Der Agent läuft jetzt im Hintergrund.")
         root.destroy()
         on_saved({
@@ -197,6 +216,8 @@ def run_setup_wizard(on_saved) -> None:
             "printer_name": printer_name,
             "watch_folder": watch_folder,
             "watch_rotation": watch_rotation,
+            "paper_width_mm": paper_width_mm,
+            "paper_height_mm": paper_height_mm,
         })
 
     save_button = ttk.Button(frame, text="Speichern und starten", command=handle_save)

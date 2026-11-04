@@ -24,6 +24,7 @@ pip install -r requirements.txt
 
 pyinstaller --onefile --windowed --name PrintAgentSetup `
     --add-binary "$sumatraPath;vendor" `
+    --collect-all pypdfium2 --collect-all pypdfium2_raw `
     main.py
 
 Write-Host ""

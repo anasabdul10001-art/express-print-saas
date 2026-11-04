@@ -40,6 +40,8 @@ def save_config(
     printer_name: str,
     watch_folder: str | None = None,
     watch_rotation: int = 0,
+    paper_width_mm: int = 100,
+    paper_height_mm: int = 150,
 ) -> None:
     # watch_folder/watch_rotation are optional - the hot-folder feature
     # (auto-print whatever new PDF lands in a chosen folder) is opt-in per
@@ -53,6 +55,8 @@ def save_config(
                 "printer_name": printer_name,
                 "watch_folder": watch_folder,
                 "watch_rotation": watch_rotation,
+                "paper_width_mm": paper_width_mm,
+                "paper_height_mm": paper_height_mm,
             },
             f,
         )

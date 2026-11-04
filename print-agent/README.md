@@ -24,6 +24,7 @@ dialog.
 | `main.py`          | Entry point - wizard on first run, tray app after that |
 | `setup_wizard.py`  | The first-run / "change settings" window |
 | `agent_core.py`    | Polling loop + backend HTTP calls |
+| `label_fit.py`     | Crops a label PDF to the label and fits it to the printer's paper |
 | `printing.py`      | Printer list + silent PDF printing (via SumatraPDF) + rotation |
 | `tray_icon.py`     | The system tray icon and its menu |
 | `autostart.py`     | Registers the program to start with Windows |

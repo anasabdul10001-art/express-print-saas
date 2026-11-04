@@ -1,0 +1,32 @@
+name: Build print agent
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "print-agent/**"
+      - ".github/workflows/build-print-agent.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: print-agent
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build
+        run: .\build.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PrintAgentSetup
+          path: print-agent/dist/PrintAgentSetup.exe
+          retention-days: 30
