@@ -1,12 +1,13 @@
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
 from app.models.user import User
+from app.services.ebay_csv_import import CsvImportError, parse_active_listings_csv
 from app.schemas.product import ProductCreate, ProductOut, ProductUpdate, RestockCreate, StockMovementOut
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -26,6 +27,96 @@ def _with_profit(product: Product) -> ProductOut:
         if product.selling_price != 0:
             out.margin_percent = (profit / product.selling_price * 100).quantize(Decimal("0.01"))
     return out
+
+
+MAX_IMPORT_BYTES = 2 * 1024 * 1024
+
+
+@router.post("/import-ebay-csv")
+async def import_ebay_csv(
+    file: UploadFile,
+    dry_run: bool = Query(True, description="True = only report what would change, write nothing"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Imports the 'Active listings' CSV downloaded from eBay Seller Hub.
+    Read-only towards eBay (the seller downloads the file himself). Matches
+    existing products by SKU: updates title, selling price, stock and image,
+    NEVER touches purchase_price/shelf/package data; creates the rest.
+    Default is a dry run so the seller sees the result before anything is written.
+    """
+    content = await file.read()
+    if len(content) > MAX_IMPORT_BYTES:
+        raise HTTPException(status_code=413, detail="Datei zu groß (max. 2 MB).")
+    try:
+        parsed = parse_active_listings_csv(content)
+    except CsvImportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    existing = {
+        p.sku: p
+        for p in db.query(Product).filter(
+            Product.tenant_id == current_user.tenant_id,
+            Product.sku.in_([item["sku"] for item in parsed["products"]]),
+        )
+    }
+    created = updated = unchanged = 0
+    for item in parsed["products"]:
+        product = existing.get(item["sku"])
+        if product is None:
+            created += 1
+            if not dry_run:
+                stock = item["stock_quantity"] or 0
+                product = Product(
+                    tenant_id=current_user.tenant_id, sku=item["sku"], title=item["title"],
+                    selling_price=item["selling_price"], stock_quantity=stock, image_url=item["image_url"],
+                )
+                db.add(product)
+                db.flush()
+                if stock:
+                    db.add(StockMovement(
+                        tenant_id=current_user.tenant_id, product_id=product.id, quantity_change=stock,
+                        reason="manual_correction", reference="ebay-csv-import",
+                    ))
+            continue
+
+        changes = {}
+        if product.title != item["title"]:
+            changes["title"] = item["title"]
+        if item["selling_price"] is not None and product.selling_price != item["selling_price"]:
+            changes["selling_price"] = item["selling_price"]
+        if item["image_url"] and product.image_url != item["image_url"]:
+            changes["image_url"] = item["image_url"]
+        if not product.active:
+            changes["active"] = True
+        new_stock = item["stock_quantity"]
+        if new_stock is not None and product.stock_quantity != new_stock:
+            changes["stock_quantity"] = new_stock
+        if not changes:
+            unchanged += 1
+            continue
+        updated += 1
+        if not dry_run:
+            delta = changes.get("stock_quantity", product.stock_quantity) - product.stock_quantity
+            for field, value in changes.items():
+                setattr(product, field, value)
+            if delta:
+                db.add(StockMovement(
+                    tenant_id=current_user.tenant_id, product_id=product.id, quantity_change=delta,
+                    reason="manual_correction", reference="ebay-csv-import",
+                ))
+    if not dry_run:
+        db.commit()
+
+    return {
+        "dry_run": dry_run,
+        "created": created,
+        "updated": updated,
+        "unchanged": unchanged,
+        "skipped": parsed["skipped"],
+        "warnings": parsed["warnings"][:50],
+    }
 
 
 @router.get("", response_model=list[ProductOut])
