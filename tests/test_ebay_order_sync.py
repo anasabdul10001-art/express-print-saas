@@ -60,3 +60,29 @@ def test_line_with_neither_sku_nor_item_number_is_skipped(register, client, monk
     orders = [{"orderId": "o3", "lineItems": [{"title": "Mystery", "quantity": 1}]}]
     _, result = _sync(register, client, monkeypatch, orders)
     assert result["created"] == 0 and result["skipped"] == 1
+
+
+def test_sync_stores_ebay_fees_and_profit_is_net(register, client, monkeypatch):
+    orders = [{"orderId": "o9", "lineItems": [
+        {"sku": "F-1", "title": "Kabel", "quantity": 1, "lineItemCost": {"value": "10.00"}}]}]
+    headers, _ = register()
+    tenant_id = client.get("/auth/me", headers=headers).json()["tenant_id"]
+    with SessionLocal() as db:
+        db.add(Product(tenant_id=tenant_id, sku="F-1", title="Kabel", selling_price=10, purchase_price=4, stock_quantity=1))
+        account = EbayAccount(id=uuid.uuid4(), tenant_id=tenant_id, environment="PRODUCTION", status="CONNECTED")
+        db.add(account)
+        db.commit()
+        monkeypatch.setattr(ebay_order_service.ebay_oauth_service, "get_valid_access_token", lambda a, d: "t")
+
+        def fake_get(url, **k):
+            if "finances" in url:
+                r = _Resp([])
+                r.json = lambda: {"transactions": [{"orderId": "o9", "totalFeeAmount": {"value": "1.50"}}]}
+                return r
+            return _Resp(orders)
+
+        monkeypatch.setattr(ebay_order_service.httpx, "get", fake_get)
+        result = ebay_order_service.sync_orders(account, tenant_id, db)
+    assert result["fees_updated"] == 1
+    out = client.get("/orders", headers=headers).json()[0]
+    assert float(out["ebay_fees"]) == 1.5 and float(out["total_profit"]) == 4.5

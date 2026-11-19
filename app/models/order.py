@@ -40,6 +40,9 @@ class Order(Base):
     # shipped through the DHL integration at all.
     tracking_number = Column(String(50), nullable=True)
 
+    # Total eBay fees for this sale (from the Finances API); null until known.
+    ebay_fees = Column(DECIMAL(10, 2), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (

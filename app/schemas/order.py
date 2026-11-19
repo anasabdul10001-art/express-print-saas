@@ -49,6 +49,8 @@ class OrderOut(BaseModel):
     # Set once a real DHL shipment has been created for this order (see
     # app/services/dhl_service.py) - null otherwise.
     tracking_number: str | None = None
+    # Real eBay fees for this sale; None until fetched (needs the finances scope).
+    ebay_fees: Decimal | None = None
     class Config:
         from_attributes = True
 class OrderSummaryOut(BaseModel):

@@ -28,6 +28,7 @@ app = FastAPI(title="eBay Seller SaaS API", version="0.1.0")
 Base.metadata.create_all(bind=engine)
 
 with engine.begin() as connection:
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS ebay_fees DECIMAL(10,2)"))
     connection.execute(text("ALTER TABLE plans ADD COLUMN IF NOT EXISTS trial_days INTEGER"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS plan_id UUID REFERENCES plans(id)"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ"))

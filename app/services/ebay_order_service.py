@@ -219,12 +219,57 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
     account.last_sync_at = datetime.now(timezone.utc)
     db.commit()
 
+    fees_updated = sync_fees(account, tenant_id, db, access_token)
+
     return {
+        "fees_updated": fees_updated,
         "created": created_count,
         "products_created": products_created,
         "skipped": skipped_count,
         "skipped_reasons": skipped_reasons,
     }
+
+FINANCES_API_BASE = {
+    "SANDBOX": "https://apiz.sandbox.ebay.com",
+    "PRODUCTION": "https://apiz.ebay.com",
+}
+
+
+def sync_fees(account: EbayAccount, tenant_id: UUID, db: Session, access_token: str) -> int:
+    """
+    Stores eBay's real fee per sale on the matching orders (Finances API).
+    Best effort: accounts connected before the finances scope existed get a
+    401/403 here and simply keep showing profit without fees until they
+    reconnect; this never breaks the order sync.
+    """
+    try:
+        resp = httpx.get(
+            f"{FINANCES_API_BASE[account.environment]}/sell/finances/v1/transaction",
+            headers={"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"},
+            params={"filter": "transactionType:{SALE}", "limit": 200},
+            timeout=20.0,
+        )
+    except httpx.HTTPError:
+        return 0
+    if resp.status_code != 200:
+        return 0
+
+    updated = 0
+    for tx in resp.json().get("transactions", []):
+        order_ref = tx.get("orderId")
+        try:
+            fee = Decimal(str((tx.get("totalFeeAmount") or {}).get("value"))).quantize(Decimal("0.01"))
+        except (InvalidOperation, TypeError, ValueError):
+            continue
+        if not order_ref:
+            continue
+        order = db.query(Order).filter(Order.tenant_id == tenant_id, Order.external_order_ref == order_ref).first()
+        if order and order.ebay_fees != fee:
+            order.ebay_fees = fee
+            updated += 1
+    db.commit()
+    return updated
+
 
 SHIPPING_CARRIERS = ("DHL", "DPD", "HERMES", "GLS", "UPS", "DEUTSCHE_POST")
 

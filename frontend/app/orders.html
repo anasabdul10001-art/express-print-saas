@@ -571,6 +571,7 @@
                             </div>
                             <div class="text-right">
                                 <div class="text-red-600 font-bold">${euro(total)}</div>
+                                ${order.ebay_fees !== null && order.ebay_fees !== undefined ? `<div class="text-xs text-slate-500">${t("orders.ebayFees")} −${euro(order.ebay_fees)}</div>` : ""}
                                 <div class="text-xs ${order.total_profit >= 0 ? "text-emerald-600" : "text-red-600"}">${t("orders.profit")} ${euro(order.total_profit)}</div>
                             </div>
                         </div>
