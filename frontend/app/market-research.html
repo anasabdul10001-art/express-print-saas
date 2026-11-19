@@ -194,7 +194,7 @@
     </div>
 
     <script>
-        const API_URL = "https://express-print-saas.onrender.com";
+        const API_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com";
         const token = localStorage.getItem("access_token");
 
         if (!token) {

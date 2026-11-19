@@ -142,10 +142,17 @@
 
         <div class="flex items-center justify-between gap-4">
             <h2 class="text-2xl font-bold" data-i18n="products.title">Produkte</h2>
-            <button onclick="openForm()"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                <span data-i18n="products.newButton">+ Neues Produkt</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <label class="cursor-pointer bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold py-2 px-4 rounded transition text-sm"
+                       title="Seller Hub → Angebote → Aktiv → Herunterladen (CSV). Es wird nichts bei eBay geändert.">
+                    eBay-CSV importieren
+                    <input type="file" id="ebay-csv-file" accept=".csv,text/csv" class="hidden" onchange="importEbayCsv(this)">
+                </label>
+                <button onclick="openForm()"
+                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                    <span data-i18n="products.newButton">+ Neues Produkt</span>
+                </button>
+            </div>
         </div>
 
         <input type="text" id="search-input" data-i18n-placeholder="products.searchPlaceholder" placeholder="Suche nach SKU oder Titel..."
@@ -287,7 +294,7 @@
     </div>
 
     <script>
-        const API_URL = "https://express-print-saas.onrender.com";
+        const API_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com";
         const token = localStorage.getItem("access_token");
 
         if (!token) {
@@ -352,6 +359,44 @@
             banner.innerText = text;
             banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-50 text-red-700 border border-red-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`;
             setTimeout(() => banner.classList.add("hidden"), 4000);
+        }
+
+        // Two-step import: a dry run first (writes nothing), then the real run only after the user confirms.
+        async function importEbayCsv(input) {
+            const file = input.files[0];
+            input.value = "";
+            if (!file) return;
+
+            const send = async (dryRun) => {
+                const formData = new FormData();
+                formData.append("file", file);
+                const response = await fetch(`${API_URL}/products/import-ebay-csv?dry_run=${dryRun}`, {
+                    method: "POST", headers: authHeaders(), body: formData,
+                });
+                if (response.status === 401) { logout(); return null; }
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || "Import fehlgeschlagen.");
+                return data;
+            };
+
+            try {
+                const preview = await send(true);
+                if (!preview) return;
+                const note = preview.warnings.length ? `\n\nHinweise (${preview.warnings.length}):\n${preview.warnings.slice(0, 5).join("\n")}` : "";
+                const ok = confirm(
+                    `Vorschau (noch nichts gespeichert):\n` +
+                    `• ${preview.created} neue Produkte\n• ${preview.updated} werden aktualisiert\n` +
+                    `• ${preview.unchanged} unverändert\n• ${preview.skipped} übersprungen${note}\n\n` +
+                    `Einkaufspreise bleiben unverändert. Jetzt importieren?`
+                );
+                if (!ok) return;
+                const result = await send(false);
+                if (!result) return;
+                showBanner(`Import fertig: ${result.created} neu, ${result.updated} aktualisiert.`, false);
+                loadProducts();
+            } catch (err) {
+                showBanner(err.message, true);
+            }
         }
 
         function euro(value) {

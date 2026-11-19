@@ -2,7 +2,7 @@
 // the logo uploaded via admin.html's Super Admin panel, if one has been set.
 // Public endpoint - no auth needed, safe to call from every page.
 (function () {
-    const apiUrl = typeof API_URL !== "undefined" ? API_URL : "https://express-print-saas.onrender.com";
+    const apiUrl = typeof API_URL !== "undefined" ? API_URL : (["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com");
 
     fetch(`${apiUrl}/site-settings`)
         .then((response) => (response.ok ? response.json() : null))
