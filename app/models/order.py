@@ -43,6 +43,9 @@ class Order(Base):
     # Total eBay fees for this sale (from the Finances API); null until known.
     ebay_fees = Column(DECIMAL(10, 2), nullable=True)
 
+    # Which connected eBay account this order came from (null for manual orders).
+    ebay_account_id = Column(UUID(as_uuid=True), ForeignKey("ebay_accounts.id", ondelete="SET NULL"), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
@@ -53,6 +56,7 @@ class Order(Base):
     )
 
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    ebay_account = relationship("EbayAccount", foreign_keys=[ebay_account_id])
 
 
 class OrderItem(Base):

@@ -51,6 +51,8 @@ class OrderOut(BaseModel):
     tracking_number: str | None = None
     # Real eBay fees for this sale; None until fetched (needs the finances scope).
     ebay_fees: Decimal | None = None
+    # Username of the eBay account the order came from (None for manual orders).
+    ebay_account_name: str | None = None
     class Config:
         from_attributes = True
 class OrderSummaryOut(BaseModel):

@@ -168,14 +168,13 @@
             <h2 class="text-xl font-bold mb-2" data-i18n="dashboard.ebayTitle">eBay-Konto</h2>
             <p class="text-slate-500 text-sm mb-4" id="ebay-desc" data-i18n="dashboard.ebayLoading">Status wird geladen...</p>
 
+            <ul id="ebay-accounts" class="mb-4 space-y-2"></ul>
+
             <button id="ebay-connect-btn" onclick="connectEbay()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition hidden">
-                <span data-i18n="dashboard.ebayConnect">Mit eBay verbinden</span>
+                <span id="ebay-connect-label" data-i18n="dashboard.ebayConnect">Mit eBay verbinden</span>
             </button>
-            <button id="ebay-disconnect-btn" onclick="disconnectEbay()"
-                    class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded transition hidden">
-                <span data-i18n="dashboard.ebayDisconnect">eBay-Verbindung trennen</span>
-            </button>
+            <p id="ebay-add-hint" class="hidden text-xs text-slate-400 mt-2" data-i18n="dashboard.ebayAddHint">eBay fragt beim Verbinden nach der Anmeldung - melde dich dort mit dem weiteren Konto an.</p>
         </div>
     </main>
     </div>
@@ -262,20 +261,24 @@
             if (ebayStatus === undefined) return;
             const descEl = document.getElementById("ebay-desc");
             descEl.removeAttribute("data-i18n");
-            if (ebayStatus) {
-                descEl.innerText = `${t("dashboard.ebayConnectedAs")} ${ebayStatus.ebay_user_id || t("dashboard.ebaySeller")}.`;
-            } else {
-                descEl.innerText = t("dashboard.ebayNotConnected");
-            }
+            const list = document.getElementById("ebay-accounts");
+            const accounts = ebayStatus || [];
+            descEl.innerText = accounts.length ? `${t("dashboard.ebayConnectedCount")} ${accounts.length}` : t("dashboard.ebayNotConnected");
+            list.innerHTML = accounts.map(a => `
+                <li class="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm">
+                    <span class="font-semibold">${a.ebay_user_id || t("dashboard.ebaySeller")}</span>
+                    <button onclick='disconnectEbay(${JSON.stringify(a.id)})' class="text-slate-500 hover:text-red-600 text-xs font-semibold">${t("dashboard.ebayDisconnect")}</button>
+                </li>`).join("");
+            document.getElementById("ebay-connect-label").innerText = accounts.length ? t("dashboard.ebayAddAnother") : t("dashboard.ebayConnect");
+            document.getElementById("ebay-add-hint").classList.toggle("hidden", accounts.length === 0);
         }
         document.addEventListener("langchange", renderEbayStatus);
 
         async function loadEbayStatus() {
             const connectBtn = document.getElementById("ebay-connect-btn");
-            const disconnectBtn = document.getElementById("ebay-disconnect-btn");
 
             try {
-                const response = await fetch(`${API_URL}/ebay/status`, { headers: authHeaders() });
+                const response = await fetch(`${API_URL}/ebay/accounts`, { headers: authHeaders() });
 
                 if (response.status === 401) {
                     logout();
@@ -286,11 +289,7 @@
                 ebayStatus = data;
                 renderEbayStatus();
 
-                if (data) {
-                    disconnectBtn.classList.remove("hidden");
-                } else {
-                    connectBtn.classList.remove("hidden");
-                }
+                connectBtn.classList.remove("hidden");
             } catch (err) {
                 document.getElementById("ebay-desc").removeAttribute("data-i18n");
                 document.getElementById("ebay-desc").innerText = t("dashboard.serverErrorReload");
@@ -307,9 +306,9 @@
             }
         }
 
-        async function disconnectEbay() {
+        async function disconnectEbay(accountId) {
             try {
-                await fetch(`${API_URL}/ebay/disconnect`, { method: "POST", headers: authHeaders() });
+                await fetch(`${API_URL}/ebay/disconnect?account_id=${encodeURIComponent(accountId)}`, { method: "POST", headers: authHeaders() });
                 window.location.reload();
             } catch (err) {
                 showBanner(t("dashboard.ebayDisconnectError"), true);

@@ -60,27 +60,43 @@ def get_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Only returns the account if it's actually CONNECTED. A DISCONNECTED row
-    still exists after disconnect() (tokens nulled, not the row itself), so
-    without this filter the frontend would keep showing "connected" forever.
-    """
+    """The first connected account (kept for older clients; see /accounts)."""
+    return _connected_accounts(current_user, db).first()
+
+
+@router.get("/accounts", response_model=list[EbayAccountOut])
+def list_accounts(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """All eBay accounts currently CONNECTED for this tenant."""
+    return _connected_accounts(current_user, db).all()
+
+
+def _connected_accounts(current_user: User, db: Session):
+    # DISCONNECTED rows stay in the table (tokens nulled), so filter them out.
     return (
         db.query(EbayAccount)
         .filter(EbayAccount.tenant_id == current_user.tenant_id, EbayAccount.status == "CONNECTED")
-        .first()
+        .order_by(EbayAccount.connected_at)
     )
 
 
 @router.post("/disconnect")
 def disconnect_ebay(
+    account_id: str | None = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    account = db.query(EbayAccount).filter(EbayAccount.tenant_id == current_user.tenant_id).first()
-    if not account:
+    """Disconnects one account (account_id), or every account when omitted."""
+    query = db.query(EbayAccount).filter(EbayAccount.tenant_id == current_user.tenant_id)
+    if account_id:
+        query = query.filter(EbayAccount.id == account_id)
+    accounts = query.all()
+    if not accounts:
         raise HTTPException(status_code=404, detail="No eBay account connected for this tenant")
-    ebay_oauth_service.disconnect(account, db)
+    for account in accounts:
+        ebay_oauth_service.disconnect(account, db)
     return {"status": "disconnected"}
 
 
@@ -94,20 +110,27 @@ def sync_orders(
     from them. Safe to call repeatedly - already-imported eBay orders are
     skipped (see ebay_order_service for the duplicate-protection logic).
     """
-    account = (
-        db.query(EbayAccount)
-        .filter(EbayAccount.tenant_id == current_user.tenant_id, EbayAccount.status == "CONNECTED")
-        .first()
-    )
-    if not account:
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
         raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
 
-    try:
-        result = ebay_order_service.sync_orders(account, current_user.tenant_id, db)
-    except ValueError as exc:
-        raise HTTPException(status_code=502, detail=f"eBay-Synchronisierung fehlgeschlagen: {exc}")
+    total = {"created": 0, "products_created": 0, "skipped": 0, "skipped_reasons": [], "fees_updated": 0}
+    errors = []
+    for account in accounts:
+        try:
+            result = ebay_order_service.sync_orders(account, current_user.tenant_id, db)
+        except ValueError as exc:
+            errors.append(f"{account.ebay_user_id or 'eBay'}: {exc}")
+            continue
+        for key in ("created", "products_created", "skipped", "fees_updated"):
+            total[key] += result.get(key, 0)
+        total["skipped_reasons"] += result.get("skipped_reasons", [])
 
-    return result
+    if errors and len(errors) == len(accounts):
+        raise HTTPException(status_code=502, detail=f"eBay-Synchronisierung fehlgeschlagen: {'; '.join(errors)}")
+    if errors:
+        total["skipped_reasons"] += errors
+    return total
 
 
 class ShipOrderIn(BaseModel):
@@ -128,11 +151,10 @@ def ship_order(
     order = db.query(Order).filter(Order.id == order_id, Order.tenant_id == current_user.tenant_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    account = (
-        db.query(EbayAccount)
-        .filter(EbayAccount.tenant_id == current_user.tenant_id, EbayAccount.status == "CONNECTED")
-        .first()
-    )
+    # The order knows which eBay account it came from; fall back to any connected one.
+    accounts = _connected_accounts(current_user, db)
+    account = accounts.filter(EbayAccount.id == order.ebay_account_id).first() if order.ebay_account_id else None
+    account = account or accounts.first()
     if not account:
         raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
     try:
