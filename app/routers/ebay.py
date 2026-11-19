@@ -1,5 +1,7 @@
 import json
 
+import httpx
+
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
@@ -11,7 +13,7 @@ from app.models.ebay_account import EbayAccount
 from app.models.order import Order
 from app.models.user import User
 from app.schemas.ebay import AuthorizeUrlOut, EbayAccountOut
-from app.services import ebay_deletion_service, ebay_oauth_service, ebay_order_service
+from app.services import ebay_deletion_service, ebay_listing_service, ebay_oauth_service, ebay_order_service
 
 router = APIRouter(prefix="/ebay", tags=["ebay"])
 
@@ -130,6 +132,33 @@ def sync_orders(
         raise HTTPException(status_code=502, detail=f"eBay-Synchronisierung fehlgeschlagen: {'; '.join(errors)}")
     if errors:
         total["skipped_reasons"] += errors
+    return total
+
+
+@router.post("/import-products")
+def import_products(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Creates missing products from the active listings of every connected
+    eBay account. Existing products are left untouched."""
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+
+    total = {"listings_found": 0, "products_created": 0, "already_known": 0}
+    errors = []
+    for account in accounts:
+        try:
+            result = ebay_listing_service.import_listings(account, current_user.tenant_id, db)
+        except (ValueError, httpx.HTTPError) as exc:
+            errors.append(f"{account.ebay_user_id or 'eBay'}: {exc}")
+            continue
+        for key in total:
+            total[key] += result[key]
+    if errors and len(errors) == len(accounts):
+        raise HTTPException(status_code=502, detail=f"eBay-Import fehlgeschlagen: {'; '.join(errors)}")
+    total["errors"] = errors
     return total
 
 
