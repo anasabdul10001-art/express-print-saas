@@ -9,7 +9,7 @@ from app.database import Base
 
 class EbayAccount(Base):
     """
-    One row per tenant's connected eBay seller account. Tokens are stored
+    One row per connected eBay seller account (a tenant may have several). Tokens are stored
     encrypted (see app/core/crypto.py) - never in plaintext, never logged.
     """
 
@@ -20,7 +20,7 @@ class EbayAccount(Base):
         UUID(as_uuid=True),
         ForeignKey("tenants.id", ondelete="CASCADE"),
         nullable=False,
-        unique=True,  # one eBay connection per tenant for now
+        index=True,  # a tenant can connect several eBay accounts
     )
 
     ebay_user_id = Column(String(255), nullable=True)  # the eBay username

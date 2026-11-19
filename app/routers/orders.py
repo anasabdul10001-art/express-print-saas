@@ -69,6 +69,7 @@ def _serialize_order(order: Order) -> OrderOut:
         items=items_out,
         total_profit=(total_profit - (order.ebay_fees or Decimal("0"))) if profit_known else None,
         ebay_fees=order.ebay_fees,
+        ebay_account_name=order.ebay_account.ebay_user_id if order.ebay_account else None,
         recipient_address=recipient_address,
         tracking_number=order.tracking_number,
     )
@@ -78,7 +79,7 @@ def list_orders(current_user: User = Depends(get_current_user), db: Session = De
     orders = (
         db.query(Order)
         .filter(Order.tenant_id == current_user.tenant_id)
-        .options(joinedload(Order.items).joinedload(OrderItem.product))
+        .options(joinedload(Order.items).joinedload(OrderItem.product), joinedload(Order.ebay_account))
         .order_by(Order.created_at.desc())
         .all()
     )

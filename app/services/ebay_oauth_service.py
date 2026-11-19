@@ -87,6 +87,9 @@ def build_authorize_url(tenant_id: UUID, db: Session) -> str:
         "response_type": "code",
         "state": state,
         "scope": SCOPES,
+        # Always show eBay's sign-in, so a second account can be chosen
+        # instead of silently re-using the browser's current eBay session.
+        "prompt": "login",
     }
     base_url = EBAY_URLS[settings.ebay_environment]["authorize"]
     return f"{base_url}?{urlencode(params)}"
@@ -108,11 +111,10 @@ def handle_callback(code: str, state: str, db: Session) -> EbayAccount:
         raise ValueError("authorization_request_expired")
 
     payload = _exchange_code_for_tokens(code)
-    account = _store_tokens(tenant_id, payload, db)
+    username, immutable_id = _fetch_identity(payload["access_token"], settings.ebay_environment)
+    account = _store_tokens(tenant_id, payload, db, username, immutable_id)
 
-    # Always overwritten, so reconnecting with a different eBay account can
-    # never keep the previous account's identity.
-    account.ebay_user_id, account.ebay_immutable_id = _fetch_identity(payload["access_token"], account.environment)
+    account.ebay_user_id, account.ebay_immutable_id = username, immutable_id
     db.commit()
     db.refresh(account)
     return account
@@ -188,8 +190,33 @@ def _fetch_identity(access_token: str, environment: str) -> tuple[str | None, st
         return None, None
 
 
-def _store_tokens(tenant_id: UUID, payload: dict, db: Session) -> EbayAccount:
-    account = db.query(EbayAccount).filter(EbayAccount.tenant_id == tenant_id).first()
+def _find_account_for_identity(
+    tenant_id: UUID, username: str | None, immutable_id: str | None, db: Session
+) -> EbayAccount | None:
+    """
+    The tenant's existing row for this eBay account, so reconnecting the same
+    account refreshes it instead of adding a duplicate, while a different
+    account gets its own row. A row from before identities were stored
+    (no username/id) is adopted when it is the tenant's only such row.
+    """
+    rows = db.query(EbayAccount).filter(EbayAccount.tenant_id == tenant_id).all()
+    for row in rows:
+        if immutable_id and row.ebay_immutable_id == immutable_id:
+            return row
+        if username and row.ebay_user_id == username:
+            return row
+    unnamed = [r for r in rows if not r.ebay_user_id and not r.ebay_immutable_id]
+    if (username or immutable_id) and len(unnamed) == 1 and len(rows) == 1:
+        return unnamed[0]
+    if not (username or immutable_id) and len(rows) == 1:
+        return rows[0]  # eBay would not tell who this is; keep the single-account behaviour
+    return None
+
+
+def _store_tokens(
+    tenant_id: UUID, payload: dict, db: Session, username: str | None = None, immutable_id: str | None = None
+) -> EbayAccount:
+    account = _find_account_for_identity(tenant_id, username, immutable_id, db)
     if not account:
         account = EbayAccount(tenant_id=tenant_id)
         db.add(account)

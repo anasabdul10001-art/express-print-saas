@@ -188,6 +188,7 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             external_order_ref=ebay_order_id,
             status="new",
             buyer_username=buyer_username,
+            ebay_account_id=account.id,
             **_extract_ship_to(ebay_order),
         )
         db.add(order)
