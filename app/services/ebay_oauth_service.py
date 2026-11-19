@@ -47,6 +47,8 @@ SCOPES = " ".join(
         "https://api.ebay.com/oauth/api_scope/sell.inventory",
         # Lets us show which eBay account is connected next to "Connected".
         "https://api.ebay.com/oauth/api_scope/commerce.identity.readonly",
+        # Real eBay fees per sale, so the profit shown is net of fees.
+        "https://api.ebay.com/oauth/api_scope/sell.finances",
     ]
 )
 

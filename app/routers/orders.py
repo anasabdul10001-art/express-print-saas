@@ -67,7 +67,8 @@ def _serialize_order(order: Order) -> OrderOut:
         external_order_ref=order.external_order_ref,
         status=order.status,
         items=items_out,
-        total_profit=total_profit if profit_known else None,
+        total_profit=(total_profit - (order.ebay_fees or Decimal("0"))) if profit_known else None,
+        ebay_fees=order.ebay_fees,
         recipient_address=recipient_address,
         tracking_number=order.tracking_number,
     )
