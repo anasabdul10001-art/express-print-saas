@@ -2,11 +2,13 @@ import json
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.deps import get_current_user, get_db
 from app.models.ebay_account import EbayAccount
+from app.models.order import Order
 from app.models.user import User
 from app.schemas.ebay import AuthorizeUrlOut, EbayAccountOut
 from app.services import ebay_deletion_service, ebay_oauth_service, ebay_order_service
@@ -106,6 +108,38 @@ def sync_orders(
         raise HTTPException(status_code=502, detail=f"eBay-Synchronisierung fehlgeschlagen: {exc}")
 
     return result
+
+
+class ShipOrderIn(BaseModel):
+    tracking_number: str
+    carrier: str = "DHL"
+
+
+@router.post("/orders/{order_id}/ship")
+def ship_order(
+    order_id: str,
+    body: ShipOrderIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Reports tracking number + carrier to eBay and marks the order shipped."""
+    if body.carrier not in ebay_order_service.SHIPPING_CARRIERS:
+        raise HTTPException(status_code=400, detail="Unbekannter Paketdienst.")
+    order = db.query(Order).filter(Order.id == order_id, Order.tenant_id == current_user.tenant_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    account = (
+        db.query(EbayAccount)
+        .filter(EbayAccount.tenant_id == current_user.tenant_id, EbayAccount.status == "CONNECTED")
+        .first()
+    )
+    if not account:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+    try:
+        ebay_order_service.mark_order_shipped(account, order, body.tracking_number, body.carrier, db)
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail=f"eBay-Versandmeldung fehlgeschlagen: {exc}")
+    return {"status": order.status, "tracking_number": order.tracking_number}
 
 
 @router.get("/account-deletion")

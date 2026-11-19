@@ -196,6 +196,13 @@
             </button>
         </div>
 
+        <!-- Print filter -->
+        <div id="filter-bar" class="flex gap-2 text-sm font-semibold">
+            <button type="button" data-filter="all" onclick="setFilter('all')" class="px-3 py-1.5 rounded-full border transition"></button>
+            <button type="button" data-filter="unprinted" onclick="setFilter('unprinted')" class="px-3 py-1.5 rounded-full border transition"></button>
+            <button type="button" data-filter="printed" onclick="setFilter('printed')" class="px-3 py-1.5 rounded-full border transition"></button>
+        </div>
+
         <!-- Orders list -->
         <div id="orders-list" class="space-y-4"></div>
     </main>
@@ -460,6 +467,26 @@
             }
         }
 
+        async function shipOrder(orderId) {
+            const tracking = document.getElementById(`trk-${orderId}`).value.trim();
+            const carrier = document.getElementById(`car-${orderId}`).value;
+            if (!tracking) { showBanner(t("orders.trackingMissing"), true); return; }
+            try {
+                const response = await fetch(`${API_URL}/ebay/orders/${orderId}/ship`, {
+                    method: "POST",
+                    headers: { ...authHeaders(), "Content-Type": "application/json" },
+                    body: JSON.stringify({ tracking_number: tracking, carrier }),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) { showBanner(data.detail || t("orders.shipFailed"), true); return; }
+                showBanner(t("orders.shipDone"), false);
+                loadOrders();
+            } catch (err) {
+                showBanner(t("orders.serverErrorRetry"), true);
+            }
+        }
+
         function formatRecipientAddress(addr) {
             const line1 = [addr.name].filter(Boolean).join(", ");
             const line2 = [addr.street1, addr.street2].filter(Boolean).join(" ");
@@ -468,7 +495,31 @@
             return [line1, line2, line3, line4].filter(Boolean).join(", ");
         }
 
+        let allOrders = [];
+        let currentFilter = "all";
+
+        function isPrinted(order) { return order.status === "printed" || order.status === "shipped"; }
+
+        function setFilter(f) { currentFilter = f; renderOrders(allOrders); }
+
+        function renderFilterBar() {
+            const printed = allOrders.filter(isPrinted).length;
+            const counts = { all: allOrders.length, unprinted: allOrders.length - printed, printed };
+            const names = { all: t("orders.filterAll"), unprinted: t("orders.filterUnprinted"), printed: t("orders.filterPrinted") };
+            document.querySelectorAll("#filter-bar button").forEach(b => {
+                const f = b.dataset.filter;
+                b.textContent = `${names[f]} (${counts[f]})`;
+                b.className = "px-3 py-1.5 rounded-full border transition " + (f === currentFilter
+                    ? "bg-slate-800 text-white border-slate-800"
+                    : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50");
+            });
+        }
+
         function renderOrders(orders) {
+            allOrders = orders;
+            renderFilterBar();
+            if (currentFilter === "unprinted") orders = orders.filter(o => !isPrinted(o));
+            if (currentFilter === "printed") orders = orders.filter(isPrinted);
             const list = document.getElementById("orders-list");
             const emptyState = document.getElementById("empty-state");
 
@@ -497,16 +548,25 @@
                 `).join("");
 
                 return `
-                    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="bg-white border border-slate-200 border-l-4 ${isPrinted(order) ? "border-l-emerald-500" : "border-l-amber-400"} rounded-xl shadow-sm overflow-hidden">
                         <div class="p-4 flex items-center justify-between bg-slate-50 border-b border-slate-200">
                             <div>
                                 <span class="font-semibold">${order.external_order_ref || t("orders.noReference")}</span>
-                                <span class="ml-3 px-2 py-1 rounded text-xs bg-slate-100 text-slate-600">${statusLabel(order.status)}</span>
+                                <span class="ml-3 px-2 py-1 rounded text-xs font-semibold ${order.status === "new" || order.status === "ready_to_print" ? "bg-amber-100 text-amber-800" : order.status === "canceled" ? "bg-slate-100 text-slate-500" : "bg-emerald-100 text-emerald-800"}">${statusLabel(order.status)}</span>
                                 ${order.status !== "shipped" && order.status !== "canceled" ? `
                                     <button onclick='printOrder(${JSON.stringify(order.id)})'
                                             class="ml-3 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1 px-3 rounded transition">
                                         ${order.status === "new" ? t("orders.printLabel") : t("orders.printAgain")}
                                     </button>
+                                ` : ""}
+                                ${order.external_order_ref && order.status !== "shipped" && order.status !== "canceled" ? `
+                                    <span class="ml-3 inline-flex items-center gap-1">
+                                        <input id="trk-${order.id}" placeholder="${t("orders.trackingPlaceholder")}" class="p-1 text-xs rounded border border-slate-300 w-36">
+                                        <select id="car-${order.id}" class="p-1 text-xs rounded border border-slate-300">
+                                            ${["DHL","DPD","HERMES","GLS","UPS","DEUTSCHE_POST"].map(c => `<option>${c}</option>`).join("")}
+                                        </select>
+                                        <button onclick='shipOrder(${JSON.stringify(order.id)})' class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-1 px-3 rounded transition">${t("orders.markShipped")}</button>
+                                    </span>
                                 ` : ""}
                             </div>
                             <div class="text-right">
