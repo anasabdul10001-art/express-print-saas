@@ -225,3 +225,54 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
         "skipped": skipped_count,
         "skipped_reasons": skipped_reasons,
     }
+
+SHIPPING_CARRIERS = ("DHL", "DPD", "HERMES", "GLS", "UPS", "DEUTSCHE_POST")
+
+
+def mark_order_shipped(
+    account: EbayAccount, order: Order, tracking_number: str, carrier: str, db: Session
+) -> None:
+    """
+    Tells eBay the order has shipped and hands it the tracking number, so the
+    buyer sees it in eBay. Then marks the local order as shipped.
+    eBay needs the order's line item ids, so the order is fetched first.
+    Raises ValueError with eBay's message on any failure.
+    """
+    tracking_number = "".join(tracking_number.split()).replace("-", "")
+    if not tracking_number:
+        raise ValueError("Sendungsnummer fehlt.")
+    if not order.external_order_ref or order.external_order_ref.startswith("deleted:"):
+        raise ValueError("Diese Bestellung stammt nicht von eBay.")
+
+    access_token = ebay_oauth_service.get_valid_access_token(account, db)
+    base = f"{EBAY_API_BASE[account.environment]}/sell/fulfillment/v1/order/{order.external_order_ref}"
+    headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+
+    got = httpx.get(base, headers=headers, timeout=20.0)
+    if got.status_code != 200:
+        raise ValueError(f"ebay_fetch_order_failed: {got.text}")
+    line_items = [
+        {"lineItemId": li["lineItemId"], "quantity": int(li.get("quantity", 1))}
+        for li in got.json().get("lineItems", [])
+        if li.get("lineItemId")
+    ]
+    if not line_items:
+        raise ValueError("eBay lieferte keine Positionen fuer diese Bestellung.")
+
+    posted = httpx.post(
+        f"{base}/shipping_fulfillment",
+        headers=headers,
+        json={
+            "lineItems": line_items,
+            "shippedDate": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+            "shippingCarrierCode": carrier,
+            "trackingNumber": tracking_number,
+        },
+        timeout=20.0,
+    )
+    if posted.status_code not in (200, 201):
+        raise ValueError(f"ebay_shipping_fulfillment_failed: {posted.text}")
+
+    order.tracking_number = tracking_number[:50]
+    order.status = "shipped"
+    db.commit()
