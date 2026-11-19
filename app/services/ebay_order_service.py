@@ -6,11 +6,13 @@ Design choices worth knowing:
       Order.external_order_ref. Before creating anything, we check whether
       an order with that ref already exists for this tenant - so running
       sync twice (or on a schedule later) never creates duplicates.
-    - SKU matching: eBay line items are matched to our Product rows by SKU.
-      If a line item's SKU doesn't exist in our products, the WHOLE eBay
-      order is skipped (not partially imported) and reported back, so the
-      seller can fix the SKU mismatch and re-sync rather than ending up
-      with a silently incomplete order.
+    - SKU matching: eBay line items are matched to our Product rows by SKU
+      (or by the eBay item number when the listing has no custom label).
+      A line item whose product doesn't exist yet creates that product from
+      the order line (title, unit price, stock 0, no purchase price), so a
+      sale is never hidden just because the seller hasn't imported products.
+      Only a line with neither SKU nor item number is skipped (the WHOLE
+      order, never partially imported) and reported back.
     - Stock: reuses the same "decrement on order creation" behavior as
       manual orders, but never blocks the import if stock is insufficient
       (an eBay order already happened in the real world - refusing to
@@ -29,6 +31,7 @@ Design choices worth knowing:
 """
 
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 
 import httpx
 from sqlalchemy.orm import Session
@@ -45,6 +48,15 @@ EBAY_API_BASE = {
     "SANDBOX": "https://api.sandbox.ebay.com",
     "PRODUCTION": "https://api.ebay.com",
 }
+
+
+def _unit_price(line_item: dict, quantity: int):
+    """Price per piece from the line's total cost; None if eBay did not send a usable figure."""
+    try:
+        total = Decimal(str((line_item.get("lineItemCost") or {}).get("value")))
+        return (total / max(quantity, 1)).quantize(Decimal("0.01"))
+    except (InvalidOperation, TypeError, ValueError):
+        return None
 
 
 def _extract_ship_to(ebay_order: dict) -> dict:
@@ -98,6 +110,7 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
         account.ebay_user_id = ebay_orders[0].get("sellerId")
 
     created_count = 0
+    products_created = 0
     skipped_count = 0
     skipped_reasons: list[str] = []
 
@@ -142,9 +155,26 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
                 else None
             )
 
+            if not product and sku:
+                # An unknown product must not hide a real sale: create it from
+                # the order line (no purchase price yet, so no profit figure
+                # until the seller fills it in) and import the order normally.
+                product = Product(
+                    tenant_id=tenant_id,
+                    sku=sku,
+                    title=(line_item.get("title") or sku)[:255],
+                    selling_price=_unit_price(line_item, quantity),
+                    stock_quantity=0,
+                )
+                db.add(product)
+                db.flush()
+                products_created += 1
+
             if not product:
                 order_ok = False
-                skipped_reasons.append(f"Bestellung {ebay_order_id}: SKU '{sku}' nicht gefunden.")
+                skipped_reasons.append(
+                    f"Bestellung {ebay_order_id}: Position ohne SKU und ohne eBay-Artikelnummer."
+                )
                 break
 
             items_to_create.append((product, quantity))
@@ -191,6 +221,7 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
 
     return {
         "created": created_count,
+        "products_created": products_created,
         "skipped": skipped_count,
         "skipped_reasons": skipped_reasons,
     }
