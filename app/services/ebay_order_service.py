@@ -129,7 +129,9 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
         order_ok = True
 
         for line_item in line_items:
-            sku = line_item.get("sku")
+            # Listings without a custom label have no "sku" in the order; the CSV
+            # import then uses the eBay item number as SKU, so match on that.
+            sku = line_item.get("sku") or line_item.get("legacyItemId")
             quantity = int(line_item.get("quantity", 1))
 
             product = (

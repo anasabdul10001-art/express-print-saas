@@ -84,3 +84,27 @@ def test_import_rejects_garbage_and_requires_login(client, register):
     headers, _ = register()
     assert _upload(client, headers, b"foo,bar\n1,2\n", dry_run=True).status_code == 422
     assert client.post("/products/import-ebay-csv", files={"file": ("a.csv", b"x", "text/csv")}).status_code in (401, 403)
+
+
+REAL_EXPORT = (
+    "\ufeffItem number;Title;Variation details;Custom label (SKU);Available quantity;Format;Currency;Start price;"
+    "Auction Buy It Now price;Reserve price;Current price;Sold quantity\n"
+    '"920105301438";"Adapter 2in1";"Farbe=Schwarz;Silber";;"6";"FIXED_PRICE";"EUR";3.59;;;3.59;"0"\n'
+    '"920105301438";"Adapter 2in1";"Farbe=Schwarz";;"2";"FIXED_PRICE";"EUR";3.59;;;;"0"\n'
+    '"920123322554";"DAC Adapter";"";;"32";"FIXED_PRICE";"EUR";2.99;;;2.99;"0"\n'
+).encode("utf-8")
+
+
+def test_real_ebay_de_export_format_with_variation_rows():
+    """Format of a real Active-listings report downloaded 17.11.2026 (English headers, ';', FIXED_PRICE, variation child rows)."""
+    parsed = parse_active_listings_csv(REAL_EXPORT)
+    assert [(p["sku"], p["stock_quantity"], str(p["selling_price"])) for p in parsed["products"]] == [
+        ("920105301438", 6, "3.59"), ("920123322554", 32, "2.99"),
+    ]
+
+
+def test_variation_rows_are_folded_with_one_summary_warning():
+    parsed = parse_active_listings_csv(REAL_EXPORT)
+    assert parsed["skipped"] == 0
+    assert not any("doppelt" in w for w in parsed["warnings"])
+    assert any("Varianten" in w for w in parsed["warnings"])

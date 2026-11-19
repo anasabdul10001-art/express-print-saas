@@ -130,6 +130,8 @@ def parse_active_listings_csv(content: bytes) -> dict:
         value = row[position].strip()
         return value or None
 
+    fallback_rows = 0
+    variation_rows = 0
     for row_number, row in enumerate(reader, start=header_index + 2):
         if not any(c.strip() for c in row):
             continue
@@ -151,8 +153,13 @@ def parse_active_listings_csv(content: bytes) -> dict:
         sku = cell(row, "sku")
         if not sku:
             sku = cell(row, "item_number")
+            if sku and sku[:100] in seen_skus:
+                # Variation child rows repeat the parent's item number; the parent row
+                # already carries the total quantity, so they are folded in silently.
+                variation_rows += 1
+                continue
             if sku:
-                warnings.append(f"Zeile {row_number}: keine eigene Artikelnummer, eBay-Nummer {sku} als SKU benutzt.")
+                fallback_rows += 1
         if not sku:
             skipped += 1
             warnings.append(f"Zeile {row_number}: weder SKU noch Artikelnummer - übersprungen.")
@@ -172,4 +179,12 @@ def parse_active_listings_csv(content: bytes) -> dict:
             "image_url": (cell(row, "image_url") or None),
         })
 
+    if fallback_rows:
+        warnings.append(
+            f"{fallback_rows} Angebot(e) ohne eigene Artikelnummer (SKU): die eBay-Artikelnummer wird als SKU benutzt."
+        )
+    if variation_rows:
+        warnings.append(
+            f"{variation_rows} Varianten-Zeile(n) zusammengefasst: das Angebot zählt mit der Gesamtmenge der Hauptzeile."
+        )
     return {"products": products, "warnings": warnings, "skipped": skipped}
