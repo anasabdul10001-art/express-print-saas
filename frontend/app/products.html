@@ -153,6 +153,10 @@
                     eBay-CSV importieren
                     <input type="file" id="ebay-csv-file" accept=".csv,text/csv" class="hidden" onchange="importEbayCsv(this)">
                 </label>
+                <button onclick="togglePricePanel()"
+                        class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold py-2 px-4 rounded transition text-sm">
+                    Preise ändern
+                </button>
                 <button onclick="openForm()"
                         class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
                     <span data-i18n="products.newButton">+ Neues Produkt</span>
@@ -165,6 +169,40 @@
                class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
 
         <!-- Add / edit form, hidden by default -->
+        <div id="price-panel" class="hidden bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h3 class="text-lg font-bold">Preise ändern (nur in ShipSync, nichts wird bei eBay geändert)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+                <label>Für welche Produkte
+                    <select id="bp-scope" class="mt-1 w-full p-2 border border-slate-300 rounded">
+                        <option value="selected">Nur ausgewählte</option>
+                        <option value="all">Alle aktiven Produkte</option>
+                    </select>
+                </label>
+                <label>Art
+                    <select id="bp-mode" class="mt-1 w-full p-2 border border-slate-300 rounded">
+                        <option value="percent">Prozent (%)</option>
+                        <option value="amount">Betrag (€)</option>
+                    </select>
+                </label>
+                <label>Aktion
+                    <select id="bp-dir" class="mt-1 w-full p-2 border border-slate-300 rounded">
+                        <option value="-1">Preis senken</option>
+                        <option value="1">Preis erhöhen</option>
+                    </select>
+                </label>
+                <label>Wert
+                    <input id="bp-value" type="number" step="0.01" min="0" class="mt-1 w-full p-2 border border-slate-300 rounded" placeholder="z.B. 10">
+                </label>
+            </div>
+            <label class="flex items-center gap-2 text-sm"><input id="bp-round" type="checkbox"> Auf ,99 runden (z.B. 11,99)</label>
+            <div id="bp-preview" class="text-sm text-slate-700"></div>
+            <div class="flex gap-2">
+                <button onclick="bulkPrice(true)" class="bg-slate-900 text-white font-semibold py-2 px-4 rounded text-sm">Vorschau</button>
+                <button id="bp-apply" onclick="bulkPrice(false)" class="hidden bg-red-600 text-white font-bold py-2 px-4 rounded text-sm">Jetzt anwenden</button>
+                <button onclick="togglePricePanel()" class="text-slate-500 px-3 py-2 text-sm">Schließen</button>
+            </div>
+        </div>
+
         <div id="form-panel" class="hidden bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 id="form-title" class="text-lg font-bold" data-i18n="products.formTitleNew">Neues Produkt</h3>
             <input type="hidden" id="product-id">
@@ -278,6 +316,7 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-slate-500 border-b border-slate-200">
+                        <th class="p-3"><input type="checkbox" id="select-all" onclick="toggleAll(this.checked)" title="Alle auswählen"></th>
                         <th class="p-3" data-i18n="products.colImage">Bild</th>
                         <th class="p-3" data-i18n="products.colSku">SKU</th>
                         <th class="p-3" data-i18n="products.colTitle">Titel</th>
@@ -686,6 +725,7 @@
 
             tbody.innerHTML = products.map(p => `
                 <tr class="border-b border-slate-200 ${p.active ? "" : "opacity-50"}">
+                    <td class="p-3"><input type="checkbox" class="row-check" value="${p.id}" onchange="resetPreview()"></td>
                     <td class="p-3">
                         ${p.image_url
                             ? `<img src="${p.image_url}" class="w-10 h-10 object-cover rounded" onerror="this.style.display='none'">`
@@ -712,6 +752,49 @@
                     </td>
                 </tr>
             `).join("");
+        }
+
+        function togglePricePanel() {
+            document.getElementById("price-panel").classList.toggle("hidden");
+        }
+        function toggleAll(on) {
+            document.querySelectorAll(".row-check").forEach(c => c.checked = on);
+            resetPreview();
+        }
+        function resetPreview() {
+            document.getElementById("bp-preview").innerHTML = "";
+            document.getElementById("bp-apply").classList.add("hidden");
+        }
+        async function bulkPrice(dryRun) {
+            const raw = parseFloat(document.getElementById("bp-value").value);
+            if (!raw || raw <= 0) { showBanner("Bitte einen Wert größer als 0 eingeben.", true); return; }
+            const scope = document.getElementById("bp-scope").value;
+            const ids = [...document.querySelectorAll(".row-check:checked")].map(c => c.value);
+            if (scope === "selected" && ids.length === 0) { showBanner("Bitte zuerst Produkte in der Tabelle auswählen.", true); return; }
+            const body = {
+                product_ids: scope === "all" ? null : ids,
+                mode: document.getElementById("bp-mode").value,
+                value: raw * parseInt(document.getElementById("bp-dir").value),
+                round_to_99: document.getElementById("bp-round").checked,
+                dry_run: dryRun,
+            };
+            try {
+                const response = await fetch(`${API_URL}/products/bulk-price`, { method: "POST", headers: authHeaders(true), body: JSON.stringify(body) });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) { showBanner(data.detail || "Fehler", true); return; }
+                if (dryRun) {
+                    const rows = data.items.slice(0, 8).map(i => `<div>${i.sku}: ${i.old_price} € → <b>${i.new_price} €</b></div>`).join("");
+                    document.getElementById("bp-preview").innerHTML = `<b>${data.changed} Produkte werden geändert</b> (${data.skipped_no_price} ohne Preis übersprungen)${rows}${data.changed > 8 ? "<div>…</div>" : ""}`;
+                    document.getElementById("bp-apply").classList.toggle("hidden", data.changed === 0);
+                } else {
+                    showBanner(`${data.changed} Preise geändert.`, false);
+                    resetPreview();
+                    loadProducts();
+                }
+            } catch (err) {
+                showBanner("Serverfehler, bitte erneut versuchen.", true);
+            }
         }
 
         async function loadProducts() {
