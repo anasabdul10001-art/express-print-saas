@@ -85,6 +85,15 @@ def _split_street_and_house(full_street: str | None) -> tuple[str, str | None]:
     return full_street, None
 
 
+def _shipment_reference(order: Order) -> str:
+    """
+    DHL requires refNo (shipment reference) to be 8-35 characters. A plain
+    str(uuid) is 36 characters and gets rejected (live sandbox test,
+    20.11.2026), so use the 32-character hex form of the order id instead.
+    """
+    return order.id.hex if hasattr(order.id, "hex") else str(order.id).replace("-", "")[:35]
+
+
 class DhlShipmentError(Exception):
     """Raised when the DHL account isn't usable, the order can't be shipped
     yet, or DHL itself rejects/fails the request."""
@@ -134,7 +143,7 @@ def create_shipment_label(
             {
                 "product": DEFAULT_PRODUCT_CODE,
                 "billingNumber": dhl_account.billing_number,
-                "refNo": str(order.id),
+                "refNo": _shipment_reference(order),
                 "shipper": {
                     "name1": dhl_account.sender_name,
                     "addressStreet": shipper_street,
