@@ -50,18 +50,37 @@ def _set_recipient_address(order_id):
         """), {"id": order_id})
 
 
-def test_print_without_dhl_connected_uses_placeholder(client, register):
+def test_print_without_dhl_and_without_label_is_refused(client, register):
     headers, _ = register()
     product = _make_product(client, headers)
     _make_agent(client, headers)
     order = _make_order(client, headers, product)
 
     response = client.post(f"/print-jobs/order/{order['id']}", headers=headers)
-    assert response.status_code == 201
-    assert response.json()["status"] == "pending"
+    assert response.status_code == 400
+    assert "Versandetikett" in response.json()["detail"]
 
-    orders_after = client.get("/orders", headers=headers).json()
-    assert orders_after[0]["tracking_number"] is None
+
+def test_uploaded_label_is_queued_and_reprint_reuses_it(client, register):
+    headers, _ = register()
+    product = _make_product(client, headers)
+    _make_agent(client, headers)
+    order = _make_order(client, headers, product)
+    pdf = b"%PDF-1.4 fake label"
+
+    bad = client.post(f"/print-jobs/order/{order['id']}/upload-label", headers=headers,
+                      files={"file": ("x.txt", b"hello", "text/plain")})
+    assert bad.status_code == 400
+
+    ok = client.post(f"/print-jobs/order/{order['id']}/upload-label", headers=headers,
+                     files={"file": ("label.pdf", pdf, "application/pdf")}, data={"tracking_number": "JJD123"})
+    assert ok.status_code == 201
+    assert client.get(f"/print-jobs/{ok.json()['id']}/label").content == pdf
+    assert client.get("/orders", headers=headers).json()[0]["tracking_number"] == "JJD123"
+
+    again = client.post(f"/print-jobs/order/{order['id']}", headers=headers)
+    assert again.status_code == 201
+    assert client.get(f"/print-jobs/{again.json()['id']}/label").content == pdf
 
 
 def test_print_with_no_active_agent_fails(client, register):

@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.deps import get_current_user, get_db, get_print_agent_from_api_key
@@ -147,8 +147,27 @@ def trigger_print_for_order(
     )
 
     job_id = uuid.uuid4()
-    label_pdf_url = f"https://placeholder.example.com/labels/{order.id}.pdf"
+    label_pdf_url = None
     label_pdf_data = None
+
+    if not dhl_account:
+        # No DHL contract: the only real label is one the seller uploaded for
+        # this order (eBay/Packlink/DHL PDF). Reprints reuse it. Without one
+        # we refuse instead of queueing a fake job that prints nothing.
+        previous = (
+            db.query(PrintJob)
+            .filter(PrintJob.order_id == order.id, PrintJob.label_pdf_data.isnot(None))
+            .order_by(PrintJob.created_at.desc())
+            .first()
+        )
+        if not previous:
+            raise HTTPException(
+                status_code=400,
+                detail="Kein Versandetikett vorhanden: Lade das Etikett-PDF (eBay/Packlink/DHL) "
+                       "für diese Bestellung hoch oder verbinde ein DHL-Konto.",
+            )
+        label_pdf_data = previous.label_pdf_data
+        label_pdf_url = f"{str(request.base_url).rstrip('/')}/print-jobs/{job_id}/label"
 
     if dhl_account:
         if not order.recipient_street1 or not order.recipient_city or not order.recipient_zip:
@@ -186,6 +205,49 @@ def trigger_print_for_order(
     db.refresh(job)
 
     return {"id": str(job.id), "status": job.status, "order_id": str(order.id)}
+
+
+@router.post("/order/{order_id}/upload-label", status_code=status.HTTP_201_CREATED)
+async def upload_label_for_order(
+    order_id: str,
+    request: Request,
+    file: UploadFile = File(...),
+    tracking_number: str | None = Form(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Attaches a ready-made shipping label PDF to an order and queues it for
+    the print agent. This is the real label path for sellers without their own
+    DHL contract (label bought on eBay, Packlink, DHL website...)."""
+    order = db.query(Order).filter(Order.id == order_id, Order.tenant_id == current_user.tenant_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    data = await file.read()
+    if not data.startswith(b"%PDF"):
+        raise HTTPException(status_code=400, detail="Bitte eine PDF-Datei hochladen.")
+    if len(data) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Datei zu groß (max. 5 MB).")
+
+    agent = (
+        db.query(PrintAgent)
+        .filter(PrintAgent.tenant_id == current_user.tenant_id, PrintAgent.status != "disabled")
+        .order_by(PrintAgent.last_seen_at.desc().nullslast())
+        .first()
+    )
+    if not agent:
+        raise HTTPException(status_code=400, detail="No active print agent found for this account")
+
+    job_id = uuid.uuid4()
+    db.add(PrintJob(
+        id=job_id, tenant_id=current_user.tenant_id, print_agent_id=agent.id, order_id=order.id,
+        label_pdf_url=f"{str(request.base_url).rstrip('/')}/print-jobs/{job_id}/label",
+        label_pdf_data=data, rotation_degrees=90, label_format="4x6", status="pending",
+    ))
+    if tracking_number and tracking_number.strip():
+        order.tracking_number = tracking_number.strip()
+    order.status = "ready_to_print"
+    db.commit()
+    return {"id": str(job_id), "status": "pending", "order_id": str(order.id)}
 
 
 @router.get("/{job_id}/label")
