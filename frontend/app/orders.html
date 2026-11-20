@@ -617,6 +617,14 @@
 
         loadOrders();
         document.addEventListener("langchange", loadOrders);
+
+        // New eBay orders appear by themselves while this page is open.
+        setInterval(async () => {
+            try {
+                const r = await fetch(`${API_URL}/ebay/sync-orders`, { method: "POST", headers: authHeaders() });
+                if (r.ok && (await r.json()).created > 0) loadOrders();
+            } catch (e) {}
+        }, 120000);
     </script>
 </body>
 </html>

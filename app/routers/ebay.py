@@ -13,7 +13,7 @@ from app.models.ebay_account import EbayAccount
 from app.models.order import Order
 from app.models.user import User
 from app.schemas.ebay import AuthorizeUrlOut, EbayAccountOut
-from app.services import ebay_deletion_service, ebay_listing_service, ebay_oauth_service, ebay_order_service
+from app.services import ebay_deletion_service, ai_reply_service, ebay_extras_service, ebay_listing_service, ebay_oauth_service, ebay_order_service
 
 router = APIRouter(prefix="/ebay", tags=["ebay"])
 
@@ -160,6 +160,77 @@ def import_products(
         raise HTTPException(status_code=502, detail=f"eBay-Import fehlgeschlagen: {'; '.join(errors)}")
     total["errors"] = errors
     return total
+
+
+def _collect(current_user: User, db: Session, fn):
+    """Runs fn(account, db) for every connected account; one broken account
+    or missing scope never hides the data of the others."""
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+    results, errors = [], []
+    for account in accounts:
+        try:
+            results.append((account.ebay_user_id or "eBay", fn(account, db)))
+        except (ValueError, httpx.HTTPError) as exc:
+            errors.append(f"{account.ebay_user_id or 'eBay'}: {exc}")
+    if errors and not results:
+        raise HTTPException(status_code=502, detail="; ".join(errors))
+    return results, errors
+
+
+@router.get("/shipping-policies")
+def get_shipping_policies(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    results, errors = _collect(current_user, db, ebay_extras_service.shipping_policies)
+    return {"accounts": [{"account": n, "policies": p} for n, p in results], "errors": errors}
+
+
+@router.get("/traffic")
+def get_traffic(days: int = 30, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    results, errors = _collect(current_user, db, lambda a, d: ebay_extras_service.traffic(a, d, min(max(days, 1), 90)))
+    return {"accounts": [{"account": n, "listings": rows} for n, rows in results], "errors": errors}
+
+
+@router.get("/cases")
+def get_cases(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    results, errors = _collect(current_user, db, ebay_extras_service.cases)
+    items = [dict(i, account=n) for n, r in results for i in r["items"]]
+    for _, r in results:
+        errors += r["errors"]
+    return {"items": items, "errors": errors}
+
+
+@router.get("/messages")
+def get_messages(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    results, errors = _collect(current_user, db, ebay_extras_service.messages)
+    items = [dict(m, account=n) for n, msgs in results for m in msgs]
+    return {"items": items, "errors": errors, "ai_configured": ai_reply_service.configured()}
+
+
+class SuggestReplyIn(BaseModel):
+    message: str
+    order_ref: str | None = None
+    buyer_name: str | None = None
+
+
+@router.post("/suggest-reply")
+def suggest_reply(body: SuggestReplyIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Drafts a German reply (never sends anything). Order facts come from our
+    own database - status, tracking, item titles - and no address data."""
+    facts = ""
+    if body.order_ref:
+        order = (
+            db.query(Order)
+            .filter(Order.tenant_id == current_user.tenant_id, Order.external_order_ref == body.order_ref)
+            .first()
+        )
+        if order:
+            titles = ", ".join(i.product.title for i in order.items if i.product)
+            facts = f"Status: {order.status}. Artikel: {titles}. Sendungsnummer: {order.tracking_number or 'noch keine'}."
+    try:
+        return ai_reply_service.suggest_reply(body.message, facts, [body.buyer_name] if body.buyer_name else None)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
 
 class ShipOrderIn(BaseModel):
