@@ -1,6 +1,9 @@
-from decimal import Decimal
+import math
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
@@ -30,6 +33,52 @@ def _with_profit(product: Product) -> ProductOut:
 
 
 MAX_IMPORT_BYTES = 2 * 1024 * 1024
+
+
+class BulkPriceIn(BaseModel):
+    product_ids: list[str] | None = None  # None = all active products
+    mode: Literal["percent", "amount"]
+    value: Decimal = Field(..., description="Negative lowers the price, positive raises it")
+    round_to_99: bool = False
+    dry_run: bool = True
+
+
+def _new_price(old: Decimal, mode: str, value: Decimal, round_to_99: bool) -> Decimal:
+    new = old * (1 + value / 100) if mode == "percent" else old + value
+    if round_to_99:
+        new = Decimal(math.floor(new + Decimal("0.5"))) - Decimal("0.01")
+    new = max(new, Decimal("0.01"))
+    return new.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+@router.post("/bulk-price")
+def bulk_price(
+    payload: BulkPriceIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Raises/lowers the selling price of many products at once. Only changes
+    the price in ShipSync - nothing is sent to eBay. dry_run=True only previews."""
+    if payload.value == 0:
+        raise HTTPException(status_code=400, detail="Der Wert darf nicht 0 sein.")
+    query = db.query(Product).filter(Product.tenant_id == current_user.tenant_id, Product.active.is_(True))
+    if payload.product_ids is not None:
+        if not payload.product_ids:
+            raise HTTPException(status_code=400, detail="Keine Produkte ausgewählt.")
+        query = query.filter(Product.id.in_(payload.product_ids))
+    changes, skipped = [], 0
+    for product in query.all():
+        if product.selling_price is None:
+            skipped += 1
+            continue
+        new = _new_price(Decimal(product.selling_price), payload.mode, payload.value, payload.round_to_99)
+        changes.append({"id": str(product.id), "sku": product.sku, "title": product.title,
+                        "old_price": str(product.selling_price), "new_price": str(new)})
+        if not payload.dry_run:
+            product.selling_price = new
+    if not payload.dry_run:
+        db.commit()
+    return {"applied": not payload.dry_run, "changed": len(changes), "skipped_no_price": skipped, "items": changes}
 
 
 @router.post("/import-ebay-csv")
