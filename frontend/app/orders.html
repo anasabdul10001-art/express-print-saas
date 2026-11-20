@@ -444,6 +444,27 @@
             }
         }
 
+        async function uploadLabel(orderId, input) {
+            const file = input.files[0];
+            if (!file) return;
+            const form = new FormData();
+            form.append("file", file);
+            const tracking = document.getElementById(`trk-${orderId}`);
+            if (tracking && tracking.value.trim()) form.append("tracking_number", tracking.value.trim());
+            try {
+                const response = await fetch(`${API_URL}/print-jobs/order/${orderId}/upload-label`, {
+                    method: "POST", headers: authHeaders(), body: form,
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) { showBanner(data.detail || t("orders.printFailed"), true); return; }
+                showBanner(t("orders.printSent"), false);
+                loadOrders();
+            } catch (err) {
+                showBanner(t("orders.serverErrorRetry"), true);
+            }
+        }
+
         async function printOrder(orderId) {
             try {
                 const response = await fetch(`${API_URL}/print-jobs/order/${orderId}`, {
@@ -559,6 +580,12 @@
                                             class="ml-3 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1 px-3 rounded transition">
                                         ${order.status === "new" ? t("orders.printLabel") : t("orders.printAgain")}
                                     </button>
+                                ` : ""}
+                                ${order.status !== "shipped" && order.status !== "canceled" ? `
+                                    <label class="ml-2 cursor-pointer bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold py-1 px-3 rounded transition">
+                                        Etikett-PDF hochladen &amp; drucken
+                                        <input type="file" accept="application/pdf" class="hidden" onchange='uploadLabel(${JSON.stringify(order.id)}, this)'>
+                                    </label>
                                 ` : ""}
                                 ${order.external_order_ref && order.status !== "shipped" && order.status !== "canceled" ? `
                                     <span class="ml-3 inline-flex items-center gap-1">
