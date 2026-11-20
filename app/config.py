@@ -58,5 +58,27 @@ class Settings(BaseSettings):
     # See app/routers/billing.py.
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
+    # --- Extra eBay scopes (messages, analytics, account policies, disputes, push) ---
+    # Space-separated. Set to an empty value to fall back to the core scopes
+    # if eBay rejects the consent screen for one of them.
+    ebay_extra_scopes: str = (
+        "https://api.ebay.com/oauth/api_scope/sell.account "
+        "https://api.ebay.com/oauth/api_scope/sell.analytics.readonly "
+        "https://api.ebay.com/oauth/api_scope/commerce.message "
+        "https://api.ebay.com/oauth/api_scope/sell.payment.dispute "
+        "https://api.ebay.com/oauth/api_scope/commerce.notification.subscription"
+    )
+    # --- AI reply suggestions (free tiers; first configured key is tried first) ---
+    groq_api_key: str = ""
+    gemini_api_key: str = ""
+    openrouter_api_key: str = ""
+    nvidia_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
+    gemini_model: str = "gemini-3.5-flash-lite"
+    openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
+    nvidia_model: str = "meta/llama-3.3-70b-instruct"
+    # Background order sync every N minutes (0 = off). The orders page also
+    # syncs by itself while it is open.
+    auto_sync_minutes: int = 0
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 settings = Settings()

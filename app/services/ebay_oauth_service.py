@@ -41,7 +41,7 @@ EBAY_URLS = {
 # Keep this list to exactly what the platform actually uses today.
 # Adding scopes later just means re-running the consent flow, it's not a
 # breaking change - so there's no reason to over-ask up front.
-SCOPES = " ".join(
+CORE_SCOPES = " ".join(
     [
         "https://api.ebay.com/oauth/api_scope/sell.fulfillment",
         "https://api.ebay.com/oauth/api_scope/sell.inventory",
@@ -51,6 +51,8 @@ SCOPES = " ".join(
         "https://api.ebay.com/oauth/api_scope/sell.finances",
     ]
 )
+# Core + the optional extras (messages, analytics, policies, disputes, push).
+SCOPES = " ".join([CORE_SCOPES, settings.ebay_extra_scopes]).strip()
 
 # Accounts connected before the identity scope existed hold refresh tokens
 # that eBay rejects with invalid_scope when asked for SCOPES above. Refreshing
@@ -261,9 +263,12 @@ def _refresh_access_token(account: EbayAccount, db: Session) -> str:
             timeout=15.0,
         )
 
+    # Newest scope set first; older connections only hold fewer scopes and
+    # eBay answers invalid_scope for anything they were not granted.
     resp = request_refresh(SCOPES)
-    if resp.status_code != 200 and "invalid_scope" in resp.text:
-        resp = request_refresh(LEGACY_SCOPES)
+    for fallback in (CORE_SCOPES, LEGACY_SCOPES):
+        if resp.status_code != 200 and "invalid_scope" in resp.text:
+            resp = request_refresh(fallback)
     if resp.status_code != 200:
         account.status = "ERROR"
         db.commit()

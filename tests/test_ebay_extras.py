@@ -1,0 +1,92 @@
+"""eBay extras (policies, traffic, cases, messages) and AI reply suggestions."""
+
+import uuid
+
+from app.database import SessionLocal
+from app.models.ebay_account import EbayAccount
+from app.services import ai_reply_service, ebay_extras_service
+
+
+class _Resp:
+    def __init__(self, data=None, status=200, text=""):
+        self._d, self.status_code, self.text = data, status, text or ""
+
+    def json(self):
+        return self._d
+
+    def raise_for_status(self):
+        if self.status_code != 200:
+            import httpx
+            raise httpx.HTTPError("boom")
+
+
+def _connect(register, client, monkeypatch):
+    headers, _ = register()
+    tid = client.get("/auth/me", headers=headers).json()["tenant_id"]
+    with SessionLocal() as db:
+        db.add(EbayAccount(id=uuid.uuid4(), tenant_id=tid, environment="PRODUCTION", status="CONNECTED", ebay_user_id="shop"))
+        db.commit()
+    monkeypatch.setattr(ebay_extras_service.ebay_oauth_service, "get_valid_access_token", lambda a, d: "t")
+    return headers
+
+
+def test_shipping_policies_and_traffic(register, client, monkeypatch):
+    headers = _connect(register, client, monkeypatch)
+
+    def fake_get(url, **k):
+        if "fulfillment_policy" in url:
+            return _Resp({"fulfillmentPolicies": [{"name": "Standard", "handlingTime": {"value": 1},
+                          "shippingOptions": [{"shippingServices": [{"shippingServiceCode": "DE_DHLPaket", "shippingCost": {"value": "3.99"}}]}]}]})
+        return _Resp({"header": {"metrics": [{"metric": "LISTING_VIEWS_TOTAL"}, {"metric": "TRANSACTION"}]},
+                      "records": [{"dimensionValues": [{"value": "111"}], "metricValues": [{"value": 50}, {"value": 2}]}]})
+
+    monkeypatch.setattr(ebay_extras_service.httpx, "get", fake_get)
+    pol = client.get("/ebay/shipping-policies", headers=headers).json()
+    assert pol["accounts"][0]["policies"][0]["services"][0]["service"] == "DE_DHLPaket"
+    tr = client.get("/ebay/traffic", headers=headers).json()
+    assert tr["accounts"][0]["listings"][0] == {"item_id": "111", "views": 50, "sales": 2, "conversion": None}
+
+
+def test_cases_collects_all_types_and_tolerates_failures(register, client, monkeypatch):
+    headers = _connect(register, client, monkeypatch)
+
+    def fake_get(url, **k):
+        if "return/search" in url:
+            return _Resp({"members": [{"returnId": "R1", "state": "OPEN", "buyerLoginName": "b1"}]})
+        if "payment_dispute" in url:
+            return _Resp({"paymentDisputeSummaries": [{"paymentDisputeId": "D1", "paymentDisputeStatus": "OPEN"}]})
+        return _Resp(status=403, text="no scope")
+
+    monkeypatch.setattr(ebay_extras_service.httpx, "get", fake_get)
+    out = client.get("/ebay/cases", headers=headers).json()
+    assert sorted(i["type"] for i in out["items"]) == ["dispute", "return"]
+    assert len(out["errors"]) == 2
+
+
+def test_mask_personal_data():
+    masked = ai_reply_service.mask_personal_data(
+        "Hallo, ich bin Max Mustermann, Hauptstraße 12, 04720 Döbeln, mail max@x.de, Tel +49 170 1234567", ["Max Mustermann"])
+    for secret in ("Max", "Mustermann", "Hauptstraße", "04720", "max@x.de", "1234567"):
+        assert secret not in masked
+
+
+def test_suggest_reply_falls_through_providers(register, client, monkeypatch):
+    headers = _connect(register, client, monkeypatch)
+    no_key = client.post("/ebay/suggest-reply", headers=headers, json={"message": "Wo ist mein Paket?"})
+    assert no_key.status_code == 503
+
+    monkeypatch.setattr(ai_reply_service.settings, "groq_api_key", "g")
+    monkeypatch.setattr(ai_reply_service.settings, "nvidia_api_key", "n")
+    seen = []
+
+    def fake_post(url, **k):
+        seen.append((url, str(k.get("json"))))
+        if "groq" in url:
+            return _Resp(status=429)
+        return _Resp({"choices": [{"message": {"content": "Guten Tag, ich sehe nach."}}]})
+
+    monkeypatch.setattr(ai_reply_service.httpx, "post", fake_post)
+    out = client.post("/ebay/suggest-reply", headers=headers,
+                      json={"message": "Schreib an max@x.de", "buyer_name": "Max Muster"}).json()
+    assert out == {"reply": "Guten Tag, ich sehe nach.", "provider": "nvidia"}
+    assert all("max@x.de" not in body for _, body in seen)

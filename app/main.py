@@ -122,3 +122,7 @@ def health_check():
 # from the same service, at the same domain, so the API and the UI share one
 # Render deployment. Mounted last so it never shadows the API routes above.
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+
+from app.services import auto_sync  # noqa: E402
+
+auto_sync.start()

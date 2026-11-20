@@ -5,7 +5,7 @@ import httpx
 from app.core.crypto import encrypt_token
 from app.models.ebay_account import EbayAccount
 from app.services import ebay_oauth_service
-from app.services.ebay_oauth_service import LEGACY_SCOPES, SCOPES, _fetch_identity, _refresh_access_token
+from app.services.ebay_oauth_service import CORE_SCOPES, LEGACY_SCOPES, SCOPES, _fetch_identity, _refresh_access_token
 
 
 class _FakeDb:
@@ -38,7 +38,7 @@ def test_refresh_falls_back_to_legacy_scopes(monkeypatch):
 
     def fake_post(url, **kwargs):
         scopes_tried.append(kwargs["data"]["scope"])
-        if kwargs["data"]["scope"] == SCOPES:
+        if kwargs["data"]["scope"] != LEGACY_SCOPES:
             return httpx.Response(400, json={"error": "invalid_scope"})
         return httpx.Response(200, json={"access_token": "new-token", "expires_in": 7200})
 
@@ -46,5 +46,5 @@ def test_refresh_falls_back_to_legacy_scopes(monkeypatch):
     account = EbayAccount(environment="PRODUCTION", refresh_token_encrypted=encrypt_token("old-refresh"))
 
     assert _refresh_access_token(account, _FakeDb()) == "new-token"
-    assert scopes_tried == [SCOPES, LEGACY_SCOPES]
+    assert scopes_tried == [SCOPES, CORE_SCOPES, LEGACY_SCOPES]
     assert account.status == "CONNECTED"
