@@ -504,6 +504,7 @@
             document.getElementById("field-image").value = product ? (product.image_url || "") : "";
             document.getElementById("field-purchase").value = product ? (product.purchase_price ?? "") : "";
             document.getElementById("field-selling").value = product ? (product.selling_price ?? "") : "";
+            originalSelling = product && product.selling_price != null ? Number(product.selling_price) : null;
             document.getElementById("field-stock").value = product ? (product.stock_quantity ?? 0) : 0;
             document.getElementById("field-weight").value = product && product.weight_kg != null ? Number(product.weight_kg) : "";
             document.getElementById("field-length").value = product ? (product.length_cm ?? "") : "";
@@ -567,6 +568,24 @@
             }
         }
 
+        let originalSelling = null;
+
+        async function pushOnePrice(productId) {
+            try {
+                const response = await fetch(`${API_URL}/ebay/push-prices`, {
+                    method: "POST", headers: authHeaders(true),
+                    body: JSON.stringify({ product_ids: [productId], dry_run: false }),
+                });
+                const data = await response.json();
+                if (!response.ok) { showBanner(data.detail || "eBay-Fehler", true); return; }
+                if (data.updated > 0) showBanner("Preis auch bei eBay geändert.", false);
+                else if (data.failed > 0) showBanner("eBay hat den Preis abgelehnt: " + (data.errors[0] || data.items[0]?.result || ""), true);
+                else showBanner("Kein passendes eBay-Angebot gefunden oder Preis schon gleich.", false);
+            } catch (err) {
+                showBanner("Preis konnte nicht an eBay gesendet werden.", true);
+            }
+        }
+
         async function saveProduct() {
             const errorBox = document.getElementById("form-error");
             errorBox.classList.add("hidden");
@@ -626,6 +645,10 @@
                 closeForm();
                 showBanner(id ? t("products.updated") : t("products.created"), false);
                 loadProducts();
+                if (id && payload.selling_price != null && payload.selling_price !== originalSelling
+                    && confirm("Der Preis wurde in ShipSync geändert. Jetzt auch bei eBay ändern (sofort für Käufer sichtbar)?")) {
+                    await pushOnePrice(id);
+                }
             } catch (err) {
                 errorBox.innerText = t("products.serverErrorRetry");
                 errorBox.classList.remove("hidden");
