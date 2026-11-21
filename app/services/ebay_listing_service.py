@@ -81,15 +81,19 @@ def parse_active_list(xml_text: str) -> tuple[list[dict], int]:
     return listings, total_pages
 
 
-def import_listings(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
-    token = ebay_oauth_service.get_valid_access_token(account, db)
-    headers = {
+def _headers(token: str, call: str) -> dict:
+    return {
         "X-EBAY-API-IAF-TOKEN": token,
         "X-EBAY-API-SITEID": "77",  # eBay Germany
         "X-EBAY-API-COMPATIBILITY-LEVEL": "1193",
-        "X-EBAY-API-CALL-NAME": "GetMyeBaySelling",
+        "X-EBAY-API-CALL-NAME": call,
         "Content-Type": "text/xml",
     }
+
+
+def fetch_active_listings(account: EbayAccount, db: Session) -> list[dict]:
+    token = ebay_oauth_service.get_valid_access_token(account, db)
+    headers = _headers(token, "GetMyeBaySelling")
 
     listings, page, total_pages = [], 1, 1
     while page <= min(total_pages, MAX_PAGES):
@@ -101,6 +105,53 @@ def import_listings(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
         page_items, total_pages = parse_active_list(resp.text)
         listings += page_items
         page += 1
+    return listings
+
+
+def _revise_xml(items: list[tuple[str, Decimal]]) -> str:
+    body = "".join(
+        f"<InventoryStatus><ItemID>{item_id}</ItemID><StartPrice>{price}</StartPrice></InventoryStatus>"
+        for item_id, price in items
+    )
+    return (
+        '<?xml version="1.0" encoding="utf-8"?>'
+        f'<ReviseInventoryStatusRequest xmlns="urn:ebay:apis:eBLBaseComponents">{body}</ReviseInventoryStatusRequest>'
+    )
+
+
+def _revise_call(account: EbayAccount, token: str, items: list[tuple[str, Decimal]]) -> tuple[bool, str]:
+    resp = httpx.post(
+        TRADING_URL[account.environment], headers=_headers(token, "ReviseInventoryStatus"),
+        content=_revise_xml(items), timeout=30.0,
+    )
+    if resp.status_code != 200:
+        return False, f"HTTP {resp.status_code}"
+    root = ET.fromstring(resp.text)
+    if _text(root, "e:Ack") in ("Success", "Warning"):
+        return True, ""
+    return False, _text(root, "e:Errors/e:LongMessage") or _text(root, "e:Errors/e:ShortMessage") or "unknown"
+
+
+def revise_prices(account: EbayAccount, db: Session, items: list[tuple[str, Decimal]]) -> dict[str, str | None]:
+    """Sets StartPrice for (item_id, price) pairs. Returns {item_id: None if ok else error text}.
+    Sends up to 4 items per call (eBay's limit); if a call fails, retries one by one so
+    each failure is attributed to the right listing."""
+    token = ebay_oauth_service.get_valid_access_token(account, db)
+    results: dict[str, str | None] = {}
+    for i in range(0, len(items), 4):
+        chunk = items[i:i + 4]
+        ok, err = _revise_call(account, token, chunk)
+        if ok:
+            results.update({item_id: None for item_id, _ in chunk})
+            continue
+        for single in chunk:
+            ok, err = _revise_call(account, token, [single])
+            results[single[0]] = None if ok else err
+    return results
+
+
+def import_listings(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
+    listings = fetch_active_listings(account, db)
 
     existing = {p.sku for p in db.query(Product).filter(Product.tenant_id == tenant_id).all()}
     created = skipped = 0

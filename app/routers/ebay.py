@@ -4,6 +4,8 @@ import httpx
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
+from decimal import Decimal
+
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,7 @@ from app.config import settings
 from app.core.deps import get_current_user, get_db
 from app.models.ebay_account import EbayAccount
 from app.models.order import Order
+from app.models.product import Product
 from app.models.user import User
 from app.schemas.ebay import AuthorizeUrlOut, EbayAccountOut
 from app.services import ebay_deletion_service, ai_reply_service, ebay_extras_service, ebay_listing_service, ebay_oauth_service, ebay_order_service
@@ -133,6 +136,76 @@ def sync_orders(
     if errors:
         total["skipped_reasons"] += errors
     return total
+
+
+class PushPricesIn(BaseModel):
+    product_ids: list[str] | None = None  # None = all active products
+    dry_run: bool = True
+
+
+@router.post("/push-prices")
+def push_prices(
+    payload: PushPricesIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Sends the ShipSync selling price of products to their eBay listings
+    (matched by SKU, else item number). dry_run=True only compares and
+    changes nothing on eBay. Only listings whose price differs are touched."""
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+
+    query = db.query(Product).filter(Product.tenant_id == current_user.tenant_id, Product.active.is_(True))
+    if payload.product_ids is not None:
+        if not payload.product_ids:
+            raise HTTPException(status_code=400, detail="Keine Produkte ausgewählt.")
+        query = query.filter(Product.id.in_(payload.product_ids))
+    products = {p.sku: p for p in query.all() if p.selling_price is not None}
+
+    changes, errors, matched = [], [], set()
+    for account in accounts:
+        name = account.ebay_user_id or "eBay"
+        try:
+            listings = ebay_listing_service.fetch_active_listings(account, db)
+        except (ValueError, httpx.HTTPError) as exc:
+            errors.append(f"{name}: {exc}")
+            continue
+        todo = []
+        for listing in listings:
+            product = products.get(listing["sku"] or "") or products.get(listing["item_id"])
+            if not product or listing["price"] is None:
+                continue
+            matched.add(product.sku)
+            new_price = Decimal(product.selling_price).quantize(Decimal("0.01"))
+            if listing["price"] == new_price:
+                continue
+            todo.append((listing["item_id"], new_price))
+            changes.append({"account": name, "item_id": listing["item_id"], "sku": product.sku,
+                            "title": product.title, "ebay_price": str(listing["price"]),
+                            "new_price": str(new_price), "result": None})
+        if payload.dry_run or not todo:
+            continue
+        if len(todo) > 200:
+            raise HTTPException(status_code=400, detail="Maximal 200 Angebote pro Vorgang.")
+        try:
+            results = ebay_listing_service.revise_prices(account, db, todo)
+        except (ValueError, httpx.HTTPError) as exc:
+            errors.append(f"{name}: {exc}")
+            continue
+        for change in changes:
+            if change["account"] == name and change["item_id"] in results:
+                change["result"] = "ok" if results[change["item_id"]] is None else results[change["item_id"]]
+
+    return {
+        "applied": not payload.dry_run,
+        "to_change": len(changes),
+        "updated": sum(1 for c in changes if c["result"] == "ok"),
+        "failed": sum(1 for c in changes if c["result"] not in (None, "ok")),
+        "no_ebay_match": len([s for s in products if s not in matched]),
+        "items": changes,
+        "errors": errors,
+    }
 
 
 @router.post("/import-products")

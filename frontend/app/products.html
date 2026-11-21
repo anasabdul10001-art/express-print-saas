@@ -195,7 +195,17 @@
                 </label>
             </div>
             <label class="flex items-center gap-2 text-sm"><input id="bp-round" type="checkbox"> Auf ,99 runden (z.B. 11,99)</label>
+            <label class="flex items-center gap-2 text-sm font-semibold"><input id="bp-ebay" type="checkbox" checked> Gleichzeitig auch bei eBay ändern</label>
             <div id="bp-preview" class="text-sm text-slate-700"></div>
+            <div class="border-t border-slate-200 pt-4 space-y-2">
+                <h4 class="font-bold text-sm">Preise an eBay senden</h4>
+                <p class="text-xs text-slate-500">Vergleicht die ShipSync-Preise (für die oben gewählten Produkte) mit deinen eBay-Angeboten. Es wird nichts gesendet, bevor du bestätigst.</p>
+                <div id="ep-preview" class="text-sm text-slate-700"></div>
+                <div class="flex gap-2">
+                    <button onclick="pushPrices(true)" class="bg-slate-900 text-white font-semibold py-2 px-4 rounded text-sm">Mit eBay vergleichen</button>
+                    <button id="ep-apply" onclick="pushPrices(false)" class="hidden bg-red-600 text-white font-bold py-2 px-4 rounded text-sm">Jetzt an eBay senden</button>
+                </div>
+            </div>
             <div class="flex gap-2">
                 <button onclick="bulkPrice(true)" class="bg-slate-900 text-white font-semibold py-2 px-4 rounded text-sm">Vorschau</button>
                 <button id="bp-apply" onclick="bulkPrice(false)" class="hidden bg-red-600 text-white font-bold py-2 px-4 rounded text-sm">Jetzt anwenden</button>
@@ -788,11 +798,45 @@
                     document.getElementById("bp-preview").innerHTML = `<b>${data.changed} Produkte werden geändert</b> (${data.skipped_no_price} ohne Preis übersprungen)${rows}${data.changed > 8 ? "<div>…</div>" : ""}`;
                     document.getElementById("bp-apply").classList.toggle("hidden", data.changed === 0);
                 } else {
-                    showBanner(`${data.changed} Preise geändert.`, false);
+                    showBanner(`${data.changed} Preise in ShipSync geändert.`, false);
                     resetPreview();
-                    loadProducts();
+                    await loadProducts();
+                    if (document.getElementById("bp-ebay").checked) {
+                        await pushPrices(false, data.items.map(i => i.id));
+                    }
                 }
             } catch (err) {
+                showBanner("Serverfehler, bitte erneut versuchen.", true);
+            }
+        }
+
+        async function pushPrices(dryRun, explicitIds) {
+            const scope = explicitIds ? "selected" : document.getElementById("bp-scope").value;
+            const ids = explicitIds || [...document.querySelectorAll(".row-check:checked")].map(c => c.value);
+            if (scope === "selected" && ids.length === 0) { showBanner("Bitte zuerst Produkte in der Tabelle auswählen.", true); return; }
+            if (!dryRun && !confirm("Die Preise werden jetzt bei eBay geändert und sind sofort für Käufer sichtbar. Fortfahren?")) return;
+            const box = document.getElementById("ep-preview");
+            box.innerHTML = "Bitte warten…";
+            try {
+                const response = await fetch(`${API_URL}/ebay/push-prices`, {
+                    method: "POST", headers: authHeaders(true),
+                    body: JSON.stringify({ product_ids: scope === "all" ? null : ids, dry_run: dryRun }),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) { box.innerHTML = ""; showBanner(data.detail || "Fehler", true); return; }
+                const errs = data.errors.length ? `<div class="text-red-600">${data.errors.join("<br>")}</div>` : "";
+                if (dryRun) {
+                    const rows = data.items.slice(0, 8).map(i => `<div>${i.sku}: eBay ${i.ebay_price} € → <b>${i.new_price} €</b></div>`).join("");
+                    box.innerHTML = `<b>${data.to_change} Angebote würden geändert</b> (${data.no_ebay_match} Produkte ohne eBay-Angebot)${rows}${data.to_change > 8 ? "<div>…</div>" : ""}${errs}`;
+                    document.getElementById("ep-apply").classList.toggle("hidden", data.to_change === 0);
+                } else {
+                    const failed = data.items.filter(i => i.result && i.result !== "ok").map(i => `<div class="text-red-600">${i.sku}: ${i.result}</div>`).join("");
+                    box.innerHTML = `<b>${data.updated} Preise bei eBay geändert, ${data.failed} fehlgeschlagen.</b>${failed}${errs}`;
+                    document.getElementById("ep-apply").classList.add("hidden");
+                }
+            } catch (err) {
+                box.innerHTML = "";
                 showBanner("Serverfehler, bitte erneut versuchen.", true);
             }
         }
