@@ -173,9 +173,18 @@
             const grid = document.getElementById("plans-grid");
 
             try {
-                const response = await fetch(`${API_URL}/plans`);
-                if (!response.ok) throw new Error("request failed");
-                const plans = await response.json();
+                // The free Render instance sleeps when idle and answers the
+                // first request(s) with a 502/timeout while it wakes up, so
+                // retry for about a minute before showing an error.
+                let plans = null;
+                for (let attempt = 0; attempt < 8 && plans === null; attempt++) {
+                    try {
+                        const response = await fetch(`${API_URL}/plans`, { signal: AbortSignal.timeout(15000) });
+                        if (response.ok) plans = await response.json();
+                    } catch (e) { /* retry */ }
+                    if (plans === null) await new Promise(r => setTimeout(r, 4000));
+                }
+                if (plans === null) throw new Error("request failed");
 
                 loadingState.classList.add("hidden");
 
