@@ -41,7 +41,7 @@ from app.models.ebay_account import EbayAccount
 from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
-from app.services import ebay_oauth_service
+from app.services import ebay_oauth_service, ebay_signing_service
 from app.services.ebay_deletion_service import deleted_order_ref
 
 EBAY_API_BASE = {
@@ -247,10 +247,18 @@ def sync_fees(
     401/403 here and simply keep showing profit without fees until they
     reconnect; this never breaks the order sync.
     """
+    url = f"{FINANCES_API_BASE[account.environment]}/sell/finances/v1/transaction"
+    try:
+        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        headers.update(ebay_signing_service.signed_headers(account, db, "GET", url))
+    except (ebay_signing_service.SigningError, httpx.HTTPError, ValueError) as exc:
+        if notes is not None:
+            notes.append(f"Gebühren: Signatur nicht möglich ({exc})")
+        return 0
     try:
         resp = httpx.get(
-            f"{FINANCES_API_BASE[account.environment]}/sell/finances/v1/transaction",
-            headers={"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"},
+            url,
+            headers=headers,
             params={"filter": "transactionType:{SALE}", "limit": 200},
             timeout=20.0,
         )
