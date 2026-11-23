@@ -119,7 +119,7 @@ def sync_orders(
     if not accounts:
         raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
 
-    total = {"created": 0, "products_created": 0, "skipped": 0, "skipped_reasons": [], "fees_updated": 0}
+    total = {"created": 0, "products_created": 0, "skipped": 0, "skipped_reasons": [], "fees_updated": 0, "fee_notes": []}
     errors = []
     for account in accounts:
         try:
@@ -130,6 +130,7 @@ def sync_orders(
         for key in ("created", "products_created", "skipped", "fees_updated"):
             total[key] += result.get(key, 0)
         total["skipped_reasons"] += result.get("skipped_reasons", [])
+        total["fee_notes"] += result.get("fee_notes", [])
 
     if errors and len(errors) == len(accounts):
         raise HTTPException(status_code=502, detail=f"eBay-Synchronisierung fehlgeschlagen: {'; '.join(errors)}")
