@@ -4,10 +4,11 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
-from app.models.order import OrderItem
+from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
 from app.models.user import User
@@ -183,7 +184,19 @@ def list_products(
         like = f"%{search}%"
         query = query.filter((Product.title.ilike(like)) | (Product.sku.ilike(like)))
     products = query.order_by(Product.created_at.desc()).all()
-    return [_with_profit(p) for p in products]
+    sold = dict(
+        db.query(OrderItem.product_id, func.sum(OrderItem.quantity))
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(Order.tenant_id == current_user.tenant_id, Order.status != "canceled", OrderItem.product_id.isnot(None))
+        .group_by(OrderItem.product_id)
+        .all()
+    )
+    out = []
+    for p in products:
+        item = _with_profit(p)
+        item.sold_quantity = int(sold.get(p.id) or 0)
+        out.append(item)
+    return out
 
 
 @router.post("", response_model=ProductOut, status_code=201)

@@ -206,9 +206,9 @@
 
         <!-- Print filter -->
         <div id="filter-bar" class="flex gap-2 text-sm font-semibold">
+            <button type="button" data-filter="unshipped" onclick="setFilter('unshipped')" class="px-3 py-1.5 rounded-full border transition"></button>
+            <button type="button" data-filter="shipped" onclick="setFilter('shipped')" class="px-3 py-1.5 rounded-full border transition"></button>
             <button type="button" data-filter="all" onclick="setFilter('all')" class="px-3 py-1.5 rounded-full border transition"></button>
-            <button type="button" data-filter="unprinted" onclick="setFilter('unprinted')" class="px-3 py-1.5 rounded-full border transition"></button>
-            <button type="button" data-filter="printed" onclick="setFilter('printed')" class="px-3 py-1.5 rounded-full border transition"></button>
         </div>
 
         <!-- Orders list -->
@@ -545,16 +545,20 @@
         }
 
         let allOrders = [];
-        let currentFilter = "all";
+        let currentFilter = "unshipped";
 
         function isPrinted(order) { return order.status === "printed" || order.status === "shipped"; }
+
+        function isShipped(order) { return order.status === "shipped"; }
+        function isUnshipped(order) { return order.status !== "shipped" && order.status !== "canceled"; }
 
         function setFilter(f) { currentFilter = f; renderOrders(allOrders); }
 
         function renderFilterBar() {
-            const printed = allOrders.filter(isPrinted).length;
-            const counts = { all: allOrders.length, unprinted: allOrders.length - printed, printed };
-            const names = { all: t("orders.filterAll"), unprinted: t("orders.filterUnprinted"), printed: t("orders.filterPrinted") };
+            const shipped = allOrders.filter(isShipped).length;
+            const unshipped = allOrders.filter(isUnshipped).length;
+            const counts = { all: allOrders.length, unshipped, shipped };
+            const names = { all: t("orders.filterAll"), unshipped: "Nicht versendet", shipped: "Versendet" };
             document.querySelectorAll("#filter-bar button").forEach(b => {
                 const f = b.dataset.filter;
                 b.textContent = `${names[f]} (${counts[f]})`;
@@ -567,8 +571,8 @@
         function renderOrders(orders) {
             allOrders = orders;
             renderFilterBar();
-            if (currentFilter === "unprinted") orders = orders.filter(o => !isPrinted(o));
-            if (currentFilter === "printed") orders = orders.filter(isPrinted);
+            if (currentFilter === "unshipped") orders = orders.filter(isUnshipped);
+            if (currentFilter === "shipped") orders = orders.filter(isShipped);
             const list = document.getElementById("orders-list");
             const emptyState = document.getElementById("empty-state");
 
