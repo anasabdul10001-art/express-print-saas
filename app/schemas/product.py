@@ -8,6 +8,8 @@ class ProductCreate(BaseModel):
     image_url: str | None = None
     shelf_location: str | None = None
     purchase_price: Decimal | None = None
+    supplier_shipping_cost: Decimal | None = Field(None, ge=0)
+    packaging_cost: Decimal | None = Field(None, ge=0)
     selling_price: Decimal | None = None
     stock_quantity: int = 0
     weight_kg: Decimal | None = Field(None, gt=0)
@@ -21,6 +23,8 @@ class ProductUpdate(BaseModel):
     image_url: str | None = None
     shelf_location: str | None = None
     purchase_price: Decimal | None = None
+    supplier_shipping_cost: Decimal | None = Field(None, ge=0)
+    packaging_cost: Decimal | None = Field(None, ge=0)
     selling_price: Decimal | None = None
     active: bool | None = None
     stock_quantity: int | None = None
@@ -35,6 +39,9 @@ class ProductOut(BaseModel):
     image_url: str | None
     shelf_location: str | None
     purchase_price: Decimal | None
+    supplier_shipping_cost: Decimal | None = None
+    packaging_cost: Decimal | None = None
+    unit_cost: Decimal | None = None
     selling_price: Decimal | None
     active: bool
     stock_quantity: int

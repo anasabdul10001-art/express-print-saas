@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
+from app.models.order import OrderItem
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
 from app.models.user import User
@@ -24,8 +25,8 @@ def _with_profit(product: Product) -> ProductOut:
     (that's markup, a different number - see project notes).
     """
     out = ProductOut.model_validate(product)
-    if product.selling_price is not None and product.purchase_price is not None:
-        profit = product.selling_price - product.purchase_price
+    if product.selling_price is not None and product.unit_cost is not None:
+        profit = product.selling_price - product.unit_cost
         out.profit_per_unit = profit
         if product.selling_price != 0:
             out.margin_percent = (profit / product.selling_price * 100).quantize(Decimal("0.01"))
@@ -255,6 +256,14 @@ def update_product(
 
     for field, value in update_data.items():
         setattr(product, field, value)
+
+    # Orders imported before the cost was known have no cost snapshot, so
+    # their profit was blank. Fill those (only those) now; costs already
+    # snapshotted on past orders are never rewritten.
+    if product.unit_cost is not None:
+        db.query(OrderItem).filter(
+            OrderItem.product_id == product.id, OrderItem.purchase_price.is_(None)
+        ).update({OrderItem.purchase_price: product.unit_cost}, synchronize_session=False)
 
     db.commit()
     db.refresh(product)

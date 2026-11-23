@@ -252,6 +252,16 @@
                            class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                 </div>
                 <div>
+                    <label class="block text-sm mb-1">Versandkosten vom Lieferanten pro Stück (€)</label>
+                    <input type="number" step="0.01" min="0" id="field-supplier-ship"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Verpackungskosten pro Stück (€)</label>
+                    <input type="number" step="0.01" min="0" id="field-packaging"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
                     <label class="block text-sm mb-1" data-i18n="products.sellingPrice">Verkaufspreis (€)</label>
                     <input type="number" step="0.01" id="field-selling"
                            class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
@@ -333,6 +343,7 @@
                         <th class="p-3" data-i18n="products.colShelf">Regalplatz</th>
                         <th class="p-3" data-i18n="products.colQuantity">Menge</th>
                         <th class="p-3" data-i18n="products.colPurchase">EK</th>
+                        <th class="p-3" title="Einkauf + Lieferantenversand + Verpackung">Gesamtkosten</th>
                         <th class="p-3" data-i18n="products.colSelling">VK</th>
                         <th class="p-3" data-i18n="products.colProfit">Gewinn</th>
                         <th class="p-3" data-i18n="products.colMargin">Marge</th>
@@ -503,6 +514,8 @@
             document.getElementById("field-shelf").value = product ? (product.shelf_location || "") : "";
             document.getElementById("field-image").value = product ? (product.image_url || "") : "";
             document.getElementById("field-purchase").value = product ? (product.purchase_price ?? "") : "";
+            document.getElementById("field-supplier-ship").value = product ? (product.supplier_shipping_cost ?? "") : "";
+            document.getElementById("field-packaging").value = product ? (product.packaging_cost ?? "") : "";
             document.getElementById("field-selling").value = product ? (product.selling_price ?? "") : "";
             originalSelling = product && product.selling_price != null ? Number(product.selling_price) : null;
             document.getElementById("field-stock").value = product ? (product.stock_quantity ?? 0) : 0;
@@ -602,6 +615,8 @@
 
             const purchaseRaw = document.getElementById("field-purchase").value;
             const sellingRaw = document.getElementById("field-selling").value;
+            const shipRaw = document.getElementById("field-supplier-ship").value;
+            const packRaw = document.getElementById("field-packaging").value;
             const stockRaw = document.getElementById("field-stock").value;
             const weightRaw = document.getElementById("field-weight").value;
             const lengthRaw = document.getElementById("field-length").value;
@@ -614,6 +629,8 @@
                 shelf_location: document.getElementById("field-shelf").value.trim() || null,
                 image_url: document.getElementById("field-image").value.trim() || null,
                 purchase_price: purchaseRaw === "" ? null : Number(purchaseRaw),
+                supplier_shipping_cost: shipRaw === "" ? null : Number(shipRaw),
+                packaging_cost: packRaw === "" ? null : Number(packRaw),
                 selling_price: sellingRaw === "" ? null : Number(sellingRaw),
                 stock_quantity: stockRaw === "" ? 0 : Number(stockRaw),
                 weight_kg: weightRaw === "" ? null : Number(weightRaw),
@@ -769,6 +786,7 @@
                     <td class="p-3 text-slate-500">${p.shelf_location || "—"}</td>
                     <td class="p-3 ${p.stock_quantity === 0 ? "text-red-600 font-semibold" : ""}">${p.stock_quantity ?? 0}</td>
                     <td class="p-3">${euro(p.purchase_price)}</td>
+                    <td class="p-3">${euro(p.unit_cost)}</td>
                     <td class="p-3">${euro(p.selling_price)}</td>
                     <td class="p-3 ${p.profit_per_unit >= 0 ? "text-emerald-600" : "text-red-600"}">${euro(p.profit_per_unit)}</td>
                     <td class="p-3">${p.margin_percent !== null && p.margin_percent !== undefined ? p.margin_percent + " %" : "—"}</td>
