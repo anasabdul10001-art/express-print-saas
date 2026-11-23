@@ -53,6 +53,8 @@ class ProductOut(BaseModel):
     # above so it can never drift out of sync with them.
     profit_per_unit: Decimal | None = None
     margin_percent: Decimal | None = None
+    # Units sold so far (non-canceled orders); filled by the list endpoint.
+    sold_quantity: int = 0
     class Config:
         from_attributes = True
 class RestockCreate(BaseModel):

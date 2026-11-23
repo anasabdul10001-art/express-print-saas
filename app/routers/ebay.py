@@ -142,6 +142,8 @@ def sync_orders(
 class PushPricesIn(BaseModel):
     product_ids: list[str] | None = None  # None = all active products
     dry_run: bool = True
+    include_price: bool = True
+    include_quantity: bool = False  # also send the ShipSync stock as the eBay available quantity
 
 
 @router.post("/push-prices")
@@ -162,7 +164,7 @@ def push_prices(
         if not payload.product_ids:
             raise HTTPException(status_code=400, detail="Keine Produkte ausgewählt.")
         query = query.filter(Product.id.in_(payload.product_ids))
-    products = {p.sku: p for p in query.all() if p.selling_price is not None}
+    products = {p.sku: p for p in query.all()}
 
     changes, errors, matched = [], [], set()
     for account in accounts:
@@ -175,22 +177,30 @@ def push_prices(
         todo = []
         for listing in listings:
             product = products.get(listing["sku"] or "") or products.get(listing["item_id"])
-            if not product or listing["price"] is None:
+            if not product:
                 continue
             matched.add(product.sku)
-            new_price = Decimal(product.selling_price).quantize(Decimal("0.01"))
-            if listing["price"] == new_price:
+            new_price = None
+            if payload.include_price and product.selling_price is not None and listing["price"] is not None:
+                candidate = Decimal(product.selling_price).quantize(Decimal("0.01"))
+                if listing["price"] != candidate:
+                    new_price = candidate
+            new_qty = None
+            if payload.include_quantity and product.stock_quantity is not None and listing["available"] != product.stock_quantity:
+                new_qty = max(0, int(product.stock_quantity))
+            if new_price is None and new_qty is None:
                 continue
-            todo.append((listing["item_id"], new_price))
+            todo.append((listing["item_id"], new_price, new_qty))
             changes.append({"account": name, "item_id": listing["item_id"], "sku": product.sku,
                             "title": product.title, "ebay_price": str(listing["price"]),
-                            "new_price": str(new_price), "result": None})
+                            "new_price": str(new_price) if new_price is not None else None,
+                            "ebay_quantity": listing["available"], "new_quantity": new_qty, "result": None})
         if payload.dry_run or not todo:
             continue
         if len(todo) > 200:
             raise HTTPException(status_code=400, detail="Maximal 200 Angebote pro Vorgang.")
         try:
-            results = ebay_listing_service.revise_prices(account, db, todo)
+            results = ebay_listing_service.revise_listings(account, db, todo)
         except (ValueError, httpx.HTTPError) as exc:
             errors.append(f"{name}: {exc}")
             continue
@@ -203,7 +213,8 @@ def push_prices(
         "to_change": len(changes),
         "updated": sum(1 for c in changes if c["result"] == "ok"),
         "failed": sum(1 for c in changes if c["result"] not in (None, "ok")),
-        "no_ebay_match": len([s for s in products if s not in matched]),
+        "no_ebay_match": len([s for s, p in products.items() if s not in matched and (
+            (payload.include_price and p.selling_price is not None) or payload.include_quantity)]),
         "items": changes,
         "errors": errors,
     }

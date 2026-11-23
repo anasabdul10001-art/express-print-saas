@@ -176,6 +176,12 @@
                oninput="debouncedLoad()"
                class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
 
+        <div class="flex flex-wrap items-center gap-2 text-sm">
+            <button id="tab-available" onclick="setTab('available')" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Verfügbar</button>
+            <button id="tab-soldout" onclick="setTab('soldout')" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Ausverkauft (Menge 0)</button>
+            <button id="sort-sold" onclick="toggleSoldSort()" class="ml-auto px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50" title="Nach verkaufter Menge sortieren">Verkauft: Standard</button>
+        </div>
+
         <!-- Add / edit form, hidden by default -->
         <div id="price-panel" class="hidden bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 class="text-lg font-bold">Preise ändern (nur in ShipSync, nichts wird bei eBay geändert)</h3>
@@ -347,9 +353,10 @@
                         <th class="p-3"><input type="checkbox" id="select-all" onclick="toggleAll(this.checked)" title="Alle auswählen"></th>
                         <th class="p-3" data-i18n="products.colImage">Bild</th>
                         <th class="p-3" data-i18n="products.colSku">SKU</th>
-                        <th class="p-3" data-i18n="products.colTitle">Titel</th>
+                        <th class="p-3 min-w-[14rem]" data-i18n="products.colTitle">Titel</th>
                         <th class="p-3" data-i18n="products.colShelf">Regalplatz</th>
                         <th class="p-3" data-i18n="products.colQuantity">Menge</th>
+                        <th class="p-3 cursor-pointer select-none" onclick="toggleSoldSort()" title="Verkaufte Stückzahl (klicken zum Sortieren)">Verkauft</th>
                         <th class="p-3" data-i18n="products.colPurchase">EK</th>
                         <th class="p-3" title="Einkauf + Lieferantenversand + Verpackung">Gesamtkosten</th>
                         <th class="p-3" data-i18n="products.colSelling">VK</th>
@@ -607,6 +614,49 @@
             }
         }
 
+        // Edit stock or price right in the list; saves in ShipSync and sends the same value to eBay.
+        function inlineEdit(id, field) {
+            const p = (window.__products || []).find(x => x.id === id);
+            if (!p) return;
+            const isStock = field === "stock_quantity";
+            const cell = document.getElementById((isStock ? "cell-stock-" : "cell-price-") + id);
+            const value = isStock ? (p.stock_quantity ?? 0) : (p.selling_price ?? "");
+            cell.innerHTML = `
+                <input id="ie-${id}" type="number" ${isStock ? 'step="1" min="0"' : 'step="0.01" min="0"'} value="${value}" class="p-1 w-20 rounded border border-slate-300 text-sm">
+                <button onclick='inlineSave(${JSON.stringify(id)}, ${JSON.stringify(field)})' class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-1 px-2 rounded">Speichern + eBay</button>
+                <button onclick="loadProducts()" class="text-slate-500 text-xs ml-1">✕</button>`;
+            document.getElementById("ie-" + id).focus();
+        }
+
+        async function inlineSave(id, field) {
+            const raw = document.getElementById("ie-" + id).value;
+            if (raw === "") { showBanner("Bitte einen Wert eingeben.", true); return; }
+            const isStock = field === "stock_quantity";
+            const value = Number(raw);
+            try {
+                const response = await fetch(`${API_URL}/products/${id}`, {
+                    method: "PATCH", headers: authHeaders(true), body: JSON.stringify({ [field]: value }),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) { showBanner(data.detail || t("products.saveFailed"), true); return; }
+                const push = await fetch(`${API_URL}/ebay/push-prices`, {
+                    method: "POST", headers: authHeaders(true),
+                    body: JSON.stringify({ product_ids: [id], dry_run: false, include_price: !isStock, include_quantity: isStock }),
+                });
+                const result = await push.json();
+                const what = isStock ? "Menge" : "Preis";
+                if (!push.ok) showBanner(`${what} in ShipSync gespeichert, aber eBay: ` + (result.detail || "Fehler"), true);
+                else if (result.updated > 0) showBanner(`${what} in ShipSync und bei eBay geändert.`, false);
+                else if (result.failed > 0) showBanner(`${what} in ShipSync gespeichert, eBay lehnte ab: ` + (result.items[0]?.result || result.errors[0] || ""), true);
+                else if (result.no_ebay_match > 0) showBanner(`${what} in ShipSync gespeichert – kein passendes eBay-Angebot gefunden.`, true);
+                else showBanner(`${what} gespeichert; bei eBay war er schon gleich.`, false);
+            } catch (err) {
+                showBanner(t("products.serverErrorRetry"), true);
+            }
+            loadProducts();
+        }
+
         async function saveProduct() {
             const errorBox = document.getElementById("form-error");
             errorBox.classList.add("hidden");
@@ -768,13 +818,42 @@
             document.getElementById("history-panel").classList.add("hidden");
         }
 
-        function renderProducts(products) {
+        let currentTab = "available";
+        let soldSort = "none"; // none | desc | asc
+
+        function setTab(tab) { currentTab = tab; applyView(); }
+
+        function toggleSoldSort() {
+            soldSort = soldSort === "none" ? "desc" : soldSort === "desc" ? "asc" : "none";
+            applyView();
+        }
+
+        function applyView() {
+            const all = window.__products || [];
+            let list = all.filter(p => currentTab === "soldout" ? (p.stock_quantity ?? 0) === 0 : (p.stock_quantity ?? 0) > 0);
+            if (soldSort !== "none") {
+                list = [...list].sort((a, b) => soldSort === "desc"
+                    ? (b.sold_quantity ?? 0) - (a.sold_quantity ?? 0)
+                    : (a.sold_quantity ?? 0) - (b.sold_quantity ?? 0));
+            }
+            const soldoutCount = all.filter(p => (p.stock_quantity ?? 0) === 0).length;
+            const on = "bg-red-50 border-red-400";
+            document.getElementById("tab-available").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "available" ? on : "border-slate-300");
+            document.getElementById("tab-soldout").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "soldout" ? on : "border-slate-300");
+            document.getElementById("tab-available").innerText = `Verfügbar (${all.length - soldoutCount})`;
+            document.getElementById("tab-soldout").innerText = `Ausverkauft (${soldoutCount})`;
+            document.getElementById("sort-sold").innerText = soldSort === "desc" ? "Verkauft: meiste zuerst ▼" : soldSort === "asc" ? "Verkauft: wenigste zuerst ▲" : "Verkauft: Standard";
+            renderProducts(list, all.length === 0);
+        }
+
+        function renderProducts(products, noProductsAtAll) {
             const tbody = document.getElementById("products-tbody");
             const emptyState = document.getElementById("empty-state");
             const tableWrap = document.getElementById("table-wrap");
 
             if (products.length === 0) {
-                emptyState.classList.remove("hidden");
+                if (noProductsAtAll) emptyState.classList.remove("hidden");
+                else emptyState.classList.add("hidden");
                 tableWrap.classList.add("hidden");
                 return;
             }
@@ -790,12 +869,13 @@
                             : `<div class="w-16 h-16 min-w-[4rem] bg-slate-100 rounded"></div>`}
                     </td>
                     <td class="px-3 py-1 font-mono text-xs">${p.sku}</td>
-                    <td class="px-3 py-1 whitespace-nowrap">${p.title}</td>
+                    <td class="px-3 py-1"><div class="w-56 truncate" title="${String(p.title).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")}">${p.title}</div></td>
                     <td class="px-3 py-1 text-slate-500">${p.shelf_location || "—"}</td>
-                    <td class="px-3 py-1 ${p.stock_quantity === 0 ? "text-red-600 font-semibold" : ""}">${p.stock_quantity ?? 0}</td>
+                    <td class="px-3 py-1 whitespace-nowrap ${p.stock_quantity === 0 ? "text-red-600 font-semibold" : ""}" id="cell-stock-${p.id}">${p.stock_quantity ?? 0} <button onclick='inlineEdit(${JSON.stringify(p.id)}, "stock_quantity")' class="text-blue-600 hover:text-blue-700 text-xs ml-1" title="Menge ändern (auch bei eBay)">✎</button></td>
+                    <td class="px-3 py-1 font-semibold">${p.sold_quantity ?? 0}</td>
                     <td class="px-3 py-1">${euro(p.purchase_price)}</td>
                     <td class="px-3 py-1">${euro(p.unit_cost)}</td>
-                    <td class="px-3 py-1">${euro(p.selling_price)}</td>
+                    <td class="px-3 py-1 whitespace-nowrap" id="cell-price-${p.id}">${euro(p.selling_price)} <button onclick='inlineEdit(${JSON.stringify(p.id)}, "selling_price")' class="text-blue-600 hover:text-blue-700 text-xs ml-1" title="Preis ändern (auch bei eBay)">✎</button></td>
                     <td class="px-3 py-1 ${p.profit_per_unit >= 0 ? "text-emerald-600" : "text-red-600"}">${euro(p.profit_per_unit)}</td>
                     <td class="px-3 py-1">${p.margin_percent !== null && p.margin_percent !== undefined ? p.margin_percent + " %" : "—"}</td>
                     <td class="px-3 py-1">
@@ -899,7 +979,8 @@
                 const response = await fetch(url, { headers: authHeaders() });
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
-                renderProducts(data);
+                window.__products = data;
+                applyView();
             } catch (err) {
                 showBanner(t("products.serverErrorReload"), true);
             }
@@ -914,6 +995,24 @@
         }
 
         loadProducts();
+        // Drag the table left/right with the mouse to reach columns off screen.
+        (function () {
+            const wrap = document.getElementById("table-wrap");
+            let down = false, startX = 0, startLeft = 0, moved = false;
+            wrap.style.cursor = "grab";
+            wrap.addEventListener("mousedown", e => {
+                if (["INPUT", "BUTTON", "SELECT", "TEXTAREA", "A"].includes(e.target.tagName)) return;
+                down = true; moved = false; startX = e.pageX; startLeft = wrap.scrollLeft;
+            });
+            window.addEventListener("mousemove", e => {
+                if (!down) return;
+                const dx = e.pageX - startX;
+                if (Math.abs(dx) > 3) moved = true;
+                wrap.scrollLeft = startLeft - dx;
+            });
+            window.addEventListener("mouseup", () => { down = false; });
+            wrap.addEventListener("dragstart", e => e.preventDefault());
+        })();
     </script>
 </body>
 </html>

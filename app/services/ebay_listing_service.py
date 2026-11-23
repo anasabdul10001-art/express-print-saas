@@ -108,18 +108,23 @@ def fetch_active_listings(account: EbayAccount, db: Session) -> list[dict]:
     return listings
 
 
-def _revise_xml(items: list[tuple[str, Decimal]]) -> str:
-    body = "".join(
-        f"<InventoryStatus><ItemID>{item_id}</ItemID><StartPrice>{price}</StartPrice></InventoryStatus>"
-        for item_id, price in items
-    )
+def _revise_xml(items: list[tuple]) -> str:
+    """items: (item_id, price or None, quantity or None); only given fields are sent."""
+    body = ""
+    for item_id, price, quantity in items:
+        fields = ""
+        if price is not None:
+            fields += f"<StartPrice>{price}</StartPrice>"
+        if quantity is not None:
+            fields += f"<Quantity>{int(quantity)}</Quantity>"
+        body += f"<InventoryStatus><ItemID>{item_id}</ItemID>{fields}</InventoryStatus>"
     return (
         '<?xml version="1.0" encoding="utf-8"?>'
         f'<ReviseInventoryStatusRequest xmlns="urn:ebay:apis:eBLBaseComponents">{body}</ReviseInventoryStatusRequest>'
     )
 
 
-def _revise_call(account: EbayAccount, token: str, items: list[tuple[str, Decimal]]) -> tuple[bool, str]:
+def _revise_call(account: EbayAccount, token: str, items: list[tuple]) -> tuple[bool, str]:
     resp = httpx.post(
         TRADING_URL[account.environment], headers=_headers(token, "ReviseInventoryStatus"),
         content=_revise_xml(items), timeout=30.0,
@@ -132,22 +137,27 @@ def _revise_call(account: EbayAccount, token: str, items: list[tuple[str, Decima
     return False, _text(root, "e:Errors/e:LongMessage") or _text(root, "e:Errors/e:ShortMessage") or "unknown"
 
 
-def revise_prices(account: EbayAccount, db: Session, items: list[tuple[str, Decimal]]) -> dict[str, str | None]:
-    """Sets StartPrice for (item_id, price) pairs. Returns {item_id: None if ok else error text}.
-    Sends up to 4 items per call (eBay's limit); if a call fails, retries one by one so
-    each failure is attributed to the right listing."""
+def revise_listings(account: EbayAccount, db: Session, items: list[tuple]) -> dict[str, str | None]:
+    """Sets price and/or available quantity for (item_id, price|None, quantity|None) tuples.
+    Returns {item_id: None if ok else error text}. eBay's request Quantity is the AVAILABLE
+    quantity (eBay adds the sold units itself). Sends up to 4 items per call (eBay's limit);
+    if a call fails, retries one by one so each failure is attributed to the right listing."""
     token = ebay_oauth_service.get_valid_access_token(account, db)
     results: dict[str, str | None] = {}
     for i in range(0, len(items), 4):
         chunk = items[i:i + 4]
         ok, err = _revise_call(account, token, chunk)
         if ok:
-            results.update({item_id: None for item_id, _ in chunk})
+            results.update({item[0]: None for item in chunk})
             continue
         for single in chunk:
             ok, err = _revise_call(account, token, [single])
             results[single[0]] = None if ok else err
     return results
+
+
+def revise_prices(account: EbayAccount, db: Session, items: list[tuple[str, Decimal]]) -> dict[str, str | None]:
+    return revise_listings(account, db, [(item_id, price, None) for item_id, price in items])
 
 
 def import_listings(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
