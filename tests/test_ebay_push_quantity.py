@@ -45,3 +45,32 @@ def test_list_products_has_sold_quantity(client, register):
         assert client.post("/orders", headers=headers, json={"items": [{"product_id": pid, "quantity": qty}]}).status_code in (200, 201)
     sold = {p["sku"]: p["sold_quantity"] for p in client.get("/products", headers=headers).json()}
     assert sold == {"S1": 5, "S2": 1}
+
+
+def test_variation_price_xml_uses_specifics_or_sku():
+    xml = ebay_listing_service._variation_price_xml("9", Decimal("3.58"), [
+        {"sku": None, "specifics": {"Farbe": "Schwarz & Weiß"}},
+        {"sku": "ABC", "specifics": {}},
+    ])
+    assert "<ItemID>9</ItemID>" in xml and "<StartPrice>3.58</StartPrice>" in xml
+    assert "<Name>Farbe</Name><Value>Schwarz &amp; Weiß</Value>" in xml
+    assert "<SKU>ABC</SKU>" in xml
+
+
+def test_revise_falls_back_to_variations(monkeypatch):
+    calls = []
+    monkeypatch.setattr(ebay_listing_service.ebay_oauth_service, "get_valid_access_token", lambda a, d: "tok")
+    monkeypatch.setattr(ebay_listing_service, "_revise_call", lambda a, t, items: (False, "Varianten Fehler"))
+    monkeypatch.setattr(ebay_listing_service, "get_item_variations",
+                        lambda a, d, i: {"variations": [{"sku": None, "specifics": {"Farbe": "Rot"}}]})
+
+    class R:
+        status_code = 200
+        text = '<r xmlns="urn:ebay:apis:eBLBaseComponents"><Ack>Success</Ack></r>'
+
+    monkeypatch.setattr(ebay_listing_service.httpx, "post", lambda url, **kw: calls.append(kw["content"]) or R())
+    acct = EbayAccount(ebay_user_id="me", environment="PRODUCTION")
+    res = ebay_listing_service.revise_listings(acct, None, [("5", Decimal("3.58"), None)])
+    assert res == {"5": None} and "ReviseFixedPriceItemRequest" in calls[0]
+    res = ebay_listing_service.revise_listings(acct, None, [("5", None, 3)])
+    assert "Menge" in res["5"]

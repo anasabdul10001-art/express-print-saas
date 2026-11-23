@@ -175,6 +175,53 @@ def _revise_call(account: EbayAccount, token: str, items: list[tuple]) -> tuple[
     return False, _text(root, "e:Errors/e:LongMessage") or _text(root, "e:Errors/e:ShortMessage") or "unknown"
 
 
+def _variation_price_xml(item_id: str, price: Decimal, variations: list[dict]) -> str:
+    """ReviseFixedPriceItem body that sets one price on every variation (identified by SKU or specifics)."""
+    from xml.sax.saxutils import escape
+
+    parts = ""
+    for v in variations:
+        if v.get("sku"):
+            ident = f"<SKU>{escape(v['sku'])}</SKU>"
+        else:
+            ident = "<VariationSpecifics>" + "".join(
+                f"<NameValueList><Name>{escape(n)}</Name><Value>{escape(val)}</Value></NameValueList>"
+                for n, val in v["specifics"].items()
+            ) + "</VariationSpecifics>"
+        parts += f"<Variation>{ident}<StartPrice>{price}</StartPrice></Variation>"
+    return (
+        '<?xml version="1.0" encoding="utf-8"?>'
+        '<ReviseFixedPriceItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">'
+        f"<Item><ItemID>{item_id}</ItemID><Variations>{parts}</Variations></Item></ReviseFixedPriceItemRequest>"
+    )
+
+
+def _revise_variation_listing(account: EbayAccount, db: Session, token: str, item: tuple) -> str | None:
+    """Fallback for listings with variations (e.g. colours): price goes to every variation.
+    Quantity cannot be set from one total, so it is refused with a clear message.
+    Returns None if the listing has no variations (caller keeps the original error) via
+    the sentinel "NO_VARIATIONS"."""
+    item_id, price, quantity = item
+    info = get_item_variations(account, db, item_id)
+    variations = info["variations"]
+    if not variations:
+        return "NO_VARIATIONS"
+    if price is None:
+        return "Mehrere Varianten (z. B. Farben): Menge pro Variante bitte direkt bei eBay ändern."
+    resp = httpx.post(
+        TRADING_URL[account.environment], headers=_headers(token, "ReviseFixedPriceItem"),
+        content=_variation_price_xml(item_id, price, variations), timeout=30.0,
+    )
+    if resp.status_code != 200:
+        return f"HTTP {resp.status_code}"
+    root = ET.fromstring(resp.text)
+    if _text(root, "e:Ack") not in ("Success", "Warning"):
+        return _text(root, "e:Errors/e:LongMessage") or _text(root, "e:Errors/e:ShortMessage") or "unknown"
+    if quantity is not None:
+        return "Preis bei allen Varianten geändert; Menge nicht (Varianten: bitte pro Variante bei eBay ändern)."
+    return None
+
+
 def revise_listings(account: EbayAccount, db: Session, items: list[tuple]) -> dict[str, str | None]:
     """Sets price and/or available quantity for (item_id, price|None, quantity|None) tuples.
     Returns {item_id: None if ok else error text}. eBay's request Quantity is the AVAILABLE
@@ -190,6 +237,14 @@ def revise_listings(account: EbayAccount, db: Session, items: list[tuple]) -> di
             continue
         for single in chunk:
             ok, err = _revise_call(account, token, [single])
+            if not ok:
+                try:
+                    variant_err = _revise_variation_listing(account, db, token, single)
+                except (ValueError, httpx.HTTPError, ET.ParseError):
+                    variant_err = "NO_VARIATIONS"
+                if variant_err != "NO_VARIATIONS":
+                    results[single[0]] = variant_err
+                    continue
             results[single[0]] = None if ok else err
     return results
 
