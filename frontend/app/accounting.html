@@ -181,11 +181,16 @@
         </div>
 
         <!-- Totals -->
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 lg:grid-cols-6 gap-4">
             <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
                 <p class="text-slate-500 text-sm">Einnahmen</p>
                 <p id="t-revenue" class="text-xl font-bold text-slate-900">—</p>
                 <p id="t-orders" class="text-xs text-slate-400"></p>
+            </div>
+            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
+                <p class="text-slate-500 text-sm">Rückerstattungen</p>
+                <p id="t-refunds" class="text-xl font-bold text-red-600">—</p>
+                <p id="t-refund-orders" class="text-xs text-slate-400"></p>
             </div>
             <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
                 <p class="text-slate-500 text-sm">eBay-Gebühren</p>
@@ -216,6 +221,7 @@
                         <th class="p-3">Zeitraum</th>
                         <th class="p-3 text-right">Bestellungen</th>
                         <th class="p-3 text-right">Einnahmen</th>
+                        <th class="p-3 text-right">Erstattungen</th>
                         <th class="p-3 text-right">eBay-Gebühren</th>
                         <th class="p-3 text-right">Warenkosten</th>
                         <th class="p-3 text-right">Ausgaben</th>
@@ -375,6 +381,8 @@
                 const t = data.totals;
                 document.getElementById("t-revenue").innerText = money(t.revenue);
                 document.getElementById("t-orders").innerText = `${t.orders} Bestellungen`;
+                document.getElementById("t-refunds").innerText = money(Number(t.refunds) + Number(t.return_shipping));
+                document.getElementById("t-refund-orders").innerText = `${t.orders_refunded} Rückgabe(n), davon Rückversand ${money(t.return_shipping)}`;
                 document.getElementById("t-fees").innerText = money(t.ebay_fees);
                 document.getElementById("t-goods").innerText = money(t.goods_cost);
                 document.getElementById("t-expenses").innerText = money(t.expenses);
@@ -391,6 +399,7 @@
                         <td class="p-3 font-semibold">${esc(r.label)}</td>
                         <td class="p-3 text-right">${r.orders}</td>
                         <td class="p-3 text-right">${money(r.revenue)}</td>
+                        <td class="p-3 text-right">${money(r.refunds)}</td>
                         <td class="p-3 text-right">${money(r.ebay_fees)}</td>
                         <td class="p-3 text-right">${money(r.goods_cost)}</td>
                         <td class="p-3 text-right">${money(r.expenses)}</td>

@@ -4,11 +4,14 @@ manually entered expenses, for any period, grouped by day/week/month/year.
 
 Definitions (management view, not a tax return):
 - revenue      = sum(unit_price * quantity) of non-canceled orders, by sale date
+- refunds      = money paid back to buyers (eBay payment summary / manual)
+- return_shipping = what the seller paid to get returned items back
 - ebay_fees    = fees eBay charged for those orders (Finances API)
 - goods_cost   = per order item the cost snapshot (purchase + supplier
-                 shipping + packaging) * quantity
+                 shipping + packaging) * quantity; 0 for a refunded order
+                 whose item came back to stock (nothing was lost)
 - expenses     = manually entered costs (electricity, internet, ...) by date
-- net_profit   = revenue - ebay_fees - goods_cost - expenses
+- net_profit   = revenue - refunds - ebay_fees - goods_cost - return_shipping - expenses
 Do NOT also enter goods purchases as expenses: they are already counted
 through the product costs.
 """
@@ -55,7 +58,7 @@ def _period_key(day: date, group_by: str) -> tuple[str, str]:
 
 
 def _blank():
-    return {"revenue": ZERO, "ebay_fees": ZERO, "goods_cost": ZERO, "expenses": ZERO, "orders": 0}
+    return {"revenue": ZERO, "refunds": ZERO, "return_shipping": ZERO, "ebay_fees": ZERO, "goods_cost": ZERO, "expenses": ZERO, "orders": 0}
 
 
 @router.get("/summary")
@@ -89,7 +92,7 @@ def summary(
     buckets: dict[str, dict] = defaultdict(_blank)
     labels: dict[str, str] = {}
     totals = _blank()
-    missing_cost = missing_fees = 0
+    missing_cost = missing_fees = refunded_orders = 0
 
     def add(day: date, field: str, amount, orders_inc: int = 0):
         key, label = _period_key(day, group_by)
@@ -109,7 +112,14 @@ def summary(
             missing_cost += 1
         if order.ebay_fees is None:
             missing_fees += 1
+        refund = order.refund_amount or ZERO
+        if order.item_returned_to_stock and refund > 0:
+            goods = ZERO
         add(day, "revenue", revenue, 1)
+        add(day, "refunds", refund)
+        add(day, "return_shipping", order.return_shipping_cost or ZERO)
+        if refund > 0:
+            refunded_orders += 1
         add(day, "goods_cost", goods)
         add(day, "ebay_fees", order.ebay_fees or ZERO)
 
@@ -123,7 +133,10 @@ def summary(
         by_category[expense.category or "Sonstiges"] += expense.amount
 
     def finish(row: dict) -> dict:
-        net = row["revenue"] - row["ebay_fees"] - row["goods_cost"] - row["expenses"]
+        net = (
+            row["revenue"] - row["refunds"] - row["ebay_fees"] - row["goods_cost"]
+            - row["return_shipping"] - row["expenses"]
+        )
         out = {k: (str(v) if isinstance(v, Decimal) else v) for k, v in row.items()}
         out["net_profit"] = str(net)
         return out
@@ -141,6 +154,7 @@ def summary(
             **finish(totals),
             "orders_missing_cost": missing_cost,
             "orders_missing_fees": missing_fees,
+            "orders_refunded": refunded_orders,
         },
         "expenses_by_category": [
             {"category": c, "amount": str(a)} for c, a in sorted(by_category.items(), key=lambda x: -x[1])

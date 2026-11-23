@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, DateTime, Integer, DECIMAL, ForeignKey, CheckConstraint
+from sqlalchemy import Column, String, DateTime, Integer, DECIMAL, ForeignKey, CheckConstraint, Boolean, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -42,6 +42,16 @@ class Order(Base):
 
     # Total eBay fees for this sale (from the Finances API); null until known.
     ebay_fees = Column(DECIMAL(10, 2), nullable=True)
+
+    # Returns / refunds. refund_amount is what was paid back to the buyer
+    # (taken from eBay's payment summary on sync, or edited by hand). By
+    # default the goods are treated as LOST (the buyer keeps them), so their
+    # cost still counts; item_returned_to_stock=True means the item came back
+    # and is resellable, so its cost is not a loss. return_shipping_cost is
+    # what the seller paid to get it back.
+    refund_amount = Column(DECIMAL(10, 2), nullable=True)
+    item_returned_to_stock = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    return_shipping_cost = Column(DECIMAL(10, 2), nullable=True)
 
     # Which connected eBay account this order came from (null for manual orders).
     ebay_account_id = Column(UUID(as_uuid=True), ForeignKey("ebay_accounts.id", ondelete="SET NULL"), nullable=True)
