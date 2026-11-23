@@ -452,6 +452,26 @@
             }
         }
 
+        async function saveRefund(orderId) {
+            const num = id => { const v = document.getElementById(id + orderId).value; return v === "" ? null : Number(v); };
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}/refund`, {
+                    method: "PATCH",
+                    headers: { ...authHeaders(), "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        refund_amount: num("rf-"),
+                        return_shipping_cost: num("rs-"),
+                        item_returned_to_stock: document.getElementById("rr-" + orderId).checked,
+                    }),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) { showBanner(data.detail || "Fehler", true); return; }
+                showBanner("Rückgabe gespeichert.", false);
+                loadOrders();
+            } catch (err) { showBanner("Serverfehler, bitte erneut versuchen.", true); }
+        }
+
         async function uploadLabel(orderId, input) {
             const file = input.files[0];
             if (!file) return;
@@ -609,6 +629,16 @@
                                 <div class="text-red-600 font-bold">${euro(total)}</div>
                                 ${order.ebay_fees !== null && order.ebay_fees !== undefined ? `<div class="text-xs text-slate-500">${t("orders.ebayFees")} −${euro(order.ebay_fees)}</div>` : ""}
                                 <div class="text-xs ${order.total_profit >= 0 ? "text-emerald-600" : "text-red-600"}">${t("orders.profit")} ${euro(order.total_profit)}</div>
+                                ${order.refund_amount ? `<div class="text-xs font-semibold text-amber-700">Erstattet −${euro(order.refund_amount)}${order.item_returned_to_stock ? " (Ware zurück)" : " (Ware verloren)"}</div>` : ""}
+                                <details class="text-xs text-slate-500 mt-1">
+                                    <summary class="cursor-pointer hover:text-slate-800">Rückgabe / Erstattung</summary>
+                                    <div class="mt-1 space-y-1 text-left">
+                                        <label class="block">Erstattet (€) <input id="rf-${order.id}" type="number" step="0.01" min="0" value="${order.refund_amount ?? ""}" class="p-1 rounded border border-slate-300 w-24"></label>
+                                        <label class="block">Rückversand (€) <input id="rs-${order.id}" type="number" step="0.01" min="0" value="${order.return_shipping_cost ?? ""}" class="p-1 rounded border border-slate-300 w-24"></label>
+                                        <label class="block"><input id="rr-${order.id}" type="checkbox" ${order.item_returned_to_stock ? "checked" : ""}> Ware zurück &amp; wieder verkäuflich</label>
+                                        <button onclick='saveRefund(${JSON.stringify(order.id)})' class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-1 px-3 rounded transition">Speichern</button>
+                                    </div>
+                                </details>
                             </div>
                         </div>
                         ${order.recipient_address ? `

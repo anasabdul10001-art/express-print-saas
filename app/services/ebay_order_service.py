@@ -96,6 +96,18 @@ def _parse_ebay_date(value):
         return None
 
 
+def _refund_total(ebay_order: dict):
+    """Total paid back to the buyer according to eBay's payment summary (None if no refund)."""
+    refunds = (ebay_order.get("paymentSummary") or {}).get("refunds") or []
+    total = Decimal("0")
+    for refund in refunds:
+        try:
+            total += Decimal(str((refund.get("amount") or {}).get("value")))
+        except (InvalidOperation, TypeError, ValueError):
+            continue
+    return total.quantize(Decimal("0.01")) if total > 0 else None
+
+
 def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
     access_token = ebay_oauth_service.get_valid_access_token(account, db)
     base_url = EBAY_API_BASE[account.environment]
@@ -147,6 +159,10 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
                 already_imported.buyer_username = buyer_username
             if already_imported.ordered_at is None:
                 already_imported.ordered_at = _parse_ebay_date(ebay_order.get("creationDate"))
+            # A refund can arrive long after the sale; eBay is the source of truth.
+            refunded = _refund_total(ebay_order)
+            if refunded is not None and already_imported.refund_amount != refunded:
+                already_imported.refund_amount = refunded
             continue  # silently skip - this is the normal case on repeat syncs
 
         line_items = ebay_order.get("lineItems", [])
@@ -201,6 +217,7 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             status="new",
             buyer_username=buyer_username,
             ordered_at=_parse_ebay_date(ebay_order.get("creationDate")),
+            refund_amount=_refund_total(ebay_order),
             ebay_account_id=account.id,
             **_extract_ship_to(ebay_order),
         )

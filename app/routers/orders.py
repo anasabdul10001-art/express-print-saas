@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
@@ -9,7 +10,7 @@ from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
 from app.models.user import User
-from app.schemas.order import OrderCreate, OrderItemOut, OrderOut, OrderSummaryOut, ProfitHistoryPoint, RecipientAddressOut
+from app.schemas.order import OrderCreate, OrderItemOut, OrderOut, OrderSummaryOut, ProfitHistoryPoint, RecipientAddressOut, RefundUpdate
 router = APIRouter(prefix="/orders", tags=["orders"])
 def _serialize_order(order: Order) -> OrderOut:
     """
@@ -23,6 +24,7 @@ def _serialize_order(order: Order) -> OrderOut:
     items_out = []
     total_profit = Decimal("0")
     profit_known = True
+    goods_cost = Decimal("0")
 
     for item in order.items:
         product = item.product
@@ -35,6 +37,7 @@ def _serialize_order(order: Order) -> OrderOut:
 
         if profit is not None:
             total_profit += profit
+            goods_cost += item.purchase_price * item.quantity
 
         items_out.append(
             OrderItemOut(
@@ -62,6 +65,14 @@ def _serialize_order(order: Order) -> OrderOut:
             phone=order.recipient_phone,
         )
 
+    # Returns: the refund comes off the profit; the goods cost only stays a
+    # loss if the item did not come back to stock; return shipping is extra.
+    if profit_known:
+        total_profit -= order.refund_amount or Decimal("0")
+        total_profit -= order.return_shipping_cost or Decimal("0")
+        if order.item_returned_to_stock and order.refund_amount:
+            total_profit += goods_cost
+
     return OrderOut(
         id=order.id,
         external_order_ref=order.external_order_ref,
@@ -69,6 +80,9 @@ def _serialize_order(order: Order) -> OrderOut:
         items=items_out,
         total_profit=(total_profit - (order.ebay_fees or Decimal("0"))) if profit_known else None,
         ebay_fees=order.ebay_fees,
+        refund_amount=order.refund_amount,
+        item_returned_to_stock=bool(order.item_returned_to_stock),
+        return_shipping_cost=order.return_shipping_cost,
         ebay_account_name=order.ebay_account.ebay_user_id if order.ebay_account else None,
         recipient_address=recipient_address,
         tracking_number=order.tracking_number,
@@ -230,4 +244,27 @@ def create_order(
         .filter(Order.id == order.id)
         .first()
     )
+    return _serialize_order(order)
+
+
+@router.patch("/{order_id}/refund", response_model=OrderOut)
+def update_refund(
+    order_id: uuid.UUID,
+    payload: RefundUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Sets the return details of an order (refund amount, item back in stock, return shipping)."""
+    order = (
+        db.query(Order)
+        .options(joinedload(Order.items).joinedload(OrderItem.product), joinedload(Order.ebay_account))
+        .filter(Order.id == order_id, Order.tenant_id == current_user.tenant_id)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Bestellung nicht gefunden.")
+    for field in payload.model_fields_set:
+        setattr(order, field, getattr(payload, field))
+    db.commit()
+    db.refresh(order)
     return _serialize_order(order)

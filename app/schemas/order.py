@@ -53,6 +53,10 @@ class OrderOut(BaseModel):
     ebay_fees: Decimal | None = None
     # Username of the eBay account the order came from (None for manual orders).
     ebay_account_name: str | None = None
+    # Return handling (see models/order.py).
+    refund_amount: Decimal | None = None
+    item_returned_to_stock: bool = False
+    return_shipping_cost: Decimal | None = None
     class Config:
         from_attributes = True
 class OrderSummaryOut(BaseModel):
@@ -65,3 +69,9 @@ class OrderSummaryOut(BaseModel):
 class ProfitHistoryPoint(BaseModel):
     date: date
     profit: Decimal
+
+
+class RefundUpdate(BaseModel):
+    refund_amount: Decimal | None = Field(None, ge=0)
+    item_returned_to_stock: bool | None = None
+    return_shipping_cost: Decimal | None = Field(None, ge=0)
