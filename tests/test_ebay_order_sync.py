@@ -73,6 +73,7 @@ def test_sync_stores_ebay_fees_and_profit_is_net(register, client, monkeypatch):
         db.add(account)
         db.commit()
         monkeypatch.setattr(ebay_order_service.ebay_oauth_service, "get_valid_access_token", lambda a, d: "t")
+        monkeypatch.setattr(ebay_order_service.ebay_signing_service, "signed_headers", lambda *a, **k: {"x-ebay-signature-key": "jwe"})
 
         def fake_get(url, **k):
             if "finances" in url:

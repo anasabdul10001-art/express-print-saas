@@ -31,6 +31,12 @@ class EbayAccount(Base):
     access_token_expires_at = Column(DateTime(timezone=True), nullable=True)
     refresh_token_expires_at = Column(DateTime(timezone=True), nullable=True)
 
+    # eBay digital-signature keypair (Ed25519) for the Finances API (EU/UK sellers).
+    # The private key is stored encrypted; eBay never shows it again.
+    signing_key_id = Column(String(255), nullable=True)
+    signing_jwe = Column(Text, nullable=True)
+    signing_private_key_encrypted = Column(Text, nullable=True)
+
     # CONNECTED / DISCONNECTED / ERROR
     status = Column(String(20), nullable=False, default="DISCONNECTED")
     # SANDBOX / PRODUCTION - which eBay environment these tokens belong to
