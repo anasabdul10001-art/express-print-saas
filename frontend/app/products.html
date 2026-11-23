@@ -347,7 +347,7 @@
                         <th class="p-3"><input type="checkbox" id="select-all" onclick="toggleAll(this.checked)" title="Alle auswählen"></th>
                         <th class="p-3" data-i18n="products.colImage">Bild</th>
                         <th class="p-3" data-i18n="products.colSku">SKU</th>
-                        <th class="p-3" data-i18n="products.colTitle">Titel</th>
+                        <th class="p-3 min-w-[14rem]" data-i18n="products.colTitle">Titel</th>
                         <th class="p-3" data-i18n="products.colShelf">Regalplatz</th>
                         <th class="p-3" data-i18n="products.colQuantity">Menge</th>
                         <th class="p-3" data-i18n="products.colPurchase">EK</th>
@@ -790,7 +790,7 @@
                             : `<div class="w-16 h-16 min-w-[4rem] bg-slate-100 rounded"></div>`}
                     </td>
                     <td class="px-3 py-1 font-mono text-xs">${p.sku}</td>
-                    <td class="px-3 py-1 whitespace-nowrap">${p.title}</td>
+                    <td class="px-3 py-1"><div class="w-56 truncate" title="${String(p.title).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")}">${p.title}</div></td>
                     <td class="px-3 py-1 text-slate-500">${p.shelf_location || "—"}</td>
                     <td class="px-3 py-1 ${p.stock_quantity === 0 ? "text-red-600 font-semibold" : ""}">${p.stock_quantity ?? 0}</td>
                     <td class="px-3 py-1">${euro(p.purchase_price)}</td>
@@ -914,6 +914,24 @@
         }
 
         loadProducts();
+        // Drag the table left/right with the mouse to reach columns off screen.
+        (function () {
+            const wrap = document.getElementById("table-wrap");
+            let down = false, startX = 0, startLeft = 0, moved = false;
+            wrap.style.cursor = "grab";
+            wrap.addEventListener("mousedown", e => {
+                if (["INPUT", "BUTTON", "SELECT", "TEXTAREA", "A"].includes(e.target.tagName)) return;
+                down = true; moved = false; startX = e.pageX; startLeft = wrap.scrollLeft;
+            });
+            window.addEventListener("mousemove", e => {
+                if (!down) return;
+                const dx = e.pageX - startX;
+                if (Math.abs(dx) > 3) moved = true;
+                wrap.scrollLeft = startLeft - dx;
+            });
+            window.addEventListener("mouseup", () => { down = false; });
+            wrap.addEventListener("dragstart", e => e.preventDefault());
+        })();
     </script>
 </body>
 </html>
