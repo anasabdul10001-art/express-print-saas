@@ -220,10 +220,12 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
     account.last_sync_at = datetime.now(timezone.utc)
     db.commit()
 
-    fees_updated = sync_fees(account, tenant_id, db, access_token)
+    fee_notes: list[str] = []
+    fees_updated = sync_fees(account, tenant_id, db, access_token, fee_notes)
 
     return {
         "fees_updated": fees_updated,
+        "fee_notes": fee_notes,
         "created": created_count,
         "products_created": products_created,
         "skipped": skipped_count,
@@ -236,7 +238,9 @@ FINANCES_API_BASE = {
 }
 
 
-def sync_fees(account: EbayAccount, tenant_id: UUID, db: Session, access_token: str) -> int:
+def sync_fees(
+    account: EbayAccount, tenant_id: UUID, db: Session, access_token: str, notes: list[str] | None = None
+) -> int:
     """
     Stores eBay's real fee per sale on the matching orders (Finances API).
     Best effort: accounts connected before the finances scope existed get a
@@ -250,13 +254,20 @@ def sync_fees(account: EbayAccount, tenant_id: UUID, db: Session, access_token: 
             params={"filter": "transactionType:{SALE}", "limit": 200},
             timeout=20.0,
         )
-    except httpx.HTTPError:
+    except httpx.HTTPError as exc:
+        if notes is not None:
+            notes.append(f"Gebühren: Netzwerkfehler ({exc.__class__.__name__})")
         return 0
     if resp.status_code != 200:
+        if notes is not None:
+            notes.append(f"Gebühren: eBay antwortet {resp.status_code}: {resp.text[:200]}")
         return 0
 
+    transactions = resp.json().get("transactions", [])
+    if not transactions and notes is not None:
+        notes.append("Gebühren: eBay lieferte keine Verkaufs-Transaktionen.")
     updated = 0
-    for tx in resp.json().get("transactions", []):
+    for tx in transactions:
         order_ref = tx.get("orderId")
         try:
             fee = Decimal(str((tx.get("totalFeeAmount") or {}).get("value"))).quantize(Decimal("0.01"))
