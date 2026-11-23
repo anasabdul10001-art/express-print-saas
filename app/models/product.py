@@ -22,6 +22,9 @@ class Product(Base):
     # missing-by-accident.
     purchase_price = Column(DECIMAL(10, 2))  # what we pay to get one unit
     selling_price = Column(DECIMAL(10, 2))   # what the customer pays
+    # Extra per-unit costs. Total unit cost = purchase + supplier shipping + packaging.
+    supplier_shipping_cost = Column(DECIMAL(10, 2))
+    packaging_cost = Column(DECIMAL(10, 2))
     # Package physical specs for this product, used to pick the right DHL
     # shipping product and weight/dimensions when creating a shipment label.
     # Null when not set - falls back to the tenant's default package size
@@ -34,3 +37,10 @@ class Product(Base):
     active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    @property
+    def unit_cost(self):
+        """Purchase price + supplier shipping + packaging; None while the purchase price is unknown."""
+        if self.purchase_price is None:
+            return None
+        return self.purchase_price + (self.supplier_shipping_cost or 0) + (self.packaging_cost or 0)

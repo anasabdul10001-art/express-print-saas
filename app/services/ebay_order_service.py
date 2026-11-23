@@ -200,7 +200,7 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
                 product_id=product.id,
                 quantity=quantity,
                 unit_price=product.selling_price,
-                purchase_price=product.purchase_price,
+                purchase_price=product.unit_cost,
                 shelf_location=product.shelf_location,
             ))
             # Best-effort decrement; never blocks the import if stock is

@@ -210,7 +210,7 @@ def create_order(
             product_id=product.id,
             quantity=item_in.quantity,
             unit_price=product.selling_price,
-            purchase_price=product.purchase_price,
+            purchase_price=product.unit_cost,
             shelf_location=product.shelf_location,
         ))
         product.stock_quantity -= item_in.quantity
