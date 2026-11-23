@@ -555,16 +555,16 @@
                 const total = order.items.reduce((sum, i) => sum + (Number(i.unit_price || 0) * i.quantity), 0);
                 const itemsHtml = order.items.map(item => `
                     <tr class="border-b border-slate-200">
-                        <td class="p-3">
+                        <td class="px-3 py-1">
                             ${item.image_url
-                                ? `<img src="${item.image_url}" class="w-8 h-8 object-cover rounded" onerror="this.style.display='none'">`
-                                : `<div class="w-8 h-8 bg-slate-100 rounded"></div>`}
+                                ? `<a href="${item.image_url}" target="_blank" rel="noopener"><img src="${item.image_url}" class="w-16 h-16 min-w-[4rem] max-w-none object-cover rounded" onerror="this.style.display='none'"></a>`
+                                : `<div class="w-16 h-16 min-w-[4rem] bg-slate-100 rounded"></div>`}
                         </td>
-                        <td class="p-3">${item.product_title}</td>
-                        <td class="p-3 text-slate-500">${item.shelf_location || "—"}</td>
-                        <td class="p-3">${item.quantity}</td>
-                        <td class="p-3">${euro(item.unit_price)}</td>
-                        <td class="p-3 ${item.profit >= 0 ? "text-emerald-600" : "text-red-600"}">${euro(item.profit)}</td>
+                        <td class="px-3 py-1 whitespace-nowrap">${item.product_title}</td>
+                        <td class="px-3 py-1 text-slate-500">${item.shelf_location || "—"}</td>
+                        <td class="px-3 py-1">${item.quantity}</td>
+                        <td class="px-3 py-1">${euro(item.unit_price)}</td>
+                        <td class="px-3 py-1 ${item.profit >= 0 ? "text-emerald-600" : "text-red-600"}">${euro(item.profit)}</td>
                     </tr>
                 `).join("");
 
@@ -613,6 +613,7 @@
                                 ${t("orders.tracking")} <span class="font-mono">${order.tracking_number}</span>
                             </div>
                         ` : ""}
+                        <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="text-left text-slate-400 text-xs border-b border-slate-200">
@@ -626,6 +627,7 @@
                             </thead>
                             <tbody>${itemsHtml}</tbody>
                         </table>
+                        </div>
                     </div>
                 `;
             }).join("");
