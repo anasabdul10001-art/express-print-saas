@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Buchhaltung — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="trial-guard.js"></script>
+    <script src="../site-logo.js"></script>
+    <script src="../translations.js"></script>
+    <script src="../i18n.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+    <div class="flex min-h-screen">
+    <aside class="hidden md:flex md:flex-col md:w-60 bg-white border-r border-slate-200 flex-shrink-0">
+        <a href="dashboard.html" class="flex items-center gap-2 p-5 border-b border-slate-100">
+            <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+        <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                    <span data-i18n="nav.dashboard">Dashboard</span>
+                </a>
+                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                    <span data-i18n="nav.products">Produkte</span>
+                </a>
+                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+                    <span data-i18n="nav.orders">Bestellungen</span>
+                </a>
+                <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                    <span data-i18n="nav.expenses">Ausgaben</span>
+                </a>
+                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M13 16V8"/><path d="M18 16v-8"/></svg>
+                    <span data-i18n="nav.accounting">Buchhaltung</span>
+                </a>
+                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <span data-i18n="nav.marketResearch">Marktrecherche</span>
+                </a>
+                <a href="label-print.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/></svg>
+                    <span data-i18n="nav.labelPrint">Etikett drucken</span>
+                </a>
+                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span data-i18n="nav.printAgents">Print-Agents</span>
+                </a>
+                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span data-i18n="nav.settings">Einstellungen</span>
+                </a>
+        </nav>
+        <a href="settings.html" class="flex items-center gap-3 mx-3 mb-1 p-2 rounded-lg hover:bg-slate-50 transition">
+            <span class="flex-shrink-0 w-9 h-9 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
+                <img id="sidebar-avatar-img" class="hidden w-full h-full object-cover" alt="">
+                <span id="sidebar-avatar-initial" class="text-slate-400 text-sm font-bold">?</span>
+            </span>
+            <span class="min-w-0 flex-1">
+                <span id="sidebar-user-name" class="block text-sm font-semibold text-slate-900 truncate">—</span>
+                <span id="sidebar-user-email" class="block text-xs text-slate-400 truncate">—</span>
+            </span>
+        </a>
+        <div class="p-3 border-t border-slate-100">
+            <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.logout">Abmelden</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="flex-1 min-w-0">
+        <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+            <a href="dashboard.html" class="flex items-center gap-2">
+                <svg class="brand-logo" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <button onclick="toggleMobileMenu()" class="p-2 -mr-2 text-slate-600" aria-label="Menü öffnen">
+                    <svg id="menu-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    <svg id="menu-icon-close" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                </button>
+            </div>
+        </header>
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 p-3 space-y-1">
+            <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                <span data-i18n="nav.dashboard">Dashboard</span>
+            </a>
+            <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                <span data-i18n="nav.products">Produkte</span>
+            </a>
+            <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+                <span data-i18n="nav.orders">Bestellungen</span>
+            </a>
+            <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                <span data-i18n="nav.expenses">Ausgaben</span>
+            </a>
+                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M13 16V8"/><path d="M18 16v-8"/></svg>
+                    <span data-i18n="nav.accounting">Buchhaltung</span>
+                </a>
+            <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span data-i18n="nav.marketResearch">Marktrecherche</span>
+            </a>
+            <a href="label-print.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/></svg>
+                <span data-i18n="nav.labelPrint">Etikett drucken</span>
+            </a>
+            <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span data-i18n="nav.printAgents">Print-Agents</span>
+            </a>
+            <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span data-i18n="nav.settings">Einstellungen</span>
+            </a>
+            <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.logout">Abmelden</span>
+            </button>
+        </div>
+
+        <div class="hidden md:flex justify-end items-center gap-1 px-6 pt-4 text-xs font-semibold">
+            <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+        </div>
+
+    <main class="max-w-5xl mx-auto p-6 space-y-6">
+        <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-2xl font-bold" data-i18n="accounting.title">Buchhaltung</h2>
+            <a href="expenses.html" class="text-sm font-semibold text-red-600 hover:underline">+ Ausgaben erfassen</a>
+        </div>
+
+        <!-- Period selection -->
+        <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm space-y-3">
+            <div class="flex flex-wrap gap-2 text-sm" id="presets">
+                <button data-preset="today" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Heute</button>
+                <button data-preset="week" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Diese Woche</button>
+                <button data-preset="month" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Dieser Monat</button>
+                <button data-preset="3m" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Letzte 3 Monate</button>
+                <button data-preset="6m" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Letzte 6 Monate</button>
+                <button data-preset="year" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Dieses Jahr</button>
+                <button data-preset="lastyear" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Letztes Jahr</button>
+            </div>
+            <div class="flex flex-wrap items-end gap-3 text-sm">
+                <label>Von <input type="date" id="f-start" class="block mt-1 p-2 border border-slate-300 rounded"></label>
+                <label>Bis <input type="date" id="f-end" class="block mt-1 p-2 border border-slate-300 rounded"></label>
+                <label>Aufteilung
+                    <select id="f-group" class="block mt-1 p-2 border border-slate-300 rounded">
+                        <option value="none">Keine (nur Gesamt)</option>
+                        <option value="day">Pro Tag</option>
+                        <option value="week">Pro Woche</option>
+                        <option value="month">Pro Monat</option>
+                        <option value="year">Pro Jahr</option>
+                    </select>
+                </label>
+                <button onclick="loadAccounting()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Anzeigen</button>
+            </div>
+        </div>
+
+        <!-- Totals -->
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
+                <p class="text-slate-500 text-sm">Einnahmen</p>
+                <p id="t-revenue" class="text-xl font-bold text-slate-900">—</p>
+                <p id="t-orders" class="text-xs text-slate-400"></p>
+            </div>
+            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
+                <p class="text-slate-500 text-sm">eBay-Gebühren</p>
+                <p id="t-fees" class="text-xl font-bold text-red-600">—</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
+                <p class="text-slate-500 text-sm">Warenkosten</p>
+                <p id="t-goods" class="text-xl font-bold text-red-600">—</p>
+                <p class="text-xs text-slate-400">Einkauf + Lieferantenversand + Verpackung</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
+                <p class="text-slate-500 text-sm">Sonstige Ausgaben</p>
+                <p id="t-expenses" class="text-xl font-bold text-red-600">—</p>
+            </div>
+            <div class="bg-white border-2 border-red-500 p-4 rounded-xl shadow-sm col-span-2 lg:col-span-1">
+                <p class="text-slate-500 text-sm">Nettogewinn</p>
+                <p id="t-net" class="text-2xl font-bold text-slate-900">—</p>
+            </div>
+        </div>
+
+        <div id="warnings" class="space-y-2"></div>
+
+        <!-- Series -->
+        <div id="series-wrap" class="hidden bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-slate-500 border-b border-slate-200">
+                        <th class="p-3">Zeitraum</th>
+                        <th class="p-3 text-right">Bestellungen</th>
+                        <th class="p-3 text-right">Einnahmen</th>
+                        <th class="p-3 text-right">eBay-Gebühren</th>
+                        <th class="p-3 text-right">Warenkosten</th>
+                        <th class="p-3 text-right">Ausgaben</th>
+                        <th class="p-3 text-right">Nettogewinn</th>
+                    </tr>
+                </thead>
+                <tbody id="series-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Expense categories -->
+        <div id="cat-wrap" class="hidden bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+            <h3 class="font-bold mb-2">Ausgaben nach Kategorie</h3>
+            <div id="cat-list" class="text-sm space-y-1"></div>
+        </div>
+
+        <p class="text-xs text-slate-400">
+            Hinweis: Wareneinkauf nicht zusätzlich unter „Ausgaben“ erfassen – er ist über die Produktkosten
+            (Einkauf, Lieferantenversand, Verpackung) bereits enthalten. Dies ist eine betriebswirtschaftliche
+            Übersicht, keine Steuererklärung.
+        </p>
+    </main>
+    </div>
+    </div>
+
+<script>
+        const API_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            window.location.href = "../login.html";
+        }
+
+        function authHeaders(json = false) {
+            const headers = { "Authorization": `Bearer ${token}` };
+            if (json) headers["Content-Type"] = "application/json";
+            return headers;
+        }
+
+
+        function toggleMobileMenu() {
+            document.getElementById("mobile-menu").classList.toggle("hidden");
+            document.getElementById("menu-icon-open").classList.toggle("hidden");
+            document.getElementById("menu-icon-close").classList.toggle("hidden");
+        }
+
+
+        function applySidebarProfile(me) {
+            const nameEl = document.getElementById("sidebar-user-name");
+            const emailEl = document.getElementById("sidebar-user-email");
+            const avatarImg = document.getElementById("sidebar-avatar-img");
+            const avatarInitial = document.getElementById("sidebar-avatar-initial");
+            if (nameEl) nameEl.innerText = me.full_name || me.email;
+            if (emailEl) emailEl.innerText = me.email;
+            if (me.avatar_url) {
+                avatarImg.src = me.avatar_url;
+                avatarImg.classList.remove("hidden");
+                avatarInitial.classList.add("hidden");
+            } else {
+                avatarInitial.innerText = (me.full_name || me.email || "?").trim().charAt(0).toUpperCase();
+            }
+        }
+
+        async function loadSidebarProfile() {
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
+                if (!response.ok) return;
+                const me = await response.json();
+                applySidebarProfile(me);
+                if (!me.is_superadmin) return;
+
+                const desktopLogout = document.querySelector('aside button[onclick="logout()"]');
+                const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
+                if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
+            } catch (err) {
+                // Non-critical - sidebar profile info and the admin link just don't show.
+            }
+        }
+        loadSidebarProfile();
+
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "../login.html";
+        }
+
+        function showBanner(text, isError) {
+            const banner = document.getElementById("banner");
+            banner.innerText = text;
+            banner.className = `p-3 rounded text-sm text-center ${isError ? "bg-red-50 text-red-700 border border-red-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`;
+            setTimeout(() => banner.classList.add("hidden"), 4000);
+        }
+
+        function euro(value) {
+            return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)} €`;
+        }
+
+        
+        function localIso(d) {
+            const m = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            return `${d.getFullYear()}-${m}-${day}`;
+        }
+
+        function presetRange(name) {
+            const now = new Date();
+            const y = now.getFullYear(), m = now.getMonth();
+            const day = new Date(y, m, now.getDate());
+            switch (name) {
+                case "today": return [day, day, "none"];
+                case "week": {
+                    const monday = new Date(day); monday.setDate(day.getDate() - ((day.getDay() + 6) % 7));
+                    return [monday, day, "day"];
+                }
+                case "month": return [new Date(y, m, 1), day, "day"];
+                case "3m": return [new Date(y, m - 2, 1), day, "month"];
+                case "6m": return [new Date(y, m - 5, 1), day, "month"];
+                case "year": return [new Date(y, 0, 1), day, "month"];
+                case "lastyear": return [new Date(y - 1, 0, 1), new Date(y - 1, 11, 31), "month"];
+            }
+        }
+
+        function applyPreset(name) {
+            const [s, e, g] = presetRange(name);
+            document.getElementById("f-start").value = localIso(s);
+            document.getElementById("f-end").value = localIso(e);
+            document.getElementById("f-group").value = g;
+            document.querySelectorAll("#presets button").forEach(b => {
+                b.classList.toggle("bg-red-50", b.dataset.preset === name);
+                b.classList.toggle("border-red-400", b.dataset.preset === name);
+            });
+            loadAccounting();
+        }
+        document.querySelectorAll("#presets button").forEach(b => b.addEventListener("click", () => applyPreset(b.dataset.preset)));
+
+        function money(v) { return `${Number(v).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`; }
+        function colored(el, v) {
+            el.innerText = money(v);
+            el.classList.toggle("text-emerald-600", Number(v) >= 0);
+            el.classList.toggle("text-red-600", Number(v) < 0);
+        }
+        function esc(s) {
+            const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+            return String(s).replace(/[&<>"']/g, c => map[c]);
+        }
+
+        async function loadAccounting() {
+            const start = document.getElementById("f-start").value;
+            const end = document.getElementById("f-end").value;
+            const group = document.getElementById("f-group").value;
+            if (!start || !end) { showBanner("Bitte Start- und Enddatum wählen.", true); return; }
+            try {
+                const response = await fetch(`${API_URL}/accounting/summary?start=${start}&end=${end}&group_by=${group}`, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                if (!response.ok) { showBanner(data.detail || "Fehler", true); return; }
+                const t = data.totals;
+                document.getElementById("t-revenue").innerText = money(t.revenue);
+                document.getElementById("t-orders").innerText = `${t.orders} Bestellungen`;
+                document.getElementById("t-fees").innerText = money(t.ebay_fees);
+                document.getElementById("t-goods").innerText = money(t.goods_cost);
+                document.getElementById("t-expenses").innerText = money(t.expenses);
+                colored(document.getElementById("t-net"), t.net_profit);
+
+                const warn = [];
+                if (t.orders_missing_cost > 0) warn.push(`${t.orders_missing_cost} Bestellung(en) ohne Produktkosten – der Nettogewinn ist zu hoch. Kosten unter „Produkte“ eintragen.`);
+                if (t.orders_missing_fees > 0) warn.push(`${t.orders_missing_fees} Bestellung(en) ohne eBay-Gebühren – unter „Bestellungen“ mit eBay synchronisieren.`);
+                document.getElementById("warnings").innerHTML = warn.map(w => `<div class="bg-amber-50 text-amber-800 border border-amber-200 p-2 rounded-lg text-sm">${esc(w)}</div>`).join("");
+
+                document.getElementById("series-wrap").classList.toggle("hidden", data.series.length === 0);
+                document.getElementById("series-body").innerHTML = data.series.map(r => `
+                    <tr class="border-b border-slate-100">
+                        <td class="p-3 font-semibold">${esc(r.label)}</td>
+                        <td class="p-3 text-right">${r.orders}</td>
+                        <td class="p-3 text-right">${money(r.revenue)}</td>
+                        <td class="p-3 text-right">${money(r.ebay_fees)}</td>
+                        <td class="p-3 text-right">${money(r.goods_cost)}</td>
+                        <td class="p-3 text-right">${money(r.expenses)}</td>
+                        <td class="p-3 text-right font-bold ${Number(r.net_profit) >= 0 ? "text-emerald-600" : "text-red-600"}">${money(r.net_profit)}</td>
+                    </tr>`).join("");
+
+                document.getElementById("cat-wrap").classList.toggle("hidden", data.expenses_by_category.length === 0);
+                document.getElementById("cat-list").innerHTML = data.expenses_by_category.map(c =>
+                    `<div class="flex justify-between"><span>${esc(c.category)}</span><span>${money(c.amount)}</span></div>`).join("");
+            } catch (err) {
+                showBanner("Serverfehler, bitte erneut versuchen.", true);
+            }
+        }
+
+        applyPreset("month");
+    </script>
+</body>
+</html>

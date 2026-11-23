@@ -37,6 +37,10 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
                     <span data-i18n="nav.expenses">Ausgaben</span>
                 </a>
+                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M13 16V8"/><path d="M18 16v-8"/></svg>
+                    <span data-i18n="nav.accounting">Buchhaltung</span>
+                </a>
                 <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                     <span data-i18n="nav.marketResearch">Marktrecherche</span>
@@ -109,6 +113,10 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
                 <span data-i18n="nav.expenses">Ausgaben</span>
             </a>
+                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M13 16V8"/><path d="M18 16v-8"/></svg>
+                    <span data-i18n="nav.accounting">Buchhaltung</span>
+                </a>
             <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 <span data-i18n="nav.marketResearch">Marktrecherche</span>
@@ -162,7 +170,7 @@
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 id="form-title" class="text-lg font-bold" data-i18n="expenses.formTitleNew">Neue Ausgabe</h3>
             <input type="hidden" id="expense-id">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div class="sm:col-span-1">
                     <label class="block text-sm mb-1" data-i18n="expenses.description">Beschreibung *</label>
                     <input type="text" id="field-description" data-i18n-placeholder="expenses.descriptionPlaceholder" placeholder="z.B. Versandetiketten"
@@ -172,6 +180,22 @@
                     <label class="block text-sm mb-1" data-i18n="expenses.amount">Betrag (€) *</label>
                     <input type="number" step="0.01" min="0.01" id="field-amount"
                            class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Kategorie</label>
+                    <select id="field-category"
+                            class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                        <option>Sonstiges</option>
+                        <option>Versand &amp; Porto</option>
+                        <option>Verpackung</option>
+                        <option>Strom</option>
+                        <option>Internet &amp; Telefon</option>
+                        <option>Software &amp; Abos</option>
+                        <option>Büro &amp; Material</option>
+                        <option>Gebühren &amp; Beiträge</option>
+                        <option>Werbung</option>
+                        <option>Fahrtkosten</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="expenses.date">Datum *</label>
@@ -204,6 +228,7 @@
                     <tr class="text-left text-slate-500 border-b border-slate-200">
                         <th class="p-3" data-i18n="expenses.colDate">Datum</th>
                         <th class="p-3" data-i18n="expenses.colDescription">Beschreibung</th>
+                        <th class="p-3">Kategorie</th>
                         <th class="p-3" data-i18n="expenses.colAmount">Betrag</th>
                         <th class="p-3" data-i18n="expenses.colActions">Aktionen</th>
                     </tr>
@@ -299,6 +324,7 @@
             document.getElementById("field-description").value = "";
             document.getElementById("field-amount").value = "";
             document.getElementById("field-date").value = todayIso();
+            document.getElementById("field-category").value = "Sonstiges";
             document.getElementById("form-title").setAttribute("data-i18n", "expenses.formTitleNew");
             document.getElementById("form-title").innerText = t("expenses.formTitleNew");
             document.getElementById("save-btn").querySelector("span").setAttribute("data-i18n", "expenses.addButton");
@@ -307,11 +333,12 @@
             document.getElementById("form-error").classList.add("hidden");
         }
 
-        function editExpense(id, description, amount, expenseDate) {
+        function editExpense(id, description, amount, expenseDate, category) {
             document.getElementById("expense-id").value = id;
             document.getElementById("field-description").value = description;
             document.getElementById("field-amount").value = amount;
             document.getElementById("field-date").value = expenseDate;
+            document.getElementById("field-category").value = category || "Sonstiges";
             document.getElementById("form-title").setAttribute("data-i18n", "expenses.formTitleEdit");
             document.getElementById("form-title").innerText = t("expenses.formTitleEdit");
             document.getElementById("save-btn").querySelector("span").setAttribute("data-i18n", "expenses.updateButton");
@@ -366,6 +393,7 @@
                 description,
                 amount: Number(amountRaw),
                 expense_date: expenseDate,
+                category: document.getElementById("field-category").value,
             };
 
             try {
@@ -436,9 +464,10 @@
                 <tr class="border-b border-slate-200">
                     <td class="p-3 text-slate-500">${e.expense_date}</td>
                     <td class="p-3">${e.description}</td>
+                    <td class="p-3 text-slate-500">${e.category || "Sonstiges"}</td>
                     <td class="p-3 text-red-600">${euro(e.amount)}</td>
                     <td class="p-3 space-x-2">
-                        <button onclick='editExpense(${JSON.stringify(e.id)}, ${JSON.stringify(e.description)}, ${e.amount}, ${JSON.stringify(e.expense_date)})'
+                        <button onclick='editExpense(${JSON.stringify(e.id)}, ${JSON.stringify(e.description)}, ${e.amount}, ${JSON.stringify(e.expense_date)}, ${JSON.stringify(e.category || "Sonstiges")})'
                                 class="text-blue-600 hover:text-blue-700 text-xs">${t("expenses.edit")}</button>
                         <button onclick='deleteExpense(${JSON.stringify(e.id)}, ${JSON.stringify(e.description)})'
                                 class="text-red-600 hover:text-red-700 text-xs">${t("expenses.delete")}</button>

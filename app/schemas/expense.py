@@ -9,6 +9,7 @@ class ExpenseCreate(BaseModel):
     description: str = Field(..., min_length=1, max_length=255)
     amount: Decimal = Field(..., gt=0)
     expense_date: date
+    category: str | None = Field(None, max_length=50)
 
 
 class ExpenseUpdate(BaseModel):
@@ -16,6 +17,7 @@ class ExpenseUpdate(BaseModel):
     description: str | None = Field(None, min_length=1, max_length=255)
     amount: Decimal | None = Field(None, gt=0)
     expense_date: date | None = None
+    category: str | None = Field(None, max_length=50)
 
 
 class ExpenseOut(BaseModel):
@@ -23,6 +25,7 @@ class ExpenseOut(BaseModel):
     description: str
     amount: Decimal
     expense_date: date
+    category: str | None = None
 
     class Config:
         from_attributes = True

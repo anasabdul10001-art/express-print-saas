@@ -10,7 +10,7 @@ from app.core.rate_limit import limiter
 from app.core.sentry import init_sentry
 from app.database import Base, engine
 from app import models  # noqa: F401 - import registers all models with Base, needed for create_all() below
-from app.routers import admin, affiliate_portal, auth, billing, dhl, ebay, expenses, market_research, orders, plans, print_agents, print_jobs, products, tenants, uploads
+from app.routers import accounting, admin, affiliate_portal, auth, billing, dhl, ebay, expenses, market_research, orders, plans, print_agents, print_jobs, products, tenants, uploads
 
 # Before the app is created: a no-op until settings.sentry_dsn is set (see
 # app/core/sentry.py) - safe to always call.
@@ -34,6 +34,8 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS ebay_fees DECIMAL(10,2)"))
     connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_shipping_cost DECIMAL(10,2)"))
     connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS packaging_cost DECIMAL(10,2)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS ordered_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS category VARCHAR(50)"))
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS signing_key_id VARCHAR(255)"))
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS signing_jwe TEXT"))
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS signing_private_key_encrypted TEXT"))
@@ -101,6 +103,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(tenants.router)
 app.include_router(products.router)
+app.include_router(accounting.router)
 app.include_router(orders.router)
 app.include_router(print_agents.router)
 app.include_router(print_jobs.router)
