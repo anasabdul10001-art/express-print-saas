@@ -108,6 +108,44 @@ def fetch_active_listings(account: EbayAccount, db: Session) -> list[dict]:
     return listings
 
 
+def get_item_variations(account: EbayAccount, db: Session, item_id: str) -> dict:
+    """Read-only GetItem: the variations (SKU, price, available quantity, specifics) of one listing."""
+    token = ebay_oauth_service.get_valid_access_token(account, db)
+    xml = (
+        '<?xml version="1.0" encoding="utf-8"?>'
+        '<GetItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">'
+        f"<ItemID>{item_id}</ItemID><DetailLevel>ReturnAll</DetailLevel></GetItemRequest>"
+    )
+    resp = httpx.post(TRADING_URL[account.environment], headers=_headers(token, "GetItem"), content=xml, timeout=30.0)
+    if resp.status_code != 200:
+        raise ValueError(f"HTTP {resp.status_code}")
+    root = ET.fromstring(resp.text)
+    if _text(root, "e:Ack") == "Failure":
+        raise ValueError(_text(root, "e:Errors/e:LongMessage") or "unknown")
+    item = root.find("e:Item", NS)
+    out = {
+        "item_id": item_id,
+        "item_sku": _text(item, "e:SKU"),
+        "price": _text(item, "e:SellingStatus/e:CurrentPrice"),
+        "quantity": _text(item, "e:Quantity"),
+        "sold": _text(item, "e:SellingStatus/e:QuantitySold"),
+        "listing_type": _text(item, "e:ListingType"),
+        "variations": [],
+    }
+    for v in item.findall("e:Variations/e:Variation", NS):
+        out["variations"].append({
+            "sku": _text(v, "e:SKU"),
+            "price": _text(v, "e:StartPrice"),
+            "quantity": _text(v, "e:Quantity"),
+            "sold": _text(v, "e:SellingStatus/e:QuantitySold"),
+            "specifics": {
+                _text(n, "e:Name"): _text(n, "e:Value")
+                for n in v.findall("e:VariationSpecifics/e:NameValueList", NS)
+            },
+        })
+    return out
+
+
 def _revise_xml(items: list[tuple]) -> str:
     """items: (item_id, price or None, quantity or None); only given fields are sent."""
     body = ""

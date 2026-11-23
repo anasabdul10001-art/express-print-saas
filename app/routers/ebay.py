@@ -220,6 +220,27 @@ def push_prices(
     }
 
 
+@router.get("/listing-info/{item_id}")
+def listing_info(
+    item_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Read-only: what eBay says about one listing (variations, SKUs, quantities)."""
+    if not item_id.isdigit():
+        raise HTTPException(status_code=400, detail="Ungültige Artikelnummer.")
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+    errors = []
+    for account in accounts:
+        try:
+            return ebay_listing_service.get_item_variations(account, db, item_id)
+        except (ValueError, httpx.HTTPError) as exc:
+            errors.append(str(exc))
+    raise HTTPException(status_code=502, detail="; ".join(errors))
+
+
 @router.post("/import-products")
 def import_products(
     current_user: User = Depends(get_current_user),
