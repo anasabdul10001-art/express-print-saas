@@ -26,6 +26,7 @@ class Expense(Base):
 
     description = Column(String(255), nullable=False)
     amount = Column(DECIMAL(10, 2), nullable=False)
+    category = Column(String(50), nullable=True)
     expense_date = Column(Date, nullable=False)  # the date the cost applies to, not when it was logged
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

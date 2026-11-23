@@ -46,6 +46,9 @@ class Order(Base):
     # Which connected eBay account this order came from (null for manual orders).
     ebay_account_id = Column(UUID(as_uuid=True), ForeignKey("ebay_accounts.id", ondelete="SET NULL"), nullable=True)
 
+    # When the sale happened at eBay (created_at is only when we imported it).
+    ordered_at = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (

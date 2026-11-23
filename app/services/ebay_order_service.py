@@ -86,6 +86,16 @@ def _extract_ship_to(ebay_order: dict) -> dict:
     return {}
 
 
+def _parse_ebay_date(value):
+    """eBay sends ISO 8601 like 2026-11-20T14:03:11.000Z; None if missing/unreadable."""
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
 def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
     access_token = ebay_oauth_service.get_valid_access_token(account, db)
     base_url = EBAY_API_BASE[account.environment]
@@ -135,6 +145,8 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             # a deletion notification until they get it.
             if not already_imported.buyer_username and already_imported.external_order_ref == ebay_order_id:
                 already_imported.buyer_username = buyer_username
+            if already_imported.ordered_at is None:
+                already_imported.ordered_at = _parse_ebay_date(ebay_order.get("creationDate"))
             continue  # silently skip - this is the normal case on repeat syncs
 
         line_items = ebay_order.get("lineItems", [])
@@ -188,6 +200,7 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             external_order_ref=ebay_order_id,
             status="new",
             buyer_username=buyer_username,
+            ordered_at=_parse_ebay_date(ebay_order.get("creationDate")),
             ebay_account_id=account.id,
             **_extract_ship_to(ebay_order),
         )
