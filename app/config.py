@@ -58,6 +58,15 @@ class Settings(BaseSettings):
     # See app/routers/billing.py.
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
+    # --- Shopify OAuth (Dev Dashboard app, authorization-code grant) ---
+    shopify_client_id: str = ""
+    shopify_client_secret: str = ""
+    shopify_redirect_uri: str = "https://express-print-saas.onrender.com/shopify/callback"
+    shopify_api_version: str = "2026-07"
+    shopify_scopes: str = (
+        "read_products,read_inventory,read_orders,"
+        "read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders"
+    )
     # --- Extra eBay scopes (messages, analytics, account policies, disputes, push) ---
     # Space-separated. Set to an empty value to fall back to the core scopes
     # if eBay rejects the consent screen for one of them.

@@ -40,7 +40,8 @@ class Order(Base):
     # shipped through the DHL integration at all.
     tracking_number = Column(String(50), nullable=True)
 
-    # Total eBay fees for this sale (from the Finances API); null until known.
+    # Total marketplace/payment fees for this sale (eBay Finances API, or the
+    # Shopify Payments fees on the order's transactions); null until known.
     ebay_fees = Column(DECIMAL(10, 2), nullable=True)
 
     # Returns / refunds. refund_amount is what was paid back to the buyer
@@ -56,6 +57,9 @@ class Order(Base):
     # Which connected eBay account this order came from (null for manual orders).
     ebay_account_id = Column(UUID(as_uuid=True), ForeignKey("ebay_accounts.id", ondelete="SET NULL"), nullable=True)
 
+    # Which connected Shopify store this order came from (null otherwise).
+    shopify_account_id = Column(UUID(as_uuid=True), ForeignKey("shopify_accounts.id", ondelete="SET NULL"), nullable=True)
+
     # When the sale happened at eBay (created_at is only when we imported it).
     ordered_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -70,6 +74,7 @@ class Order(Base):
 
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     ebay_account = relationship("EbayAccount", foreign_keys=[ebay_account_id])
+    shopify_account = relationship("ShopifyAccount", foreign_keys=[shopify_account_id])
 
 
 class OrderItem(Base):

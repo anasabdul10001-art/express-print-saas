@@ -154,7 +154,7 @@
                 <button id="ebay-import-btn" onclick="importFromEbay()"
                         title="Holt deine aktiven eBay-Angebote als Produkte. Es wird nichts bei eBay geändert."
                         class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold py-2 px-4 rounded transition text-sm">
-                    Von eBay importieren
+                    Von eBay/Shopify importieren
                 </button>
                 <label class="cursor-pointer bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold py-2 px-4 rounded transition text-sm"
                        title="Seller Hub → Angebote → Aktiv → Herunterladen (CSV). Es wird nichts bei eBay geändert.">
@@ -485,11 +485,20 @@
             btn.disabled = true;
             btn.innerText = "Importiere…";
             try {
-                const response = await fetch(`${API_URL}/ebay/import-products`, { method: "POST", headers: authHeaders() });
-                if (response.status === 401) { logout(); return; }
-                const data = await response.json();
-                if (!response.ok) { showBanner(data.detail || "Import fehlgeschlagen.", true); return; }
-                showBanner(`${data.listings_found} Angebote gefunden: ${data.products_created} neue Produkte, ${data.already_known} schon vorhanden.`, false);
+                let found = 0, created = 0, known = 0, connected = 0;
+                const problems = [];
+                for (const path of ["ebay", "shopify"]) {
+                    const response = await fetch(`${API_URL}/${path}/import-products`, { method: "POST", headers: authHeaders() });
+                    if (response.status === 401) { logout(); return; }
+                    const data = await response.json().catch(() => ({}));
+                    if (response.status === 400) continue;  // that channel is not connected
+                    connected++;
+                    if (!response.ok) { problems.push(data.detail || "Import fehlgeschlagen."); continue; }
+                    found += data.listings_found; created += data.products_created; known += data.already_known;
+                }
+                if (connected === 0) problems.push("Kein eBay-Konto und kein Shopify-Shop verbunden.");
+                if (problems.length && created === 0 && found === 0) { showBanner(problems.join(" | "), true); return; }
+                showBanner(`${found} Angebote gefunden: ${created} neue Produkte, ${known} schon vorhanden.` + (problems.length ? ` (${problems.join(" | ")})` : ""), problems.length > 0);
                 loadProducts();
             } catch (err) {
                 showBanner("Serverfehler, bitte erneut versuchen.", true);

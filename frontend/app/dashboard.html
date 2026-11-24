@@ -185,6 +185,20 @@
             <a href="ebay-tools.html" class="inline-block mt-3 text-sm font-semibold text-red-600 hover:underline">eBay-Zentrale: Nachrichten, Rückgaben, Statistik →</a>
             <p id="ebay-add-hint" class="hidden text-xs text-slate-400 mt-2" data-i18n="dashboard.ebayAddHint">eBay fragt beim Verbinden nach der Anmeldung - melde dich dort mit dem weiteren Konto an.</p>
         </div>
+
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+            <h2 class="text-xl font-bold mb-2">Shopify-Shop</h2>
+            <p class="text-slate-500 text-sm mb-4" id="shopify-desc">Status wird geladen...</p>
+            <ul id="shopify-accounts" class="mb-4 space-y-2"></ul>
+            <div id="shopify-connect" class="hidden flex flex-wrap gap-2 items-center">
+                <input id="shopify-shop" type="text" placeholder="dein-shop.myshopify.com"
+                       class="border border-slate-300 rounded px-3 py-2 text-sm w-64" />
+                <button onclick="connectShopify()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition">
+                    Mit Shopify verbinden
+                </button>
+            </div>
+            <p id="shopify-hint" class="hidden text-xs text-slate-400 mt-2"></p>
+        </div>
     </main>
     </div>
     </div>
@@ -410,6 +424,65 @@
         document.addEventListener("langchange", renderProfitChart);
 
         loadEbayStatus();
+
+        // ---- Shopify ----
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("shopify_connected")) showBanner(`Shopify verbunden: ${params.get("shopify_connected")}`, false);
+            else if (params.get("shopify_error")) showBanner(`Shopify-Verbindung fehlgeschlagen: ${params.get("shopify_error")}`, true);
+        })();
+
+        async function loadShopifyStatus() {
+            const desc = document.getElementById("shopify-desc");
+            try {
+                const [accRes, stRes] = await Promise.all([
+                    fetch(`${API_URL}/shopify/accounts`, { headers: authHeaders() }),
+                    fetch(`${API_URL}/shopify/status`, { headers: authHeaders() }),
+                ]);
+                if (accRes.status === 401) { logout(); return; }
+                const accounts = await accRes.json();
+                const status = await stRes.json();
+                desc.innerText = accounts.length ? `Verbundene Shops: ${accounts.length}` : "Noch kein Shop verbunden.";
+                document.getElementById("shopify-accounts").innerHTML = accounts.map(a => `
+                    <li class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm">
+                        <span class="font-semibold">${a.shop_name || a.shop_domain}</span>
+                        <button onclick='disconnectShopify(${JSON.stringify(a.id)})' class="text-slate-500 hover:text-red-600 text-xs font-semibold">Trennen</button>
+                    </li>`).join("");
+                const hint = document.getElementById("shopify-hint");
+                if (status.configured) {
+                    document.getElementById("shopify-connect").classList.remove("hidden");
+                } else {
+                    hint.innerText = "Shopify ist serverseitig noch nicht eingerichtet (SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET).";
+                    hint.classList.remove("hidden");
+                }
+            } catch (err) {
+                desc.innerText = "Server nicht erreichbar, bitte Seite neu laden.";
+            }
+        }
+
+        async function connectShopify() {
+            const shop = document.getElementById("shopify-shop").value.trim();
+            if (!shop) { showBanner("Bitte die Shop-Adresse eingeben (dein-shop.myshopify.com).", true); return; }
+            try {
+                const response = await fetch(`${API_URL}/shopify/authorize-url?shop=${encodeURIComponent(shop)}`, { headers: authHeaders() });
+                const data = await response.json();
+                if (!response.ok) { showBanner(data.detail || "Verbindung konnte nicht gestartet werden.", true); return; }
+                window.location.href = data.authorize_url;
+            } catch (err) {
+                showBanner("Verbindung konnte nicht gestartet werden.", true);
+            }
+        }
+
+        async function disconnectShopify(accountId) {
+            try {
+                await fetch(`${API_URL}/shopify/disconnect?account_id=${encodeURIComponent(accountId)}`, { method: "POST", headers: authHeaders() });
+                loadShopifyStatus();
+            } catch (err) {
+                showBanner("Trennen fehlgeschlagen.", true);
+            }
+        }
+
+        loadShopifyStatus();
         loadSummary();
         loadProfitHistory();
     </script>
