@@ -344,6 +344,23 @@ def finances_raw(
     return out
 
 
+@router.get("/subscription-raw")
+def subscription_raw(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Read-only diagnostic: does this eBay account have an eBay Store subscription? (Account API
+    getSubscription.) Shows eBay's answer as it is, per connected account."""
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+    out = []
+    for account in accounts:
+        try:
+            result = ebay_extras_service.subscriptions(account, db)
+        except (ValueError, httpx.HTTPError) as exc:
+            result = {"ok": False, "error": str(exc)[:300]}
+        out.append({"ebay_user_id": account.ebay_user_id, **result})
+    return out
+
+
 @router.post("/import-products")
 def import_products(
     current_user: User = Depends(get_current_user),
