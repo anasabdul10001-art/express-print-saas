@@ -27,6 +27,8 @@ class Expense(Base):
     description = Column(String(255), nullable=False)
     amount = Column(DECIMAL(10, 2), nullable=False)
     category = Column(String(50), nullable=True)
-    expense_date = Column(Date, nullable=False)  # the date the cost applies to, not when it was logged
+    expense_date = Column(Date, nullable=False)
+    # Set for expenses imported from eBay (its transaction id), so a re-sync never duplicates them.
+    external_ref = Column(String(100), nullable=True)  # the date the cost applies to, not when it was logged
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -70,10 +70,7 @@ def _serialize_order(order: Order) -> OrderOut:
     # Same rules as the accounting page (app/services/order_money.py): what the buyer
     # actually paid, minus refund, fees, goods cost and return shipping.
     if profit_known:
-        total_profit = (
-            order_money.revenue(order) - order_money.refund(order) - order_money.fees(order)
-            - order_money.goods(order) - (order.return_shipping_cost or Decimal("0"))
-        )
+        total_profit = order_money.profit(order)
 
     return OrderOut(
         id=order.id,
@@ -81,7 +78,8 @@ def _serialize_order(order: Order) -> OrderOut:
         status=order.status,
         items=items_out,
         total_profit=total_profit if profit_known else None,
-        ebay_fees=order.ebay_fees,
+        ebay_fees=order_money.fees(order),
+        shipping_label_cost=order.shipping_label_cost,
         ordered_at=order.ordered_at or order.created_at,
         refund_amount=order.refund_amount,
         item_returned_to_stock=bool(order.item_returned_to_stock),
@@ -111,10 +109,7 @@ BERLIN = ZoneInfo("Europe/Berlin")
 
 def _order_profit(order: Order) -> Decimal:
     """Profit of one order by the same rules as the accounting page (fees, refunds, returns)."""
-    return (
-        order_money.revenue(order) - order_money.refund(order) - order_money.fees(order)
-        - order_money.goods(order) - (order.return_shipping_cost or Decimal("0"))
-    )
+    return order_money.profit(order)
 
 
 def _sale_day(order: Order):

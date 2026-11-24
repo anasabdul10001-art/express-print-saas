@@ -59,6 +59,7 @@ class OrderOut(BaseModel):
     source: str = "manual"  # ebay / shopify / amazon / manual
     # When the sale happened (eBay creation date, else import time); the list is newest first.
     ordered_at: datetime | None = None
+    shipping_label_cost: Decimal | None = None
     # Return handling (see models/order.py).
     refund_amount: Decimal | None = None
     item_returned_to_stock: bool = False

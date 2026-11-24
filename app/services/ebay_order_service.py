@@ -31,6 +31,7 @@ Design choices worth knowing:
 """
 
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from decimal import Decimal, InvalidOperation
 
 import httpx
@@ -38,6 +39,7 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from app.models.ebay_account import EbayAccount
+from app.models.expense import Expense
 from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
@@ -299,55 +301,112 @@ FINANCES_API_BASE = {
 }
 
 
+def _fetch_transactions(account, db, access_token, kind, notes):
+    """All Finances transactions of one type (paged, each request signed). None on failure."""
+    url = f"{FINANCES_API_BASE[account.environment]}/sell/finances/v1/transaction"
+    out: list[dict] = []
+    for page in range(10):
+        try:
+            headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+            headers.update(ebay_signing_service.signed_headers(account, db, "GET", url))
+            resp = httpx.get(
+                url, headers=headers, timeout=20.0,
+                params={"filter": f"transactionType:{{{kind}}}", "limit": 200, "offset": page * 200},
+            )
+        except (ebay_signing_service.SigningError, httpx.HTTPError, ValueError) as exc:
+            if notes is not None:
+                notes.append(f"Finanzen {kind}: {exc.__class__.__name__}: {exc}")
+            return None
+        if resp.status_code != 200:
+            if notes is not None:
+                notes.append(f"Finanzen {kind}: eBay antwortet {resp.status_code}: {resp.text[:200]}")
+            return None
+        batch = resp.json().get("transactions", [])
+        out += batch
+        if len(batch) < 200:
+            break
+    return out
+
+
+def _tx_amount(tx):
+    """Signed amount of a transaction: DEBIT (money out) positive, CREDIT negative."""
+    value = _dec((tx.get("amount") or {}).get("value"))
+    if value is None:
+        return None
+    return -value if tx.get("bookingEntry") == "CREDIT" else value
+
+
 def sync_fees(
     account: EbayAccount, tenant_id: UUID, db: Session, access_token: str, notes: list[str] | None = None
 ) -> int:
     """
-    Stores eBay's real fee per sale on the matching orders (Finances API).
-    Best effort: accounts connected before the finances scope existed get a
-    401/403 here and simply keep showing profit without fees until they
-    reconnect; this never breaks the order sync.
+    Stores eBay's real money movements (Finances API): the fee per sale, refunds with the fees eBay
+    gave back, the shipping label cost per order, and fees not tied to an order (insertion fees ...)
+    as expenses. Best effort: a failing call is reported in `notes` and never breaks the order sync.
     """
-    url = f"{FINANCES_API_BASE[account.environment]}/sell/finances/v1/transaction"
-    try:
-        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
-        headers.update(ebay_signing_service.signed_headers(account, db, "GET", url))
-    except (ebay_signing_service.SigningError, httpx.HTTPError, ValueError) as exc:
-        if notes is not None:
-            notes.append(f"Gebühren: Signatur nicht möglich ({exc})")
-        return 0
-    try:
-        resp = httpx.get(
-            url,
-            headers=headers,
-            params={"filter": "transactionType:{SALE}", "limit": 200},
-            timeout=20.0,
-        )
-    except httpx.HTTPError as exc:
-        if notes is not None:
-            notes.append(f"Gebühren: Netzwerkfehler ({exc.__class__.__name__})")
-        return 0
-    if resp.status_code != 200:
-        if notes is not None:
-            notes.append(f"Gebühren: eBay antwortet {resp.status_code}: {resp.text[:200]}")
-        return 0
-
-    transactions = resp.json().get("transactions", [])
-    if not transactions and notes is not None:
-        notes.append("Gebühren: eBay lieferte keine Verkaufs-Transaktionen.")
     updated = 0
-    for tx in transactions:
-        order_ref = tx.get("orderId")
-        try:
-            fee = Decimal(str((tx.get("totalFeeAmount") or {}).get("value"))).quantize(Decimal("0.01"))
-        except (InvalidOperation, TypeError, ValueError):
-            continue
-        if not order_ref:
-            continue
-        order = db.query(Order).filter(Order.tenant_id == tenant_id, Order.external_order_ref == order_ref).first()
-        if order and order.ebay_fees != fee:
-            order.ebay_fees = fee
+
+    def order_for(ref):
+        return db.query(Order).filter(Order.tenant_id == tenant_id, Order.external_order_ref == ref).first()
+
+    sales = _fetch_transactions(account, db, access_token, "SALE", notes)
+    if sales is not None:
+        if not sales and notes is not None:
+            notes.append("Gebühren: eBay lieferte keine Verkaufs-Transaktionen.")
+        for tx in sales:
+            fee = _dec((tx.get("totalFeeAmount") or {}).get("value"))
+            order = order_for(tx.get("orderId")) if tx.get("orderId") else None
+            if order and fee is not None and order.ebay_fees != fee:
+                order.ebay_fees = fee
+                updated += 1
+
+    refunds = _fetch_transactions(account, db, access_token, "REFUND", notes)
+    if refunds is not None:
+        per_order: dict[str, list[Decimal]] = {}
+        for tx in refunds:
+            amount, credit = _tx_amount(tx), _dec((tx.get("totalFeeAmount") or {}).get("value")) or Decimal("0")
+            if tx.get("orderId") and amount is not None:
+                entry = per_order.setdefault(tx["orderId"], [Decimal("0"), Decimal("0")])
+                entry[0] += amount + credit  # what the buyer got back = eBay's net refund + the fee it returned
+                entry[1] += credit
+        for ref, (refunded, credit) in per_order.items():
+            order = order_for(ref)
+            if order:
+                if order.refund_amount != refunded.quantize(Decimal("0.01")):
+                    order.refund_amount = refunded.quantize(Decimal("0.01"))
+                    updated += 1
+                order.ebay_fee_credit = credit.quantize(Decimal("0.01"))
+
+    labels = _fetch_transactions(account, db, access_token, "SHIPPING_LABEL", notes)
+    if labels is not None:
+        per_order_labels: dict[str, Decimal] = {}
+        for tx in labels:
+            amount = _tx_amount(tx)
+            if tx.get("orderId") and amount is not None:
+                per_order_labels[tx["orderId"]] = per_order_labels.get(tx["orderId"], Decimal("0")) + amount
+        for ref, cost in per_order_labels.items():
+            order = order_for(ref)
+            if order and order.shipping_label_cost != cost:
+                order.shipping_label_cost = cost
+                updated += 1
+
+    charges = _fetch_transactions(account, db, access_token, "NON_SALE_CHARGE", notes)
+    if charges is not None:
+        known = {r for (r,) in db.query(Expense.external_ref).filter(
+            Expense.tenant_id == tenant_id, Expense.external_ref.isnot(None))}
+        for tx in charges:
+            ref, amount = tx.get("transactionId"), _tx_amount(tx)
+            if not ref or amount is None or ref in known:
+                continue
+            when = _parse_ebay_date(tx.get("transactionDate")) or datetime.now(timezone.utc)
+            db.add(Expense(
+                tenant_id=tenant_id, amount=amount, category="eBay-Gebühren (Angebote)",
+                description=(tx.get("transactionMemo") or tx.get("feeType") or "eBay-Gebühr")[:255],
+                expense_date=when.astimezone(ZoneInfo("Europe/Berlin")).date(), external_ref=ref[:100],
+            ))
+            known.add(ref)
             updated += 1
+
     db.commit()
     return updated
 

@@ -11,7 +11,8 @@ Definitions (management view, not a tax return):
                  shipping + packaging) * quantity; 0 for a refunded order
                  whose item came back to stock (nothing was lost)
 - expenses     = manually entered costs (electricity, internet, ...) by date
-- net_profit   = revenue - refunds - ebay_fees - goods_cost - return_shipping - expenses
+- shipping_labels = label costs bought through eBay (Finances API)
+- net_profit   = revenue - refunds - ebay_fees - goods_cost - return_shipping - shipping_labels - expenses
 Do NOT also enter goods purchases as expenses: they are already counted
 through the product costs.
 """
@@ -71,7 +72,7 @@ def _vat_block(totals: dict) -> dict:
     factor = VAT_RATE / (VAT_RATE + Decimal("100"))
     gross_sales = totals["revenue"] - totals["refunds"]
     sales_vat = (gross_sales * factor).quantize(Decimal("0.01"))
-    costs = totals["goods_cost"] + totals["expenses"] + totals["return_shipping"]
+    costs = totals["goods_cost"] + totals["expenses"] + totals["return_shipping"] + totals["shipping_labels"]
     input_vat = (costs * factor).quantize(Decimal("0.01"))
     return {
         "rate": str(VAT_RATE),
@@ -103,7 +104,7 @@ def _period_key(day: date, group_by: str) -> tuple[str, str]:
 
 
 def _blank():
-    return {"revenue": ZERO, "refunds": ZERO, "return_shipping": ZERO, "ebay_fees": ZERO, "goods_cost": ZERO, "expenses": ZERO, "orders": 0}
+    return {"revenue": ZERO, "refunds": ZERO, "return_shipping": ZERO, "shipping_labels": ZERO, "ebay_fees": ZERO, "goods_cost": ZERO, "expenses": ZERO, "orders": 0}
 
 
 @router.get("/summary")
@@ -162,6 +163,7 @@ def summary(
         add(day, "revenue", revenue, 1)
         add(day, "refunds", refund)
         add(day, "return_shipping", order.return_shipping_cost or ZERO)
+        add(day, "shipping_labels", order_money.labels(order))
         if refund > 0:
             refunded_orders += 1
         add(day, "goods_cost", goods)
@@ -179,7 +181,7 @@ def summary(
     def finish(row: dict) -> dict:
         net = (
             row["revenue"] - row["refunds"] - row["ebay_fees"] - row["goods_cost"]
-            - row["return_shipping"] - row["expenses"]
+            - row["return_shipping"] - row["shipping_labels"] - row["expenses"]
         )
         out = {k: (str(v) if isinstance(v, Decimal) else v) for k, v in row.items()}
         out["net_profit"] = str(net)
