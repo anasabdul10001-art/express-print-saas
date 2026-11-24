@@ -146,6 +146,37 @@ def get_item_variations(account: EbayAccount, db: Session, item_id: str) -> dict
     return out
 
 
+def revise_variation_quantities(account: EbayAccount, db: Session, item_id: str, available: list[int]) -> None:
+    """Sets the AVAILABLE quantity of every variation of a listing, in the order GetItem returns
+    them. eBay's Quantity here is the total including units already sold, so sold is added back."""
+    from xml.sax.saxutils import escape
+
+    token = ebay_oauth_service.get_valid_access_token(account, db)
+    info = get_item_variations(account, db, item_id)
+    variations = info["variations"]
+    if len(available) != len(variations):
+        raise ValueError("Die Variantenliste hat sich geändert, bitte neu laden.")
+    parts = ""
+    for v, qty in zip(variations, available):
+        ident = f"<SKU>{escape(v['sku'])}</SKU>" if v.get("sku") else "<VariationSpecifics>" + "".join(
+            f"<NameValueList><Name>{escape(n)}</Name><Value>{escape(val)}</Value></NameValueList>"
+            for n, val in v["specifics"].items()
+        ) + "</VariationSpecifics>"
+        total = max(int(qty), 0) + int(v.get("sold") or 0)
+        parts += f"<Variation>{ident}<Quantity>{total}</Quantity></Variation>"
+    xml = (
+        '<?xml version="1.0" encoding="utf-8"?>'
+        '<ReviseFixedPriceItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">'
+        f"<Item><ItemID>{item_id}</ItemID><Variations>{parts}</Variations></Item></ReviseFixedPriceItemRequest>"
+    )
+    resp = httpx.post(TRADING_URL[account.environment], headers=_headers(token, "ReviseFixedPriceItem"), content=xml, timeout=30.0)
+    if resp.status_code != 200:
+        raise ValueError(f"HTTP {resp.status_code}")
+    root = ET.fromstring(resp.text)
+    if _text(root, "e:Ack") not in ("Success", "Warning"):
+        raise ValueError(_text(root, "e:Errors/e:LongMessage") or _text(root, "e:Errors/e:ShortMessage") or "unknown")
+
+
 def _revise_xml(items: list[tuple]) -> str:
     """items: (item_id, price or None, quantity or None); only given fields are sent."""
     body = ""

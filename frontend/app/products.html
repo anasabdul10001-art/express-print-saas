@@ -628,6 +628,40 @@
             document.getElementById("ie-" + id).focus();
         }
 
+        // Listings with variations (colours) keep one quantity per variation at eBay.
+        async function openVariationEditor(id) {
+            const p = (window.__products || []).find(x => x.id === id);
+            const itemId = p && /^\d+$/.test(p.sku) ? p.sku : null;
+            if (!itemId) { showBanner("Dieses Angebot hat Varianten – Mengen pro Variante bitte bei eBay ändern.", true); loadProducts(); return; }
+            try {
+                const response = await fetch(`${API_URL}/ebay/listing-info/${itemId}`, { headers: authHeaders() });
+                const info = await response.json();
+                if (!response.ok || !info.variations.length) { showBanner(info.detail || "Keine Varianten gefunden.", true); loadProducts(); return; }
+                window.__varInfo = { id, itemId, variations: info.variations };
+                const cell = document.getElementById("cell-stock-" + id);
+                cell.innerHTML = `<div class="space-y-1 text-xs">
+                    <div class="font-semibold text-amber-700">Mengen pro Variante (eBay):</div>
+                    ${info.variations.map((v, i) => `<label class="block">${Object.values(v.specifics).join(" / ") || "Variante " + (i + 1)}
+                        <input id="var-${i}" type="number" min="0" step="1" value="${Math.max(0, Number(v.quantity || 0) - Number(v.sold || 0))}" class="p-1 w-16 rounded border border-slate-300"></label>`).join("")}
+                    <button onclick='saveVariationQuantities()' class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-1 px-2 rounded">Speichern + eBay</button>
+                    <button onclick="loadProducts()" class="text-slate-500 ml-1">✕</button></div>`;
+            } catch (err) { showBanner(t("products.serverErrorRetry"), true); }
+        }
+
+        async function saveVariationQuantities() {
+            const info = window.__varInfo;
+            const available = info.variations.map((v, i) => Number(document.getElementById("var-" + i).value || 0));
+            try {
+                const response = await fetch(`${API_URL}/ebay/variation-quantities`, {
+                    method: "POST", headers: authHeaders(true), body: JSON.stringify({ product_id: info.id, available }),
+                });
+                const data = await response.json();
+                if (!response.ok) showBanner("eBay: " + (data.detail || "Fehler"), true);
+                else showBanner(`Mengen bei eBay geändert (Summe ${data.stock_quantity}).`, false);
+            } catch (err) { showBanner(t("products.serverErrorRetry"), true); }
+            loadProducts();
+        }
+
         async function inlineSave(id, field) {
             const raw = document.getElementById("ie-" + id).value;
             if (raw === "") { showBanner("Bitte einen Wert eingeben.", true); return; }
@@ -648,6 +682,7 @@
                 const what = isStock ? "Menge" : "Preis";
                 if (!push.ok) showBanner(`${what} in ShipSync gespeichert, aber eBay: ` + (result.detail || "Fehler"), true);
                 else if (result.updated > 0) showBanner(`${what} in ShipSync und bei eBay geändert.`, false);
+                else if (result.failed > 0 && isStock && String(result.items[0]?.result || "").includes("Varianten")) { await openVariationEditor(id); return; }
                 else if (result.failed > 0) showBanner(`${what} in ShipSync gespeichert, eBay lehnte ab: ` + (result.items[0]?.result || result.errors[0] || ""), true);
                 else if (result.no_ebay_match > 0) showBanner(`${what} in ShipSync gespeichert – kein passendes eBay-Angebot gefunden.`, true);
                 else showBanner(`${what} gespeichert; bei eBay war er schon gleich.`, false);

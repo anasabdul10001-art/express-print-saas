@@ -16,7 +16,7 @@ from app.models.order import Order
 from app.models.product import Product
 from app.models.user import User
 from app.schemas.ebay import AuthorizeUrlOut, EbayAccountOut
-from app.services import ebay_deletion_service, ai_reply_service, ebay_extras_service, ebay_listing_service, ebay_oauth_service, ebay_order_service
+from app.services import ebay_signing_service, ebay_deletion_service, ai_reply_service, ebay_extras_service, ebay_listing_service, ebay_oauth_service, ebay_order_service
 
 router = APIRouter(prefix="/ebay", tags=["ebay"])
 
@@ -276,6 +276,71 @@ def orders_raw(
                     for li in o.get("lineItems", [])
                 ],
             })
+    return out
+
+
+class VariationQuantitiesIn(BaseModel):
+    product_id: str
+    available: list[int]  # one number per variation, in the order /ebay/listing-info returns them
+
+
+@router.post("/variation-quantities")
+def variation_quantities(
+    payload: VariationQuantitiesIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Sets the per-variation (e.g. colour) quantities of a product's eBay listing and stores
+    their sum as the product's stock in ShipSync."""
+    if any(q < 0 for q in payload.available):
+        raise HTTPException(status_code=400, detail="Mengen dürfen nicht negativ sein.")
+    product = db.query(Product).filter(Product.id == payload.product_id, Product.tenant_id == current_user.tenant_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produkt nicht gefunden.")
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+    item_id = product.sku if product.sku.isdigit() else None
+    errors = []
+    for account in accounts:
+        try:
+            if item_id is None:
+                match = next((l for l in ebay_listing_service.fetch_active_listings(account, db) if l["sku"] == product.sku), None)
+                if not match:
+                    continue
+                item_id = match["item_id"]
+            ebay_listing_service.revise_variation_quantities(account, db, item_id, payload.available)
+            product.stock_quantity = sum(payload.available)
+            db.commit()
+            return {"item_id": item_id, "stock_quantity": product.stock_quantity}
+        except (ValueError, httpx.HTTPError) as exc:
+            errors.append(str(exc))
+    raise HTTPException(status_code=502, detail="; ".join(errors) or "Kein passendes eBay-Angebot gefunden.")
+
+
+@router.get("/finances-raw")
+def finances_raw(
+    kind: str = "SHIPPING_LABEL",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Read-only diagnostic: raw Finances transactions of one type (SALE, REFUND, SHIPPING_LABEL,
+    NON_SALE_CHARGE ...) to see how label costs and extra fees are reported."""
+    if not kind.replace("_", "").isalpha():
+        raise HTTPException(status_code=400, detail="Ungültiger Typ.")
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+    out = []
+    for account in accounts:
+        token = ebay_oauth_service.get_valid_access_token(account, db)
+        url = f"{ebay_order_service.FINANCES_API_BASE[account.environment]}/sell/finances/v1/transaction"
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        headers.update(ebay_signing_service.signed_headers(account, db, "GET", url))
+        resp = httpx.get(url, headers=headers, params={"filter": f"transactionType:{{{kind}}}", "limit": 200}, timeout=20.0)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"eBay: {resp.status_code} {resp.text[:300]}")
+        out += resp.json().get("transactions", [])
     return out
 
 
