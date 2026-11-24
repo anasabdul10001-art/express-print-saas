@@ -202,6 +202,11 @@
                 <p id="t-fees" class="text-xl font-bold text-red-600">—</p>
             </div>
             <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
+                <p class="text-slate-500 text-sm">Versandetiketten</p>
+                <p id="t-labels" class="text-xl font-bold text-red-600">—</p>
+                <p class="text-xs text-slate-400">bei eBay gekaufte Etiketten</p>
+            </div>
+            <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
                 <p class="text-slate-500 text-sm">Warenkosten</p>
                 <p id="t-goods" class="text-xl font-bold text-red-600">—</p>
                 <p class="text-xs text-slate-400">Einkauf + Lieferantenversand + Verpackung</p>
@@ -249,6 +254,7 @@
                         <th class="p-3 text-right">Erstattungen</th>
                         <th class="p-3 text-right">Netto-Einnahmen</th>
                         <th class="p-3 text-right">eBay-Gebühren</th>
+                        <th class="p-3 text-right">Etiketten</th>
                         <th class="p-3 text-right">Warenkosten</th>
                         <th class="p-3 text-right">Ausgaben</th>
                         <th class="p-3 text-right">Nettogewinn</th>
@@ -438,6 +444,7 @@
                 document.getElementById("t-refunds").innerText = money(Number(t.refunds) + Number(t.return_shipping));
                 document.getElementById("t-refund-orders").innerText = `${t.orders_refunded} Rückgabe(n), davon Rückversand ${money(t.return_shipping)}`;
                 document.getElementById("t-fees").innerText = money(t.ebay_fees);
+                document.getElementById("t-labels").innerText = money(t.shipping_labels);
                 document.getElementById("t-goods").innerText = money(t.goods_cost);
                 document.getElementById("t-expenses").innerText = money(t.expenses);
                 colored(document.getElementById("t-net"), t.net_profit);
@@ -456,6 +463,7 @@
                         <td class="p-3 text-right">${money(r.refunds)}</td>
                         <td class="p-3 text-right font-semibold">${money(Number(r.revenue) - Number(r.refunds))}</td>
                         <td class="p-3 text-right">${money(r.ebay_fees)}</td>
+                        <td class="p-3 text-right">${money(r.shipping_labels)}</td>
                         <td class="p-3 text-right">${money(r.goods_cost)}</td>
                         <td class="p-3 text-right">${money(r.expenses)}</td>
                         <td class="p-3 text-right font-bold ${Number(r.net_profit) >= 0 ? "text-emerald-600" : "text-red-600"}">${money(r.net_profit)}</td>

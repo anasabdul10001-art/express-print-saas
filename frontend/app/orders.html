@@ -648,6 +648,7 @@
                             <div class="text-right">
                                 <div class="text-red-600 font-bold">${euro(total)}</div>
                                 ${order.ebay_fees !== null && order.ebay_fees !== undefined ? `<div class="text-xs text-slate-500">${t("orders.ebayFees")} −${euro(order.ebay_fees)}</div>` : ""}
+                                ${order.shipping_label_cost ? `<div class="text-xs text-slate-500">Etikett −${euro(order.shipping_label_cost)}</div>` : ""}
                                 <div class="text-xs ${order.total_profit >= 0 ? "text-emerald-600" : "text-red-600"}">${t("orders.profit")} ${euro(order.total_profit)}</div>
                                 ${order.refund_amount ? `<div class="text-xs font-semibold text-amber-700">Erstattet −${euro(order.refund_amount)}${order.item_returned_to_stock ? " (Ware zurück)" : " (Ware verloren)"}</div>` : ""}
                                 <details class="text-xs text-slate-500 mt-1">

@@ -61,6 +61,11 @@ class Order(Base):
     ebay_payout = Column(DECIMAL(10, 2), nullable=True)
     ebay_payment_status = Column(String(30), nullable=True)
 
+    # From eBay's Finances API: what the seller paid for the shipping label of this order,
+    # and the part of the fees eBay gave back when the order was (partly) refunded.
+    shipping_label_cost = Column(DECIMAL(10, 2), nullable=True)
+    ebay_fee_credit = Column(DECIMAL(10, 2), nullable=True)
+
     # Which connected eBay account this order came from (null for manual orders).
     ebay_account_id = Column(UUID(as_uuid=True), ForeignKey("ebay_accounts.id", ondelete="SET NULL"), nullable=True)
 
