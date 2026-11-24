@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <title>Preisrechner — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="trial-guard.js"></script>
+    <script src="../site-logo.js"></script>
+    <script src="../translations.js"></script>
+    <script src="../i18n.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+    <div class="flex min-h-screen">
+    <aside class="hidden md:flex md:flex-col md:w-60 bg-white border-r border-slate-200 flex-shrink-0">
+        <a href="dashboard.html" class="flex items-center gap-2 p-5 border-b border-slate-100">
+            <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+        <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                    <span data-i18n="nav.dashboard">Dashboard</span>
+                </a>
+                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                    <span data-i18n="nav.products">Produkte</span>
+                </a>
+                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+                    <span data-i18n="nav.orders">Bestellungen</span>
+                </a>
+                <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                    <span data-i18n="nav.expenses">Ausgaben</span>
+                </a>
+                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M13 16V8"/><path d="M18 16v-8"/></svg>
+                    <span data-i18n="nav.accounting">Buchhaltung</span>
+                </a>
+                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <span data-i18n="nav.marketResearch">Marktrecherche</span>
+                </a>
+                <a href="label-print.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/></svg>
+                    <span data-i18n="nav.labelPrint">Etikett drucken</span>
+                </a>
+                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span data-i18n="nav.printAgents">Print-Agents</span>
+                </a>
+                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span data-i18n="nav.settings">Einstellungen</span>
+                </a>
+        </nav>
+        <a href="settings.html" class="flex items-center gap-3 mx-3 mb-1 p-2 rounded-lg hover:bg-slate-50 transition">
+            <span class="flex-shrink-0 w-9 h-9 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
+                <img id="sidebar-avatar-img" class="hidden w-full h-full object-cover" alt="">
+                <span id="sidebar-avatar-initial" class="text-slate-400 text-sm font-bold">?</span>
+            </span>
+            <span class="min-w-0 flex-1">
+                <span id="sidebar-user-name" class="block text-sm font-semibold text-slate-900 truncate">—</span>
+                <span id="sidebar-user-email" class="block text-xs text-slate-400 truncate">—</span>
+            </span>
+        </a>
+        <div class="p-3 border-t border-slate-100">
+            <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.logout">Abmelden</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="flex-1 min-w-0">
+        <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+            <a href="dashboard.html" class="flex items-center gap-2">
+                <svg class="brand-logo" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
+                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 text-xs font-semibold">
+                    <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+                    <span class="text-slate-300">|</span>
+                    <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+                </div>
+                <button onclick="toggleMobileMenu()" class="p-2 -mr-2 text-slate-600" aria-label="Menü öffnen">
+                    <svg id="menu-icon-open" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    <svg id="menu-icon-close" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+                </button>
+            </div>
+        </header>
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-slate-200 p-3 space-y-1">
+            <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                <span data-i18n="nav.dashboard">Dashboard</span>
+            </a>
+            <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                <span data-i18n="nav.products">Produkte</span>
+            </a>
+            <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+                <span data-i18n="nav.orders">Bestellungen</span>
+            </a>
+            <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
+                <span data-i18n="nav.expenses">Ausgaben</span>
+            </a>
+                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M13 16V8"/><path d="M18 16v-8"/></svg>
+                    <span data-i18n="nav.accounting">Buchhaltung</span>
+                </a>
+            <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span data-i18n="nav.marketResearch">Marktrecherche</span>
+            </a>
+            <a href="label-print.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/></svg>
+                <span data-i18n="nav.labelPrint">Etikett drucken</span>
+            </a>
+            <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span data-i18n="nav.printAgents">Print-Agents</span>
+            </a>
+            <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span data-i18n="nav.settings">Einstellungen</span>
+            </a>
+            <button onclick="logout()" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span data-i18n="nav.logout">Abmelden</span>
+            </button>
+        </div>
+
+        <div class="hidden md:flex justify-end items-center gap-1 px-6 pt-4 text-xs font-semibold">
+            <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
+            <span class="text-slate-300">|</span>
+            <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
+        </div>
+
+    <main class="max-w-5xl mx-auto p-6 space-y-6">
+        <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <div>
+            <h2 class="text-2xl font-bold">Preisrechner</h2>
+            <p class="text-sm text-slate-500 mt-1">Aus Einkaufskosten, eBay-Gebühren und Umsatzsteuer den Verkaufspreis für dein Gewinnziel berechnen. Alle Beträge sind Brutto (inkl. USt, falls vorhanden).</p>
+        </div>
+
+        <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-5 space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="block text-sm">
+                    <span class="font-semibold text-slate-700">Umsatzsteuer</span>
+                    <select id="vat_mode" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2">
+                        <option value="kleinunternehmer">Kleinunternehmer (§ 19 UStG, keine USt)</option>
+                        <option value="regular">Regelbesteuerung (19 % USt)</option>
+                    </select>
+                    <span class="text-xs text-slate-400">Vorgabe aus deinen Einstellungen (Buchhaltung). Hier nur für die Rechnung geändert.</span>
+                </label>
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="block text-sm"><span class="font-semibold text-slate-700">eBay-Gebühr (%)</span>
+                        <input id="fee_percent" type="number" step="0.01" min="0" value="11" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"></label>
+                    <label class="block text-sm"><span class="font-semibold text-slate-700">Fixgebühr (€)</span>
+                        <input id="fee_fixed" type="number" step="0.01" min="0" value="0.35" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"></label>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <label class="block text-sm"><span class="font-semibold text-slate-700">Einkaufspreis (€)</span>
+                    <input id="purchase_price" type="number" step="0.01" min="0" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"></label>
+                <label class="block text-sm"><span class="font-semibold text-slate-700">Versand Lieferant (€)</span>
+                    <input id="supplier_shipping_cost" type="number" step="0.01" min="0" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"></label>
+                <label class="block text-sm"><span class="font-semibold text-slate-700">Verpackung (€)</span>
+                    <input id="packaging_cost" type="number" step="0.01" min="0" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"></label>
+                <label class="block text-sm"><span class="font-semibold text-slate-700">Versandetikett (€)</span>
+                    <input id="label_cost" type="number" step="0.01" min="0" value="1.10" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"></label>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <label class="block text-sm"><span class="font-semibold text-slate-700">Ziel</span>
+                    <select id="target_kind" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2">
+                        <option value="margin">Marge (% vom Netto-Umsatz)</option>
+                        <option value="profit">Gewinn pro Stück (€)</option>
+                    </select></label>
+                <label class="block text-sm"><span class="font-semibold text-slate-700">Zielwert</span>
+                    <input id="target_value" type="number" step="0.01" min="0" value="20" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"></label>
+                <label class="block text-sm"><span class="font-semibold text-slate-700">Preis aufrunden auf</span>
+                    <select id="round_to" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2">
+                        <option value="none">Cent genau</option>
+                        <option value="x.99">x,99</option>
+                        <option value="x.49">x,49 / x,99</option>
+                        <option value="x.90">x,90</option>
+                    </select></label>
+                <label class="block text-sm"><span class="font-semibold text-slate-700">Aktuellen Preis prüfen (€)</span>
+                    <input id="check_price" type="number" step="0.01" min="0" placeholder="optional" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"></label>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <button id="btn-calc" class="px-5 py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition">Preis berechnen</button>
+                <button id="btn-all" class="px-5 py-2.5 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Für alle meine Produkte berechnen</button>
+            </div>
+        </section>
+
+        <section id="result" class="hidden bg-white border border-slate-200 rounded-xl shadow-sm p-5 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+                    <p class="text-sm text-emerald-700">Empfohlener Verkaufspreis</p>
+                    <p id="r-suggested" class="text-3xl font-bold text-emerald-700">—</p>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <p class="text-sm text-slate-500">Mindestpreis (Gewinn 0 €)</p>
+                    <p id="r-breakeven" class="text-2xl font-bold text-slate-700">—</p>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <p class="text-sm text-slate-500">Stückkosten (Einkauf + Lieferant + Verpackung)</p>
+                    <p id="r-goods" class="text-2xl font-bold text-slate-700">—</p>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead><tr class="text-left text-slate-500 border-b border-slate-200"><th class="py-2 pr-4"></th><th class="py-2 pr-4 text-right">Empfohlener Preis</th><th id="r-check-head" class="py-2 text-right hidden">Dein Preis</th></tr></thead>
+                    <tbody id="r-rows"></tbody>
+                </table>
+            </div>
+            <p id="r-note" class="text-xs text-slate-400"></p>
+        </section>
+
+        <section id="all" class="hidden bg-white border border-slate-200 rounded-xl shadow-sm p-5 space-y-3">
+            <h3 class="text-lg font-bold">Alle Produkte</h3>
+            <p class="text-xs text-slate-500">Nur Produkte mit eingetragenem Einkaufspreis. Preise werden hier nur berechnet, nicht geändert. Ändern kannst du sie in der Produktliste.</p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead><tr class="text-left text-slate-500 border-b border-slate-200">
+                        <th class="py-2 pr-4">Produkt</th><th class="py-2 pr-4 text-right">Stückkosten</th><th class="py-2 pr-4 text-right">Aktueller Preis</th>
+                        <th class="py-2 pr-4 text-right">Gewinn jetzt</th><th class="py-2 pr-4 text-right">Mindestpreis</th><th class="py-2 text-right">Empfohlen</th></tr></thead>
+                    <tbody id="all-rows"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    </div>
+    </div>
+
+    <script>
+        const API_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+        if (!token) { window.location.href = "../login.html"; }
+
+        function authHeaders(json = false) {
+            const headers = { "Authorization": `Bearer ${token}` };
+            if (json) headers["Content-Type"] = "application/json";
+            return headers;
+        }
+        function toggleMobileMenu() {
+            document.getElementById("mobile-menu").classList.toggle("hidden");
+            document.getElementById("menu-icon-open").classList.toggle("hidden");
+            document.getElementById("menu-icon-close").classList.toggle("hidden");
+        }
+        function logout() {
+            localStorage.removeItem("access_token");
+            window.location.href = "../login.html";
+        }
+        async function loadSidebarProfile() {
+            try {
+                const r = await fetch(`${API_URL}/auth/me`, { headers: authHeaders() });
+                if (r.status === 401) { logout(); return; }
+                if (!r.ok) return;
+                const me = await r.json();
+                document.getElementById("sidebar-user-name").innerText = me.full_name || me.email;
+                document.getElementById("sidebar-user-email").innerText = me.email;
+                const img = document.getElementById("sidebar-avatar-img");
+                const ini = document.getElementById("sidebar-avatar-initial");
+                if (me.avatar_url) { img.src = me.avatar_url; img.classList.remove("hidden"); ini.classList.add("hidden"); }
+                else { ini.innerText = (me.full_name || me.email || "?").trim().charAt(0).toUpperCase(); }
+            } catch (err) { /* sidebar info is optional */ }
+        }
+        loadSidebarProfile();
+
+        const $ = (id) => document.getElementById(id);
+        const eur = (v) => (v === null || v === undefined) ? "—" : Number(v).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+        const num = (id) => { const v = $(id).value; return v === "" ? 0 : Number(v); };
+
+        function showBanner(msg, isError) {
+            const b = $("banner");
+            b.textContent = msg;
+            b.className = msg ? "p-3 rounded text-sm text-center " + (isError ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700") : "hidden";
+        }
+
+        function params() {
+            const p = {
+                vat_mode: $("vat_mode").value,
+                label_cost: num("label_cost"),
+                fee_percent: num("fee_percent"),
+                fee_fixed: num("fee_fixed"),
+                round_to: $("round_to").value,
+            };
+            p[$("target_kind").value === "profit" ? "target_profit" : "target_margin_percent"] = num("target_value");
+            return p;
+        }
+
+        async function post(path, body) {
+            const r = await fetch(`${API_URL}${path}`, { method: "POST", headers: authHeaders(true), body: JSON.stringify(body) });
+            if (r.status === 401) { logout(); throw new Error("401"); }
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                const d = data.detail;
+                throw new Error(typeof d === "string" ? d : "Bitte die Eingaben prüfen.");
+            }
+            return data;
+        }
+
+        function row(label, a, b, strong) {
+            const cls = strong ? "font-bold" : "";
+            return `<tr class="border-b border-slate-100"><td class="py-2 pr-4 ${cls}">${label}</td><td class="py-2 pr-4 text-right ${cls}">${a}</td>${b === null ? "" : `<td class="py-2 text-right ${cls}">${b}</td>`}</tr>`;
+        }
+
+        function renderResult(d) {
+            const a = d.at_suggested, c = d.at_check_price, regular = d.vat_mode === "regular";
+            $("r-suggested").textContent = eur(d.suggested_price);
+            $("r-breakeven").textContent = eur(d.break_even_price);
+            $("r-goods").textContent = eur(d.goods_cost);
+            $("r-check-head").classList.toggle("hidden", !c);
+            const pair = (k, neg) => [neg ? "− " + eur(a[k]) : eur(a[k]), c ? (neg ? "− " + eur(c[k]) : eur(c[k])) : null];
+            const lines = [["Verkaufspreis (brutto)", "price", false]];
+            if (regular) {
+                lines.push(["davon USt 19 %", "sales_vat", true], ["Netto-Umsatz", "net_revenue", false]);
+            }
+            lines.push(["eBay-Gebühren", "ebay_fees", true],
+                       [regular ? "Ware + Etikett (netto)" : "Ware + Etikett", "goods_and_label_net", true]);
+            let html = "";
+            for (const [label, key, neg] of lines) { const [x, y] = pair(key, neg); html += row(label, x, y, false); }
+            const [px, py] = pair("profit", false);
+            html += row("Gewinn pro Stück", px, py, true);
+            html += row("Marge (vom Netto-Umsatz)", a.margin_percent.replace(".", ",") + " %", c ? c.margin_percent.replace(".", ",") + " %" : null, false);
+            if (regular) {
+                html += row("USt-Zahllast (USt − Vorsteuer)", eur(a.vat_payable), c ? eur(c.vat_payable) : null, false);
+            }
+            $("r-rows").innerHTML = html;
+            $("r-note").textContent = regular
+                ? "Regelbesteuerung: Waren- und Etikettenkosten gelten als Brutto mit abziehbarer Vorsteuer. eBay-Gebühren werden vorsichtig ohne Vorsteuerabzug gerechnet."
+                : "Kleinunternehmer: keine Umsatzsteuer, alle Beträge zählen wie eingegeben.";
+            $("result").classList.remove("hidden");
+        }
+
+        $("btn-calc").addEventListener("click", async () => {
+            showBanner("");
+            const body = {
+                ...params(),
+                purchase_price: num("purchase_price"),
+                supplier_shipping_cost: num("supplier_shipping_cost"),
+                packaging_cost: num("packaging_cost"),
+            };
+            if ($("check_price").value !== "") body.check_price = num("check_price");
+            try { renderResult(await post("/pricing/calculate", body)); }
+            catch (err) { if (err.message !== "401") showBanner(err.message, true); }
+        });
+
+        function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+        $("btn-all").addEventListener("click", async () => {
+            showBanner("");
+            try {
+                const d = await post("/pricing/products", params());
+                if (!d.products.length) {
+                    $("all-rows").innerHTML = '<tr><td colspan="6" class="py-4 text-center text-slate-400">Keine Produkte mit Einkaufspreis. Trage die Kosten in der Produktliste ein.</td></tr>';
+                } else {
+                    $("all-rows").innerHTML = d.products.map((p) => {
+                        const profit = p.at_current ? Number(p.at_current.profit) : null;
+                        const cls = profit === null ? "" : (profit < 0 ? "text-red-600 font-semibold" : "text-emerald-600");
+                        return `<tr class="border-b border-slate-100"><td class="py-2 pr-4">${esc(p.title)}<div class="text-xs text-slate-400">${esc(p.sku)}</div></td>
+                            <td class="py-2 pr-4 text-right">${eur(p.goods_cost)}</td><td class="py-2 pr-4 text-right">${eur(p.current_price)}</td>
+                            <td class="py-2 pr-4 text-right ${cls}">${profit === null ? "—" : eur(profit)}</td>
+                            <td class="py-2 pr-4 text-right">${eur(p.break_even_price)}</td><td class="py-2 text-right font-bold">${eur(p.suggested_price)}</td></tr>`;
+                    }).join("");
+                }
+                $("all").classList.remove("hidden");
+            } catch (err) { if (err.message !== "401") showBanner(err.message, true); }
+        });
+
+        (async () => {
+            try {
+                const r = await fetch(`${API_URL}/accounting/vat-settings`, { headers: authHeaders() });
+                if (r.ok) $("vat_mode").value = (await r.json()).vat_mode;
+            } catch (err) { /* keep default */ }
+        })();
+    </script>
+</body>
+</html>
