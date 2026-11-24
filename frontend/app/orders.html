@@ -305,9 +305,9 @@
 
         // Pulls orders from every connected channel (eBay + Shopify). A channel with
         // nothing connected answers 400 and is simply skipped.
-        async function syncChannels() {
+        async function syncChannels(channels = ["ebay", "shopify", "amazon"]) {
             const out = { created: 0, skipped: 0, skipped_reasons: [], errors: [], connected: 0 };
-            for (const path of ["ebay", "shopify"]) {
+            for (const path of channels) {
                 const response = await fetch(`${API_URL}/${path}/sync-orders`, { method: "POST", headers: authHeaders() });
                 if (response.status === 401) { logout(); return null; }
                 const data = await response.json().catch(() => ({}));
@@ -318,7 +318,7 @@
                 out.skipped += data.skipped || 0;
                 out.skipped_reasons = out.skipped_reasons.concat(data.skipped_reasons || []);
             }
-            if (out.connected === 0) out.errors.push("Kein eBay-Konto und kein Shopify-Shop verbunden.");
+            if (out.connected === 0) out.errors.push("Kein eBay-Konto, Shopify-Shop oder Amazon-Konto verbunden.");
             return out;
         }
 
@@ -533,7 +533,8 @@
             const carrier = document.getElementById(`car-${orderId}`).value;
             if (!tracking) { showBanner(t("orders.trackingMissing"), true); return; }
             try {
-                const channel = (allOrders.find(o => o.id === orderId) || {}).source === "shopify" ? "shopify" : "ebay";
+                const source = (allOrders.find(o => o.id === orderId) || {}).source;
+                const channel = source === "shopify" || source === "amazon" ? source : "ebay";
                 const response = await fetch(`${API_URL}/${channel}/orders/${orderId}/ship`, {
                     method: "POST",
                     headers: { ...authHeaders(), "Content-Type": "application/json" },
@@ -620,6 +621,7 @@
                                 <span class="font-semibold">${order.external_order_ref || t("orders.noReference")}</span>
                                 ${order.ebay_account_name ? `<span class="ml-2 px-2 py-1 rounded text-xs bg-sky-100 text-sky-800">${order.ebay_account_name}</span>` : ""}
                                 ${order.shopify_account_name ? `<span class="ml-2 px-2 py-1 rounded text-xs bg-green-100 text-green-800">Shopify · ${order.shopify_account_name}</span>` : ""}
+                                ${order.amazon_account_name ? `<span class="ml-2 px-2 py-1 rounded text-xs bg-orange-100 text-orange-800">Amazon · ${order.amazon_account_name}</span>` : ""}
                                 <span class="ml-3 px-2 py-1 rounded text-xs font-semibold ${order.status === "new" || order.status === "ready_to_print" ? "bg-amber-100 text-amber-800" : order.status === "canceled" ? "bg-slate-100 text-slate-500" : "bg-emerald-100 text-emerald-800"}">${statusLabel(order.status)}</span>
                                 ${order.status !== "shipped" && order.status !== "canceled" ? `
                                     <button onclick='printOrder(${JSON.stringify(order.id)})'
@@ -706,7 +708,7 @@
         // New eBay/Shopify orders appear by themselves while this page is open.
         setInterval(async () => {
             try {
-                const r = await syncChannels();
+                const r = await syncChannels(["ebay", "shopify"]);
                 if (r && r.created > 0) loadOrders();
             } catch (e) {}
         }, 120000);

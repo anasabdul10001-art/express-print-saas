@@ -60,6 +60,9 @@ class Order(Base):
     # Which connected Shopify store this order came from (null otherwise).
     shopify_account_id = Column(UUID(as_uuid=True), ForeignKey("shopify_accounts.id", ondelete="SET NULL"), nullable=True)
 
+    # Which connected Amazon seller account this order came from (null otherwise).
+    amazon_account_id = Column(UUID(as_uuid=True), ForeignKey("amazon_accounts.id", ondelete="SET NULL"), nullable=True)
+
     # When the sale happened at eBay (created_at is only when we imported it).
     ordered_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -75,6 +78,7 @@ class Order(Base):
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     ebay_account = relationship("EbayAccount", foreign_keys=[ebay_account_id])
     shopify_account = relationship("ShopifyAccount", foreign_keys=[shopify_account_id])
+    amazon_account = relationship("AmazonAccount", foreign_keys=[amazon_account_id])
 
 
 class OrderItem(Base):

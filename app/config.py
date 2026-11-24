@@ -67,6 +67,15 @@ class Settings(BaseSettings):
         "read_products,read_inventory,read_orders,"
         "read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders"
     )
+    # --- Amazon SP-API (Login with Amazon app; the SP-API needs no AWS signing any more) ---
+    amazon_lwa_client_id: str = ""
+    amazon_lwa_client_secret: str = ""
+    amazon_application_id: str = ""  # the app's id from Seller Central > Develop Apps (consent flow only)
+    amazon_redirect_uri: str = "https://express-print-saas.onrender.com/amazon/callback"
+    amazon_draft_app: bool = True  # adds version=beta to the consent URL while the app is in Draft
+    amazon_seller_central_url: str = "https://sellercentral-europe.amazon.com"
+    amazon_sp_api_host: str = "https://sellingpartnerapi-eu.amazon.com"
+    amazon_marketplace_id: str = "A1PA6795UKMFR9"  # Amazon.de
     # --- Extra eBay scopes (messages, analytics, account policies, disputes, push) ---
     # Space-separated. Set to an empty value to fall back to the core scopes
     # if eBay rejects the consent screen for one of them.
