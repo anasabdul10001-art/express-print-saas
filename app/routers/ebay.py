@@ -241,6 +241,44 @@ def listing_info(
     raise HTTPException(status_code=502, detail="; ".join(errors))
 
 
+@router.get("/orders-raw")
+def orders_raw(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Read-only diagnostic: the money fields eBay returns per order (prices, discounts,
+    shipping, refunds, payment summary), to reconcile ShipSync's accounting with eBay."""
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+    out = []
+    for account in accounts:
+        token = ebay_oauth_service.get_valid_access_token(account, db)
+        resp = httpx.get(
+            f"{ebay_order_service.EBAY_API_BASE[account.environment]}/sell/fulfillment/v1/order",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            params={"limit": 50}, timeout=20.0,
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"eBay: {resp.status_code} {resp.text[:200]}")
+        for o in resp.json().get("orders", []):
+            out.append({
+                "orderId": o.get("orderId"),
+                "creationDate": o.get("creationDate"),
+                "pricingSummary": o.get("pricingSummary"),
+                "paymentSummary": o.get("paymentSummary"),
+                "orderPaymentStatus": o.get("orderPaymentStatus"),
+                "cancelStatus": (o.get("cancelStatus") or {}).get("cancelState"),
+                "lineItems": [
+                    {"quantity": li.get("quantity"), "lineItemCost": li.get("lineItemCost"),
+                     "total": li.get("total"), "discountedLineItemCost": li.get("discountedLineItemCost"),
+                     "appliedPromotions": li.get("appliedPromotions"), "deliveryCost": li.get("deliveryCost")}
+                    for li in o.get("lineItems", [])
+                ],
+            })
+    return out
+
+
 @router.post("/import-products")
 def import_products(
     current_user: User = Depends(get_current_user),
