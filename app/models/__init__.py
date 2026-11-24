@@ -5,6 +5,7 @@ from app.models.print_job import PrintJob
 from app.models.product import Product
 from app.models.order import Order, OrderItem
 from app.models.ebay_account import EbayAccount, EbayOAuthState
+from app.models.shopify_account import ShopifyAccount, ShopifyOAuthState
 from app.models.stock_movement import StockMovement
 from app.models.expense import Expense
 from app.models.password_reset_token import PasswordResetToken
@@ -19,7 +20,7 @@ from app.models.site_page import SitePage
 
 __all__ = [
     "Tenant", "User", "PrintAgent", "PrintJob", "Product", "Order", "OrderItem",
-    "EbayAccount", "EbayOAuthState", "StockMovement", "Expense", "PasswordResetToken",
+    "EbayAccount", "EbayOAuthState", "ShopifyAccount", "ShopifyOAuthState", "StockMovement", "Expense", "PasswordResetToken",
     "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings", "PaymentMethod", "Invoice",
     "DhlAccount", "Affiliate", "AffiliateReferral", "AffiliateCommission", "AffiliatePayout",
     "AffiliatePasswordToken", "SitePage",

@@ -303,6 +303,25 @@
             return map[status] || status;
         }
 
+        // Pulls orders from every connected channel (eBay + Shopify). A channel with
+        // nothing connected answers 400 and is simply skipped.
+        async function syncChannels() {
+            const out = { created: 0, skipped: 0, skipped_reasons: [], errors: [], connected: 0 };
+            for (const path of ["ebay", "shopify"]) {
+                const response = await fetch(`${API_URL}/${path}/sync-orders`, { method: "POST", headers: authHeaders() });
+                if (response.status === 401) { logout(); return null; }
+                const data = await response.json().catch(() => ({}));
+                if (response.status === 400) continue;
+                out.connected++;
+                if (!response.ok) { out.errors.push(data.detail || t("orders.syncFailed")); continue; }
+                out.created += data.created || 0;
+                out.skipped += data.skipped || 0;
+                out.skipped_reasons = out.skipped_reasons.concat(data.skipped_reasons || []);
+            }
+            if (out.connected === 0) out.errors.push("Kein eBay-Konto und kein Shopify-Shop verbunden.");
+            return out;
+        }
+
         async function syncEbayOrders() {
             const btn = document.getElementById("sync-btn");
             const originalText = btn.innerText;
@@ -310,28 +329,21 @@
             btn.innerText = t("orders.syncing");
 
             try {
-                const response = await fetch(`${API_URL}/ebay/sync-orders`, {
-                    method: "POST",
-                    headers: authHeaders(),
-                });
-
-                if (response.status === 401) { logout(); return; }
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    showBanner(data.detail || t("orders.syncFailed"), true);
+                const data = await syncChannels();
+                if (!data) return;
+                if (data.errors.length && data.created === 0) {
+                    showBanner(data.errors.join(" | "), true);
                     return;
                 }
-
                 let message = `${data.created} ${t("orders.syncImported")}`;
                 if (data.skipped > 0) {
                     message += ` ${data.skipped} ${t("orders.syncSkipped")}`;
                 }
-                showBanner(message, data.skipped > 0 && data.created === 0);
+                if (data.errors.length) message += ` (${data.errors.join(" | ")})`;
+                showBanner(message, (data.skipped > 0 && data.created === 0) || data.errors.length > 0);
 
-                if (data.skipped_reasons && data.skipped_reasons.length > 0) {
-                    console.warn("eBay Sync - übersprungene Bestellungen:", data.skipped_reasons);
+                if (data.skipped_reasons.length > 0) {
+                    console.warn("Sync - uebersprungene Bestellungen:", data.skipped_reasons);
                 }
 
                 loadOrders();
@@ -521,7 +533,8 @@
             const carrier = document.getElementById(`car-${orderId}`).value;
             if (!tracking) { showBanner(t("orders.trackingMissing"), true); return; }
             try {
-                const response = await fetch(`${API_URL}/ebay/orders/${orderId}/ship`, {
+                const channel = (allOrders.find(o => o.id === orderId) || {}).source === "shopify" ? "shopify" : "ebay";
+                const response = await fetch(`${API_URL}/${channel}/orders/${orderId}/ship`, {
                     method: "POST",
                     headers: { ...authHeaders(), "Content-Type": "application/json" },
                     body: JSON.stringify({ tracking_number: tracking, carrier }),
@@ -606,6 +619,7 @@
                             <div>
                                 <span class="font-semibold">${order.external_order_ref || t("orders.noReference")}</span>
                                 ${order.ebay_account_name ? `<span class="ml-2 px-2 py-1 rounded text-xs bg-sky-100 text-sky-800">${order.ebay_account_name}</span>` : ""}
+                                ${order.shopify_account_name ? `<span class="ml-2 px-2 py-1 rounded text-xs bg-green-100 text-green-800">Shopify · ${order.shopify_account_name}</span>` : ""}
                                 <span class="ml-3 px-2 py-1 rounded text-xs font-semibold ${order.status === "new" || order.status === "ready_to_print" ? "bg-amber-100 text-amber-800" : order.status === "canceled" ? "bg-slate-100 text-slate-500" : "bg-emerald-100 text-emerald-800"}">${statusLabel(order.status)}</span>
                                 ${order.status !== "shipped" && order.status !== "canceled" ? `
                                     <button onclick='printOrder(${JSON.stringify(order.id)})'
@@ -689,11 +703,11 @@
         loadOrders();
         document.addEventListener("langchange", loadOrders);
 
-        // New eBay orders appear by themselves while this page is open.
+        // New eBay/Shopify orders appear by themselves while this page is open.
         setInterval(async () => {
             try {
-                const r = await fetch(`${API_URL}/ebay/sync-orders`, { method: "POST", headers: authHeaders() });
-                if (r.ok && (await r.json()).created > 0) loadOrders();
+                const r = await syncChannels();
+                if (r && r.created > 0) loadOrders();
             } catch (e) {}
         }, 120000);
     </script>
