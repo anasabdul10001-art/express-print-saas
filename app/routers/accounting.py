@@ -32,6 +32,7 @@ from app.models.expense import Expense
 from app.models.order import Order
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.services import order_money
 
 router = APIRouter(prefix="/accounting", tags=["accounting"])
 
@@ -151,22 +152,20 @@ def summary(
         day = _sale_date(order)
         if not (start <= day <= end):
             continue
-        revenue = sum(((i.unit_price or ZERO) * i.quantity for i in order.items), ZERO)
-        goods = sum(((i.purchase_price or ZERO) * i.quantity for i in order.items), ZERO)
+        revenue = order_money.revenue(order)
+        goods = order_money.goods(order)
         if any(i.purchase_price is None for i in order.items):
             missing_cost += 1
         if order.ebay_fees is None:
             missing_fees += 1
-        refund = order.refund_amount or ZERO
-        if order.item_returned_to_stock and refund > 0:
-            goods = ZERO
+        refund = order_money.refund(order)
         add(day, "revenue", revenue, 1)
         add(day, "refunds", refund)
         add(day, "return_shipping", order.return_shipping_cost or ZERO)
         if refund > 0:
             refunded_orders += 1
         add(day, "goods_cost", goods)
-        add(day, "ebay_fees", order.ebay_fees or ZERO)
+        add(day, "ebay_fees", order_money.fees(order))
 
     by_category: dict[str, Decimal] = defaultdict(lambda: ZERO)
     for expense in (

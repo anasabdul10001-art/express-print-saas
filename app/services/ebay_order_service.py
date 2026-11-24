@@ -108,6 +108,33 @@ def _refund_total(ebay_order: dict):
     return total.quantize(Decimal("0.01")) if total > 0 else None
 
 
+def _dec(value):
+    try:
+        return Decimal(str(value)).quantize(Decimal("0.01"))
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+
+
+def _apply_amounts(order: Order, ebay_order: dict) -> None:
+    """Copies eBay's own money figures onto the order (buyer total, payout, payment status, refund)."""
+    summary = ebay_order.get("paymentSummary") or {}
+    pricing = ebay_order.get("pricingSummary") or {}
+    total = _dec((pricing.get("total") or {}).get("value"))
+    if total is not None:
+        order.ebay_buyer_total = total
+    payout = _dec((summary.get("totalDueSeller") or {}).get("value"))
+    if payout is not None:
+        order.ebay_payout = payout
+    status = ebay_order.get("orderPaymentStatus")
+    if status:
+        order.ebay_payment_status = status
+    refunded = _refund_total(ebay_order)
+    if status == "FULLY_REFUNDED" and total is not None:
+        refunded = total  # the buyer got everything back (eBay's own refund figure is net of returned fees)
+    if refunded is not None and order.refund_amount != refunded:
+        order.refund_amount = refunded
+
+
 def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
     access_token = ebay_oauth_service.get_valid_access_token(account, db)
     base_url = EBAY_API_BASE[account.environment]
@@ -160,9 +187,13 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             if already_imported.ordered_at is None:
                 already_imported.ordered_at = _parse_ebay_date(ebay_order.get("creationDate"))
             # A refund can arrive long after the sale; eBay is the source of truth.
-            refunded = _refund_total(ebay_order)
-            if refunded is not None and already_imported.refund_amount != refunded:
-                already_imported.refund_amount = refunded
+            _apply_amounts(already_imported, ebay_order)
+            lines = ebay_order.get("lineItems", [])
+            if len(lines) == len(already_imported.items):
+                for item, line in zip(already_imported.items, lines):
+                    price = _unit_price(line, int(line.get("quantity", 1)))
+                    if price is not None and item.unit_price != price:
+                        item.unit_price = price
             continue  # silently skip - this is the normal case on repeat syncs
 
         line_items = ebay_order.get("lineItems", [])
@@ -217,19 +248,19 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             status="new",
             buyer_username=buyer_username,
             ordered_at=_parse_ebay_date(ebay_order.get("creationDate")),
-            refund_amount=_refund_total(ebay_order),
             ebay_account_id=account.id,
             **_extract_ship_to(ebay_order),
         )
+        _apply_amounts(order, ebay_order)
         db.add(order)
         db.flush()
 
-        for product, quantity in items_to_create:
+        for (product, quantity), line_item in zip(items_to_create, line_items):
             db.add(OrderItem(
                 order_id=order.id,
                 product_id=product.id,
                 quantity=quantity,
-                unit_price=product.selling_price,
+                unit_price=_unit_price(line_item, quantity) or product.selling_price,
                 purchase_price=product.unit_cost,
                 shelf_location=product.shelf_location,
             ))

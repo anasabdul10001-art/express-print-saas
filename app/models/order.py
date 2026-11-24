@@ -53,6 +53,13 @@ class Order(Base):
     item_returned_to_stock = Column(Boolean, nullable=False, default=False, server_default=text("false"))
     return_shipping_cost = Column(DECIMAL(10, 2), nullable=True)
 
+    # What eBay itself reports for the sale (Fulfillment API): the amount the buyer paid
+    # (items - multi-buy discount + shipping), what is due to the seller after fees and
+    # refunds, and the payment status (PAID / PARTIALLY_REFUNDED / FULLY_REFUNDED ...).
+    ebay_buyer_total = Column(DECIMAL(10, 2), nullable=True)
+    ebay_payout = Column(DECIMAL(10, 2), nullable=True)
+    ebay_payment_status = Column(String(30), nullable=True)
+
     # Which connected eBay account this order came from (null for manual orders).
     ebay_account_id = Column(UUID(as_uuid=True), ForeignKey("ebay_accounts.id", ondelete="SET NULL"), nullable=True)
 
