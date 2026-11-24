@@ -10,6 +10,7 @@ from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
 from app.models.user import User
+from app.services import order_money
 from app.schemas.order import OrderCreate, OrderItemOut, OrderOut, OrderSummaryOut, ProfitHistoryPoint, RecipientAddressOut, RefundUpdate
 router = APIRouter(prefix="/orders", tags=["orders"])
 def _serialize_order(order: Order) -> OrderOut:
@@ -65,20 +66,20 @@ def _serialize_order(order: Order) -> OrderOut:
             phone=order.recipient_phone,
         )
 
-    # Returns: the refund comes off the profit; the goods cost only stays a
-    # loss if the item did not come back to stock; return shipping is extra.
+    # Same rules as the accounting page (app/services/order_money.py): what the buyer
+    # actually paid, minus refund, fees, goods cost and return shipping.
     if profit_known:
-        total_profit -= order.refund_amount or Decimal("0")
-        total_profit -= order.return_shipping_cost or Decimal("0")
-        if order.item_returned_to_stock and order.refund_amount:
-            total_profit += goods_cost
+        total_profit = (
+            order_money.revenue(order) - order_money.refund(order) - order_money.fees(order)
+            - order_money.goods(order) - (order.return_shipping_cost or Decimal("0"))
+        )
 
     return OrderOut(
         id=order.id,
         external_order_ref=order.external_order_ref,
         status=order.status,
         items=items_out,
-        total_profit=(total_profit - (order.ebay_fees or Decimal("0"))) if profit_known else None,
+        total_profit=total_profit if profit_known else None,
         ebay_fees=order.ebay_fees,
         ordered_at=order.ordered_at or order.created_at,
         refund_amount=order.refund_amount,
