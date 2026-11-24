@@ -1,4 +1,5 @@
 import uuid
+from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
@@ -105,43 +106,52 @@ def list_orders(current_user: User = Depends(get_current_user), db: Session = De
     return [_serialize_order(o) for o in orders]
 
 
+BERLIN = ZoneInfo("Europe/Berlin")
+
+
+def _order_profit(order: Order) -> Decimal:
+    """Profit of one order by the same rules as the accounting page (fees, refunds, returns)."""
+    return (
+        order_money.revenue(order) - order_money.refund(order) - order_money.fees(order)
+        - order_money.goods(order) - (order.return_shipping_cost or Decimal("0"))
+    )
+
+
+def _sale_day(order: Order):
+    return (order.ordered_at or order.created_at).astimezone(BERLIN).date()
+
+
+def _recent_orders(db: Session, tenant_id, since_day):
+    """Non-canceled orders sold on or after since_day (Berlin date), with their items."""
+    lo = datetime.combine(since_day - timedelta(days=1), datetime.min.time()).replace(tzinfo=BERLIN)
+    orders = (
+        db.query(Order)
+        .options(joinedload(Order.items))
+        .filter(
+            Order.tenant_id == tenant_id,
+            Order.status != "canceled",
+            func.coalesce(Order.ordered_at, Order.created_at) >= lo,
+        )
+        .all()
+    )
+    return [o for o in orders if _sale_day(o) >= since_day]
+
+
 @router.get("/summary", response_model=OrderSummaryOut)
 def order_summary(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Powers the dashboard's quick numbers. Boundaries are UTC calendar days/
-    months (not the seller's local timezone) - fine for a rough at-a-glance
-    figure, but worth knowing if "today" ever looks off by a few hours
-    around midnight. Profit here simply skips items with unknown cost data
-    rather than voiding the whole total (unlike a single order's
-    total_profit, which goes to None if ANY item is unknown) - a dashboard
-    estimate is more useful approximate than blank.
+    Powers the dashboard's quick numbers, by the Berlin calendar day/month of the sale. Profit
+    follows the accounting page's rules (eBay's real amounts, fees, refunds, returns); items
+    with unknown cost simply count as 0 cost - an estimate is more useful than blank.
     """
-    now = datetime.now(timezone.utc)
-    start_of_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    start_of_month = start_of_today.replace(day=1)
-
-    def counts_and_profit(since: datetime) -> tuple[int, Decimal]:
-        orders_count = (
-            db.query(func.count(Order.id))
-            .filter(Order.tenant_id == current_user.tenant_id, Order.created_at >= since)
-            .scalar()
-        ) or 0
-        profit = (
-            db.query(func.sum((OrderItem.unit_price - OrderItem.purchase_price) * OrderItem.quantity))
-            .join(Order, Order.id == OrderItem.order_id)
-            .filter(Order.tenant_id == current_user.tenant_id, Order.created_at >= since)
-            .scalar()
-        ) or Decimal("0")
-        return orders_count, profit
-
-    orders_today, profit_today = counts_and_profit(start_of_today)
-    orders_month, profit_month = counts_and_profit(start_of_month)
-
+    today = datetime.now(BERLIN).date()
+    orders = _recent_orders(db, current_user.tenant_id, today.replace(day=1))
+    todays = [o for o in orders if _sale_day(o) == today]
     return OrderSummaryOut(
-        orders_today=orders_today,
-        profit_today=profit_today,
-        orders_month=orders_month,
-        profit_month=profit_month,
+        orders_today=len(todays),
+        profit_today=sum((_order_profit(o) for o in todays), Decimal("0")),
+        orders_month=len(orders),
+        profit_month=sum((_order_profit(o) for o in orders), Decimal("0")),
     )
 
 
@@ -152,28 +162,16 @@ def profit_history(
     db: Session = Depends(get_db),
 ):
     """
-    Daily profit totals for the last `days` days (including today), powering
-    the dashboard's trend chart. Days with no orders come back as 0 rather
-    than being omitted, so the chart's x-axis stays evenly spaced.
+    Daily profit totals for the last `days` days (including today), powering the dashboard's
+    trend chart. Days with no orders come back as 0 so the x-axis stays evenly spaced.
     """
     days = max(1, min(days, 90))
-    start_date = (datetime.now(timezone.utc) - timedelta(days=days - 1)).date()
-
-    day_col = func.date(Order.created_at)
-    rows = (
-        db.query(
-            day_col.label("day"),
-            func.sum((OrderItem.unit_price - OrderItem.purchase_price) * OrderItem.quantity).label("profit"),
-        )
-        .join(OrderItem, OrderItem.order_id == Order.id)
-        .filter(Order.tenant_id == current_user.tenant_id, day_col >= start_date)
-        .group_by(day_col)
-        .all()
-    )
-    profit_by_day = {row.day: (row.profit or Decimal("0")) for row in rows}
-
+    start_date = datetime.now(BERLIN).date() - timedelta(days=days - 1)
+    by_day: dict = {}
+    for order in _recent_orders(db, current_user.tenant_id, start_date):
+        by_day[_sale_day(order)] = by_day.get(_sale_day(order), Decimal("0")) + _order_profit(order)
     return [
-        ProfitHistoryPoint(date=start_date + timedelta(days=i), profit=profit_by_day.get(start_date + timedelta(days=i), Decimal("0")))
+        ProfitHistoryPoint(date=start_date + timedelta(days=i), profit=by_day.get(start_date + timedelta(days=i), Decimal("0")))
         for i in range(days)
     ]
 
@@ -268,8 +266,21 @@ def update_refund(
     )
     if not order:
         raise HTTPException(status_code=404, detail="Bestellung nicht gefunden.")
+    was_returned = bool(order.item_returned_to_stock)
     for field in payload.model_fields_set:
         setattr(order, field, getattr(payload, field))
+    # Marking the item as back (and resellable) puts it on the shelf again; unmarking takes it off.
+    now_returned = bool(order.item_returned_to_stock)
+    if now_returned != was_returned:
+        sign = 1 if now_returned else -1
+        for item in order.items:
+            if item.product is None:
+                continue
+            item.product.stock_quantity = max(0, item.product.stock_quantity + sign * item.quantity)
+            db.add(StockMovement(
+                tenant_id=order.tenant_id, product_id=item.product.id, quantity_change=sign * item.quantity,
+                reason="manual_correction", reference=f"return {order.external_order_ref or order.id}",
+            ))
     db.commit()
     db.refresh(order)
     return _serialize_order(order)
