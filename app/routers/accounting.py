@@ -22,6 +22,7 @@ from decimal import Decimal
 from typing import Literal
 from zoneinfo import ZoneInfo
 
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
@@ -29,6 +30,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.deps import get_current_user, get_db
 from app.models.expense import Expense
 from app.models.order import Order
+from app.models.tenant import Tenant
 from app.models.user import User
 
 router = APIRouter(prefix="/accounting", tags=["accounting"])
@@ -36,6 +38,48 @@ router = APIRouter(prefix="/accounting", tags=["accounting"])
 BERLIN = ZoneInfo("Europe/Berlin")
 ZERO = Decimal("0")
 MAX_DAYS = 3660
+
+
+VAT_RATE = Decimal("19")
+
+
+class VatSettingsIn(BaseModel):
+    vat_mode: Literal["kleinunternehmer", "regular"]
+
+
+def _tenant(db: Session, user: User) -> Tenant:
+    return db.query(Tenant).filter(Tenant.id == user.tenant_id).one()
+
+
+@router.get("/vat-settings")
+def get_vat_settings(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return {"vat_mode": _tenant(db, current_user).vat_mode, "rate": str(VAT_RATE)}
+
+
+@router.put("/vat-settings")
+def set_vat_settings(payload: VatSettingsIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    tenant = _tenant(db, current_user)
+    tenant.vat_mode = payload.vat_mode
+    db.commit()
+    return {"vat_mode": tenant.vat_mode, "rate": str(VAT_RATE)}
+
+
+def _vat_block(totals: dict) -> dict:
+    """19% VAT overview for regular taxpayers. Amounts are assumed GROSS (eBay prices and
+    purchase prices include VAT), so VAT = gross * 19/119. Input VAT is an estimate."""
+    factor = VAT_RATE / (VAT_RATE + Decimal("100"))
+    gross_sales = totals["revenue"] - totals["refunds"]
+    sales_vat = (gross_sales * factor).quantize(Decimal("0.01"))
+    costs = totals["goods_cost"] + totals["expenses"] + totals["return_shipping"]
+    input_vat = (costs * factor).quantize(Decimal("0.01"))
+    return {
+        "rate": str(VAT_RATE),
+        "gross_sales_after_refunds": str(gross_sales),
+        "net_sales": str(gross_sales - sales_vat),
+        "sales_vat": str(sales_vat),
+        "input_vat_estimate": str(input_vat),
+        "payable_estimate": str(sales_vat - input_vat),
+    }
 
 
 def _sale_date(order: Order) -> date:
@@ -69,6 +113,7 @@ def summary(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    tenant_mode = _tenant(db, current_user).vat_mode
     if end < start:
         raise HTTPException(status_code=400, detail="Das Enddatum liegt vor dem Startdatum.")
     if (end - start).days > MAX_DAYS:
@@ -156,6 +201,8 @@ def summary(
             "orders_missing_fees": missing_fees,
             "orders_refunded": refunded_orders,
         },
+        "vat_mode": tenant_mode,
+        "vat": _vat_block(totals) if tenant_mode == "regular" else None,
         "expenses_by_category": [
             {"category": c, "amount": str(a)} for c, a in sorted(by_category.items(), key=lambda x: -x[1])
         ],

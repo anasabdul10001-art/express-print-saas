@@ -48,6 +48,9 @@ class Tenant(Base):
     default_package_width_cm = Column(Integer, nullable=False, default=15)
     default_package_height_cm = Column(Integer, nullable=False, default=10)
 
+    # Accounting VAT mode: 'kleinunternehmer' (no VAT, par. 19 UStG) or 'regular' (19%).
+    vat_mode = Column(String(20), nullable=False, default="kleinunternehmer", server_default="kleinunternehmer")
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
 

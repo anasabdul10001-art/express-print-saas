@@ -45,6 +45,7 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE plans ADD COLUMN IF NOT EXISTS trial_days INTEGER"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS plan_id UUID REFERENCES plans(id)"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS vat_mode VARCHAR(20) NOT NULL DEFAULT 'kleinunternehmer'"))
     connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS logo_height INTEGER"))
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT"))
     connection.execute(text("ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS company_legal_name VARCHAR(255)"))
