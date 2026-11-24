@@ -87,7 +87,8 @@ def _serialize_order(order: Order) -> OrderOut:
         return_shipping_cost=order.return_shipping_cost,
         ebay_account_name=order.ebay_account.ebay_user_id if order.ebay_account else None,
         shopify_account_name=(order.shopify_account.shop_name or order.shopify_account.shop_domain) if order.shopify_account else None,
-        source="shopify" if order.shopify_account_id else ("ebay" if order.ebay_account_id else "manual"),
+        amazon_account_name=order.amazon_account.seller_id if order.amazon_account else None,
+        source="amazon" if order.amazon_account_id else ("shopify" if order.shopify_account_id else ("ebay" if order.ebay_account_id else "manual")),
         recipient_address=recipient_address,
         tracking_number=order.tracking_number,
     )
@@ -97,7 +98,7 @@ def list_orders(current_user: User = Depends(get_current_user), db: Session = De
     orders = (
         db.query(Order)
         .filter(Order.tenant_id == current_user.tenant_id)
-        .options(joinedload(Order.items).joinedload(OrderItem.product), joinedload(Order.ebay_account), joinedload(Order.shopify_account))
+        .options(joinedload(Order.items).joinedload(OrderItem.product), joinedload(Order.ebay_account), joinedload(Order.shopify_account), joinedload(Order.amazon_account))
         .order_by(func.coalesce(Order.ordered_at, Order.created_at).desc(), Order.created_at.desc())
         .all()
     )
@@ -261,7 +262,7 @@ def update_refund(
     """Sets the return details of an order (refund amount, item back in stock, return shipping)."""
     order = (
         db.query(Order)
-        .options(joinedload(Order.items).joinedload(OrderItem.product), joinedload(Order.ebay_account), joinedload(Order.shopify_account))
+        .options(joinedload(Order.items).joinedload(OrderItem.product), joinedload(Order.ebay_account), joinedload(Order.shopify_account), joinedload(Order.amazon_account))
         .filter(Order.id == order_id, Order.tenant_id == current_user.tenant_id)
         .first()
     )

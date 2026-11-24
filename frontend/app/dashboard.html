@@ -199,6 +199,26 @@
             </div>
             <p id="shopify-hint" class="hidden text-xs text-slate-400 mt-2"></p>
         </div>
+
+        <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
+            <h2 class="text-xl font-bold mb-2">Amazon-Konto</h2>
+            <p class="text-slate-500 text-sm mb-4" id="amazon-desc">Status wird geladen...</p>
+            <ul id="amazon-accounts" class="mb-4 space-y-2"></ul>
+            <div id="amazon-connect" class="hidden space-y-3">
+                <button id="amazon-consent-btn" onclick="connectAmazon()" class="hidden bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded transition">
+                    Mit Amazon verbinden
+                </button>
+                <details class="text-sm">
+                    <summary class="cursor-pointer text-slate-600 font-semibold">Eigenes Konto per Token verbinden (Selbstautorisierung)</summary>
+                    <div class="mt-2 flex flex-wrap gap-2 items-center">
+                        <input id="amazon-seller-id" type="text" placeholder="Seller-ID (A1B2C3...)" class="border border-slate-300 rounded px-3 py-2 text-sm w-48" />
+                        <input id="amazon-refresh-token" type="password" placeholder="Refresh-Token (Atzr|...)" autocomplete="off" class="border border-slate-300 rounded px-3 py-2 text-sm w-64" />
+                        <button onclick="connectAmazonToken()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded transition">Verbinden</button>
+                    </div>
+                </details>
+            </div>
+            <p id="amazon-hint" class="hidden text-xs text-slate-400 mt-2"></p>
+        </div>
     </main>
     </div>
     </div>
@@ -483,6 +503,84 @@
         }
 
         loadShopifyStatus();
+
+        // ---- Amazon ----
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("amazon_connected")) showBanner(`Amazon verbunden: ${params.get("amazon_connected")}`, false);
+            else if (params.get("amazon_error")) showBanner(`Amazon-Verbindung fehlgeschlagen: ${params.get("amazon_error")}`, true);
+        })();
+
+        async function loadAmazonStatus() {
+            const desc = document.getElementById("amazon-desc");
+            try {
+                const [accRes, stRes] = await Promise.all([
+                    fetch(`${API_URL}/amazon/accounts`, { headers: authHeaders() }),
+                    fetch(`${API_URL}/amazon/status`, { headers: authHeaders() }),
+                ]);
+                if (accRes.status === 401) { logout(); return; }
+                const accounts = await accRes.json();
+                const status = await stRes.json();
+                desc.innerText = accounts.length ? `Verbundene Konten: ${accounts.length}` : "Noch kein Amazon-Konto verbunden.";
+                document.getElementById("amazon-accounts").innerHTML = accounts.map(a => `
+                    <li class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm">
+                        <span class="font-semibold">Seller ${a.seller_id}</span>
+                        <button onclick='disconnectAmazon(${JSON.stringify(a.id)})' class="text-slate-500 hover:text-red-600 text-xs font-semibold">Trennen</button>
+                    </li>`).join("");
+                const hint = document.getElementById("amazon-hint");
+                if (status.configured) {
+                    document.getElementById("amazon-connect").classList.remove("hidden");
+                    document.getElementById("amazon-consent-btn").classList.toggle("hidden", !status.consent_flow);
+                } else {
+                    hint.innerText = "Amazon ist serverseitig noch nicht eingerichtet (AMAZON_LWA_CLIENT_ID / AMAZON_LWA_CLIENT_SECRET).";
+                    hint.classList.remove("hidden");
+                }
+            } catch (err) {
+                desc.innerText = "Server nicht erreichbar, bitte Seite neu laden.";
+            }
+        }
+
+        async function connectAmazon() {
+            try {
+                const response = await fetch(`${API_URL}/amazon/authorize-url`, { headers: authHeaders() });
+                const data = await response.json();
+                if (!response.ok) { showBanner(data.detail || "Verbindung konnte nicht gestartet werden.", true); return; }
+                window.location.href = data.authorize_url;
+            } catch (err) {
+                showBanner("Verbindung konnte nicht gestartet werden.", true);
+            }
+        }
+
+        async function connectAmazonToken() {
+            const seller = document.getElementById("amazon-seller-id").value.trim();
+            const token = document.getElementById("amazon-refresh-token").value.trim();
+            if (!seller || !token) { showBanner("Bitte Seller-ID und Refresh-Token eingeben.", true); return; }
+            try {
+                const response = await fetch(`${API_URL}/amazon/connect-token`, {
+                    method: "POST",
+                    headers: { ...authHeaders(), "Content-Type": "application/json" },
+                    body: JSON.stringify({ seller_id: seller, refresh_token: token }),
+                });
+                const data = await response.json();
+                if (!response.ok) { showBanner(data.detail || "Verbindung fehlgeschlagen.", true); return; }
+                document.getElementById("amazon-refresh-token").value = "";
+                showBanner(`Amazon verbunden: ${data.seller_id}`, false);
+                loadAmazonStatus();
+            } catch (err) {
+                showBanner("Verbindung fehlgeschlagen.", true);
+            }
+        }
+
+        async function disconnectAmazon(accountId) {
+            try {
+                await fetch(`${API_URL}/amazon/disconnect?account_id=${encodeURIComponent(accountId)}`, { method: "POST", headers: authHeaders() });
+                loadAmazonStatus();
+            } catch (err) {
+                showBanner("Trennen fehlgeschlagen.", true);
+            }
+        }
+
+        loadAmazonStatus();
         loadSummary();
         loadProfitHistory();
     </script>

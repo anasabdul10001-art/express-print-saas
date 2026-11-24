@@ -10,7 +10,7 @@ from app.core.rate_limit import limiter
 from app.core.sentry import init_sentry
 from app.database import Base, engine
 from app import models  # noqa: F401 - import registers all models with Base, needed for create_all() below
-from app.routers import accounting, admin, affiliate_portal, auth, billing, dhl, ebay, expenses, market_research, orders, plans, print_agents, print_jobs, products, shopify, tenants, uploads
+from app.routers import accounting, admin, affiliate_portal, amazon, auth, billing, dhl, ebay, expenses, market_research, orders, plans, print_agents, print_jobs, products, shopify, tenants, uploads
 
 # Before the app is created: a no-op until settings.sentry_dsn is set (see
 # app/core/sentry.py) - safe to always call.
@@ -32,6 +32,7 @@ with engine.begin() as connection:
     connection.execute(text("CREATE INDEX IF NOT EXISTS ix_ebay_accounts_tenant_id ON ebay_accounts (tenant_id)"))
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS ebay_account_id UUID REFERENCES ebay_accounts(id) ON DELETE SET NULL"))
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS ebay_fees DECIMAL(10,2)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS amazon_account_id UUID REFERENCES amazon_accounts(id) ON DELETE SET NULL"))
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shopify_account_id UUID REFERENCES shopify_accounts(id) ON DELETE SET NULL"))
     connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_shipping_cost DECIMAL(10,2)"))
     connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS packaging_cost DECIMAL(10,2)"))
@@ -117,6 +118,7 @@ app.include_router(print_agents.router)
 app.include_router(print_jobs.router)
 app.include_router(ebay.router)
 app.include_router(shopify.router)
+app.include_router(amazon.router)
 app.include_router(uploads.router)
 app.include_router(expenses.router)
 app.include_router(market_research.router)

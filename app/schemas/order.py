@@ -55,7 +55,8 @@ class OrderOut(BaseModel):
     ebay_account_name: str | None = None
     # Name of the Shopify store the order came from, and where it came from overall.
     shopify_account_name: str | None = None
-    source: str = "manual"  # ebay / shopify / manual
+    amazon_account_name: str | None = None
+    source: str = "manual"  # ebay / shopify / amazon / manual
     # When the sale happened (eBay creation date, else import time); the list is newest first.
     ordered_at: datetime | None = None
     # Return handling (see models/order.py).
