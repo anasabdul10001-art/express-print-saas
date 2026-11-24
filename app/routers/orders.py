@@ -80,6 +80,7 @@ def _serialize_order(order: Order) -> OrderOut:
         items=items_out,
         total_profit=(total_profit - (order.ebay_fees or Decimal("0"))) if profit_known else None,
         ebay_fees=order.ebay_fees,
+        ordered_at=order.ordered_at or order.created_at,
         refund_amount=order.refund_amount,
         item_returned_to_stock=bool(order.item_returned_to_stock),
         return_shipping_cost=order.return_shipping_cost,
@@ -94,7 +95,7 @@ def list_orders(current_user: User = Depends(get_current_user), db: Session = De
         db.query(Order)
         .filter(Order.tenant_id == current_user.tenant_id)
         .options(joinedload(Order.items).joinedload(OrderItem.product), joinedload(Order.ebay_account))
-        .order_by(Order.created_at.desc())
+        .order_by(func.coalesce(Order.ordered_at, Order.created_at).desc(), Order.created_at.desc())
         .all()
     )
     return [_serialize_order(o) for o in orders]

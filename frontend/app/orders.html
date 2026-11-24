@@ -549,8 +549,8 @@
 
         function isPrinted(order) { return order.status === "printed" || order.status === "shipped"; }
 
-        function isShipped(order) { return order.status === "shipped"; }
-        function isUnshipped(order) { return order.status !== "shipped" && order.status !== "canceled"; }
+        function isShipped(order) { return isPrinted(order); }
+        function isUnshipped(order) { return !isPrinted(order) && order.status !== "canceled"; }
 
         function setFilter(f) { currentFilter = f; renderOrders(allOrders); }
 
@@ -558,7 +558,7 @@
             const shipped = allOrders.filter(isShipped).length;
             const unshipped = allOrders.filter(isUnshipped).length;
             const counts = { all: allOrders.length, unshipped, shipped };
-            const names = { all: t("orders.filterAll"), unshipped: "Nicht versendet", shipped: "Versendet" };
+            const names = { all: t("orders.filterAll"), unshipped: "Nicht gedruckt", shipped: "Gedruckt / Versendet" };
             document.querySelectorAll("#filter-bar button").forEach(b => {
                 const f = b.dataset.filter;
                 b.textContent = `${names[f]} (${counts[f]})`;

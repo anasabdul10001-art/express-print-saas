@@ -51,3 +51,18 @@ def test_refund_total_from_ebay_payload():
     assert _refund_total({}) is None
     payload = {"paymentSummary": {"refunds": [{"amount": {"value": "2.50"}}, {"amount": {"value": "0.50"}}]}}
     assert _refund_total(payload) == Decimal("3.00")
+
+
+def test_orders_listed_newest_sale_first(client, register):
+    from datetime import datetime, timezone
+    headers, _ = register()
+    first = _order(client, headers)
+    pid = client.get("/products", headers=headers).json()[0]["id"]
+    second = client.post("/orders", headers=headers, json={"items": [{"product_id": pid, "quantity": 1}]}).json()["id"]
+    import uuid as _uuid
+    with SessionLocal() as db:
+        db.query(Order).filter(Order.id == _uuid.UUID(first)).update({"ordered_at": datetime(2026, 11, 20, tzinfo=timezone.utc)})
+        db.query(Order).filter(Order.id == _uuid.UUID(second)).update({"ordered_at": datetime(2026, 11, 10, tzinfo=timezone.utc)})
+        db.commit()
+    ids = [o["id"] for o in client.get("/orders", headers=headers).json()]
+    assert ids == [first, second]
