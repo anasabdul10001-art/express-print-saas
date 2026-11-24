@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field
 class OrderItemCreate(BaseModel):
@@ -53,6 +53,8 @@ class OrderOut(BaseModel):
     ebay_fees: Decimal | None = None
     # Username of the eBay account the order came from (None for manual orders).
     ebay_account_name: str | None = None
+    # When the sale happened (eBay creation date, else import time); the list is newest first.
+    ordered_at: datetime | None = None
     # Return handling (see models/order.py).
     refund_amount: Decimal | None = None
     item_returned_to_stock: bool = False
