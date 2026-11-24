@@ -25,6 +25,9 @@ class Product(Base):
     # Extra per-unit costs. Total unit cost = purchase + supplier shipping + packaging.
     supplier_shipping_cost = Column(DECIMAL(10, 2))
     packaging_cost = Column(DECIMAL(10, 2))
+    # eBay final-value-fee percent for this product's category (e.g. 6.5). None = unknown;
+    # the pricing calculator then falls back to the rate observed on past orders, then to its default.
+    ebay_fee_percent = Column(DECIMAL(5, 2))
     # Package physical specs for this product, used to pick the right DHL
     # shipping product and weight/dimensions when creating a shipment label.
     # Null when not set - falls back to the tenant's default package size

@@ -10,6 +10,7 @@ class ProductCreate(BaseModel):
     purchase_price: Decimal | None = None
     supplier_shipping_cost: Decimal | None = Field(None, ge=0)
     packaging_cost: Decimal | None = Field(None, ge=0)
+    ebay_fee_percent: Decimal | None = Field(None, ge=0, lt=100)
     selling_price: Decimal | None = None
     stock_quantity: int = 0
     weight_kg: Decimal | None = Field(None, gt=0)
@@ -25,6 +26,7 @@ class ProductUpdate(BaseModel):
     purchase_price: Decimal | None = None
     supplier_shipping_cost: Decimal | None = Field(None, ge=0)
     packaging_cost: Decimal | None = Field(None, ge=0)
+    ebay_fee_percent: Decimal | None = Field(None, ge=0, lt=100)
     selling_price: Decimal | None = None
     active: bool | None = None
     stock_quantity: int | None = None
@@ -41,6 +43,7 @@ class ProductOut(BaseModel):
     purchase_price: Decimal | None
     supplier_shipping_cost: Decimal | None = None
     packaging_cost: Decimal | None = None
+    ebay_fee_percent: Decimal | None = None
     unit_cost: Decimal | None = None
     selling_price: Decimal | None
     active: bool

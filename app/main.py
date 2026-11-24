@@ -36,6 +36,7 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shopify_account_id UUID REFERENCES shopify_accounts(id) ON DELETE SET NULL"))
     connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_shipping_cost DECIMAL(10,2)"))
     connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS packaging_cost DECIMAL(10,2)"))
+    connection.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS ebay_fee_percent DECIMAL(5,2)"))
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS ordered_at TIMESTAMPTZ"))
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_label_cost DECIMAL(10,2)"))
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS ebay_fee_credit DECIMAL(10,2)"))

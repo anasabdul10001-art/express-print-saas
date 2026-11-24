@@ -96,3 +96,36 @@ def test_products_list_and_isolation(client, register):
     row = r["products"][0]
     assert row["goods_cost"] == "2.00" and row["at_current"]["price"] == "5.00"
     assert client.post("/pricing/products", headers=h2, json={}).json()["products"] == []
+
+
+def test_fee_percent_per_product_and_observed(client, register):
+    from decimal import Decimal as D
+    from app.database import SessionLocal
+    from app.models.order import Order
+
+    headers, _ = register()
+    tenant_id = client.get("/auth/me", headers=headers).json()["tenant_id"]
+    pid = client.post("/products", headers=headers, json={"sku": "F1", "title": "F1", "purchase_price": 1, "selling_price": 10, "stock_quantity": 20}).json()["id"]
+    # no data: default
+    info = client.get(f"/pricing/fee-info/{pid}", headers=headers).json()
+    assert info["source"] == "default" and D(info["fee_percent"]) == 11 and info["observed_percent"] is None
+    # a real order: fees 0.35 + 6% of 10.00 = 0.95 -> observed 6.0 %
+    assert client.post("/orders", headers=headers, json={"items": [{"product_id": pid, "quantity": 1}]}).status_code in (200, 201)
+    with SessionLocal() as db:
+        order = db.query(Order).filter(Order.tenant_id == tenant_id).one()
+        order.ebay_fees = D("0.95")
+        db.commit()
+    info = client.get(f"/pricing/fee-info/{pid}", headers=headers).json()
+    assert info["source"] == "observed" and info["observed_percent"] == "6.0" and info["observed_orders"] == 1
+    row = client.post("/pricing/products", headers=headers, json={"target_margin_percent": 10}).json()["products"][0]
+    assert row["fee_source"] == "observed" and row["fee_percent"] == "6.0"
+    # a manual value on the product wins
+    assert client.patch(f"/products/{pid}", headers=headers, json={"ebay_fee_percent": 6.5}).status_code == 200
+    info = client.get(f"/pricing/fee-info/{pid}", headers=headers).json()
+    assert info["source"] == "product" and info["fee_percent"] == "6.50" and info["observed_percent"] == "6.0"
+    row = client.post("/pricing/products", headers=headers, json={"target_margin_percent": 10}).json()["products"][0]
+    assert row["fee_source"] == "product" and row["fee_percent"] == "6.50"
+    # invalid value rejected, other tenant cannot read it
+    assert client.patch(f"/products/{pid}", headers=headers, json={"ebay_fee_percent": 100}).status_code == 422
+    h2, _ = register()
+    assert client.get(f"/pricing/fee-info/{pid}", headers=h2).status_code == 404

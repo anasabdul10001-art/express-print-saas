@@ -164,12 +164,18 @@
                     <span class="text-xs text-slate-400">Vorgabe aus deinen Einstellungen (Buchhaltung). Hier nur für die Rechnung geändert.</span>
                 </label>
                 <div class="grid grid-cols-2 gap-4">
-                    <label class="block text-sm"><span class="font-semibold text-slate-700">eBay-Gebühr (%)</span>
+                    <label class="block text-sm"><span class="font-semibold text-slate-700">eBay-Gebühr (%) <span class="font-normal text-slate-400">(Standard für Produkte ohne eigene)</span></span>
                         <input id="fee_percent" type="number" step="0.01" min="0" value="11" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"></label>
                     <label class="block text-sm"><span class="font-semibold text-slate-700">Fixgebühr (€)</span>
                         <input id="fee_fixed" type="number" step="0.01" min="0" value="0.35" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"></label>
                 </div>
             </div>
+
+            <label class="block text-sm">
+                <span class="font-semibold text-slate-700">Produkt wählen (optional, füllt Kosten und eBay-Gebühr aus)</span>
+                <select id="product_pick" class="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"><option value="">— manuell eingeben —</option></select>
+                <span id="fee_hint" class="text-xs text-slate-400"></span>
+            </label>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <label class="block text-sm"><span class="font-semibold text-slate-700">Einkaufspreis (€)</span>
@@ -237,7 +243,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead><tr class="text-left text-slate-500 border-b border-slate-200">
-                        <th class="py-2 pr-4">Produkt</th><th class="py-2 pr-4 text-right">Stückkosten</th><th class="py-2 pr-4 text-right">Aktueller Preis</th>
+                        <th class="py-2 pr-4">Produkt</th><th class="py-2 pr-4 text-right">Stückkosten</th><th class="py-2 pr-4 text-right">eBay-Gebühr</th><th class="py-2 pr-4 text-right">Aktueller Preis</th>
                         <th class="py-2 pr-4 text-right">Gewinn jetzt</th><th class="py-2 pr-4 text-right">Mindestpreis</th><th class="py-2 text-right">Empfohlen</th></tr></thead>
                     <tbody id="all-rows"></tbody>
                 </table>
@@ -361,6 +367,8 @@
             catch (err) { if (err.message !== "401") showBanner(err.message, true); }
         });
 
+        const FEE_SOURCE = { product: "am Produkt", observed: "aus Verkäufen", default: "Standard" };
+
         function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
 
         $("btn-all").addEventListener("click", async () => {
@@ -368,13 +376,13 @@
             try {
                 const d = await post("/pricing/products", params());
                 if (!d.products.length) {
-                    $("all-rows").innerHTML = '<tr><td colspan="6" class="py-4 text-center text-slate-400">Keine Produkte mit Einkaufspreis. Trage die Kosten in der Produktliste ein.</td></tr>';
+                    $("all-rows").innerHTML = '<tr><td colspan="7" class="py-4 text-center text-slate-400">Keine Produkte mit Einkaufspreis. Trage die Kosten in der Produktliste ein.</td></tr>';
                 } else {
                     $("all-rows").innerHTML = d.products.map((p) => {
                         const profit = p.at_current ? Number(p.at_current.profit) : null;
                         const cls = profit === null ? "" : (profit < 0 ? "text-red-600 font-semibold" : "text-emerald-600");
                         return `<tr class="border-b border-slate-100"><td class="py-2 pr-4">${esc(p.title)}<div class="text-xs text-slate-400">${esc(p.sku)}</div></td>
-                            <td class="py-2 pr-4 text-right">${eur(p.goods_cost)}</td><td class="py-2 pr-4 text-right">${eur(p.current_price)}</td>
+                            <td class="py-2 pr-4 text-right">${eur(p.goods_cost)}</td><td class="py-2 pr-4 text-right">${Number(p.fee_percent).toLocaleString("de-DE")} %<div class="text-xs text-slate-400">${FEE_SOURCE[p.fee_source]}${p.fee_source === "observed" ? " (" + p.observed_orders + " Bestellungen)" : ""}</div></td><td class="py-2 pr-4 text-right">${eur(p.current_price)}</td>
                             <td class="py-2 pr-4 text-right ${cls}">${profit === null ? "—" : eur(profit)}</td>
                             <td class="py-2 pr-4 text-right">${eur(p.break_even_price)}</td><td class="py-2 text-right font-bold">${eur(p.suggested_price)}</td></tr>`;
                     }).join("");
@@ -382,6 +390,38 @@
                 $("all").classList.remove("hidden");
             } catch (err) { if (err.message !== "401") showBanner(err.message, true); }
         });
+
+        const products = {};
+        async function loadProductPicker() {
+            try {
+                const r = await fetch(`${API_URL}/products?active=true`, { headers: authHeaders() });
+                if (!r.ok) return;
+                for (const p of await r.json()) {
+                    products[p.id] = p;
+                    const o = document.createElement("option");
+                    o.value = p.id; o.textContent = `${p.title} (${p.sku})`;
+                    $("product_pick").appendChild(o);
+                }
+            } catch (err) { /* picker is optional */ }
+        }
+        $("product_pick").addEventListener("change", async () => {
+            const p = products[$("product_pick").value];
+            $("fee_hint").textContent = "";
+            if (!p) return;
+            $("purchase_price").value = p.purchase_price ?? "";
+            $("supplier_shipping_cost").value = p.supplier_shipping_cost ?? "";
+            $("packaging_cost").value = p.packaging_cost ?? "";
+            if (p.selling_price !== null && p.selling_price !== undefined) $("check_price").value = p.selling_price;
+            try {
+                const r = await fetch(`${API_URL}/pricing/fee-info/${p.id}`, { headers: authHeaders() });
+                if (!r.ok) return;
+                const f = await r.json();
+                $("fee_percent").value = f.fee_percent;
+                $("fee_hint").textContent = f.source === "product" ? "Gebühr aus dem Produkt." : f.source === "observed"
+                    ? `Gebühr aus ${f.observed_orders} echten Bestellungen.` : "Noch keine Daten: Standard-Gebühr. Im Produkt kann sie gesetzt werden.";
+            } catch (err) { /* keep manual value */ }
+        });
+        loadProductPicker();
 
         (async () => {
             try {

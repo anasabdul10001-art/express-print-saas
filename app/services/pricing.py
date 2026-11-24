@@ -116,3 +116,32 @@ def round_up_to_ending(price: Decimal, ending: str) -> Decimal:
             if candidate >= price and candidate >= 0:
                 return candidate
     return price
+
+
+def observed_fee_percent(orders, product_id, fee_fixed: Decimal = DEFAULT_FEE_FIXED):
+    """Fee percent eBay really charged for one product, from its past orders: (fees - fixed fee) / buyer total.
+
+    Only clean orders count: a single line item of this product, fees known, no refund (a refund
+    distorts both numbers). Returns (percent rounded to 0.1, number of orders) or (None, 0).
+    """
+    from app.services import order_money  # local import keeps this module importable without models
+
+    fees = ZERO
+    base = ZERO
+    used = 0
+    for order in orders:
+        if order.status == "canceled" or order.ebay_fees is None:
+            continue
+        if len(order.items) != 1 or order.items[0].product_id != product_id:
+            continue
+        if order_money.refund(order) > 0 or order.ebay_payment_status in ("FULLY_REFUNDED", "PARTIALLY_REFUNDED"):
+            continue
+        total = order_money.revenue(order)
+        if total <= 0:
+            continue
+        fees += max(order.ebay_fees - fee_fixed, ZERO)
+        base += total
+        used += 1
+    if used == 0 or base <= 0:
+        return None, 0
+    return (fees / base * HUNDRED).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP), used
