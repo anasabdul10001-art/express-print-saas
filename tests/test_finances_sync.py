@@ -72,3 +72,23 @@ def test_accounting_counts_labels(client, register):
     t = client.get("/accounting/summary", headers=headers, params={"start": "2020-01-01", "end": "2029-12-31"}).json()["totals"]
     assert t["shipping_labels"] == "1.20"
     assert float(t["net_profit"]) == 3 - 1 - 1.2
+
+
+def test_store_subscription_gets_its_own_expense_category(client, register):
+    headers, _ = register()
+    tenant_id = uuid.UUID(client.get("/auth/me", headers=headers).json()["tenant_id"])
+    charges = [
+        {"transactionId": "SUB-1", "bookingEntry": "DEBIT", "amount": {"value": "39.95"}, "feeType": "EBAY_STORE_SUBSCRIPTION_FEE",
+         "transactionDate": "2026-11-01T02:00:00.000Z"},
+        {"transactionId": "FEE-9", "bookingEntry": "DEBIT", "amount": {"value": "0.42"}, "transactionMemo": "Insertion Fee",
+         "transactionDate": "2026-11-23T16:19:50.039Z"},
+    ]
+    with SessionLocal() as db, patch.object(
+        ebay_order_service, "_fetch_transactions", side_effect=lambda a, d, t, kind, n: charges if kind == "NON_SALE_CHARGE" else []
+    ):
+        ebay_order_service.sync_fees(object(), tenant_id, db, "tok", [])
+        ebay_order_service.sync_fees(object(), tenant_id, db, "tok", [])  # second run must not duplicate
+    with SessionLocal() as db:
+        rows = {e.external_ref: (e.category, e.amount) for e in db.query(Expense).filter(Expense.tenant_id == tenant_id)}
+    assert rows["SUB-1"] == ("eBay-Shop-Abo", Decimal("39.95"))
+    assert rows["FEE-9"][0] == "eBay-Gebühren (Angebote)" and len(rows) == 2

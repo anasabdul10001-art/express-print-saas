@@ -151,6 +151,7 @@
         <div class="flex items-center justify-between gap-4">
             <h2 class="text-2xl font-bold" data-i18n="products.title">Produkte</h2>
             <div class="flex items-center gap-2">
+                <a href="pricing.html" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold py-2 px-4 rounded transition text-sm">Preisrechner</a>
                 <button id="ebay-import-btn" onclick="importFromEbay()"
                         title="Holt deine aktiven eBay-Angebote als Produkte. Es wird nichts bei eBay geändert."
                         class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold py-2 px-4 rounded transition text-sm">
@@ -274,6 +275,12 @@
                     <label class="block text-sm mb-1">Verpackungskosten pro Stück (€)</label>
                     <input type="number" step="0.01" min="0" id="field-packaging"
                            class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">eBay-Verkaufsprovision dieser Kategorie (%)</label>
+                    <input type="number" step="0.01" min="0" max="99" id="field-fee-percent" placeholder="leer = automatisch"
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    <p class="text-xs text-slate-400 mt-1">Für den Preisrechner. Leer: aus deinen bisherigen Verkäufen, sonst 11 %.</p>
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.sellingPrice">Verkaufspreis (€)</label>
@@ -540,6 +547,7 @@
             document.getElementById("field-purchase").value = product ? (product.purchase_price ?? "") : "";
             document.getElementById("field-supplier-ship").value = product ? (product.supplier_shipping_cost ?? "") : "";
             document.getElementById("field-packaging").value = product ? (product.packaging_cost ?? "") : "";
+            document.getElementById("field-fee-percent").value = product ? (product.ebay_fee_percent ?? "") : "";
             document.getElementById("field-selling").value = product ? (product.selling_price ?? "") : "";
             originalSelling = product && product.selling_price != null ? Number(product.selling_price) : null;
             document.getElementById("field-stock").value = product ? (product.stock_quantity ?? 0) : 0;
@@ -719,6 +727,7 @@
             const sellingRaw = document.getElementById("field-selling").value;
             const shipRaw = document.getElementById("field-supplier-ship").value;
             const packRaw = document.getElementById("field-packaging").value;
+            const feeRaw = document.getElementById("field-fee-percent").value;
             const stockRaw = document.getElementById("field-stock").value;
             const weightRaw = document.getElementById("field-weight").value;
             const lengthRaw = document.getElementById("field-length").value;
@@ -733,6 +742,7 @@
                 purchase_price: purchaseRaw === "" ? null : Number(purchaseRaw),
                 supplier_shipping_cost: shipRaw === "" ? null : Number(shipRaw),
                 packaging_cost: packRaw === "" ? null : Number(packRaw),
+                ebay_fee_percent: feeRaw === "" ? null : Number(feeRaw),
                 selling_price: sellingRaw === "" ? null : Number(sellingRaw),
                 stock_quantity: stockRaw === "" ? 0 : Number(stockRaw),
                 weight_kg: weightRaw === "" ? null : Number(weightRaw),

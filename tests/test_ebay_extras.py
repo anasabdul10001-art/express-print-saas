@@ -90,3 +90,15 @@ def test_suggest_reply_falls_through_providers(register, client, monkeypatch):
                       json={"message": "Schreib an max@x.de", "buyer_name": "Max Muster"}).json()
     assert out == {"reply": "Guten Tag, ich sehe nach.", "provider": "nvidia"}
     assert all("max@x.de" not in body for _, body in seen)
+
+
+def test_subscription_raw_shows_ebays_answer_for_each_case(register, client, monkeypatch):
+    headers = _connect(register, client, monkeypatch)
+    sub = {"subscriptions": [{"subscriptionType": "BASIC", "status": "ACTIVE", "marketplaceId": "EBAY_DE"}]}
+    monkeypatch.setattr(ebay_extras_service.httpx, "get", lambda url, **k: _Resp(sub))
+    r = client.get("/ebay/subscription-raw", headers=headers).json()
+    assert r[0]["ok"] is True and r[0]["data"]["subscriptions"][0]["status"] == "ACTIVE"
+    # an account without a subscription / missing scope: eBay's error text comes back, no crash
+    monkeypatch.setattr(ebay_extras_service.httpx, "get", lambda url, **k: _Resp(status=404, text="no subscription"))
+    r = client.get("/ebay/subscription-raw", headers=headers).json()
+    assert r[0]["ok"] is False and r[0]["http_status"] == 404 and "no subscription" in r[0]["error"]

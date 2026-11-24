@@ -53,6 +53,20 @@ def shipping_policies(account: EbayAccount, db: Session) -> list[dict]:
     return out
 
 
+# --- Seller subscriptions (sell.account) ----------------------------------
+
+def subscriptions(account: EbayAccount, db: Session) -> dict:
+    """Raw answer of the Account API getSubscription: the seller's eBay Store subscription
+    (level, status, terms). Read-only. Never raises: eBay's HTTP error text is returned instead
+    (an account without a subscription may answer with an error or an empty list)."""
+    token = ebay_oauth_service.get_valid_access_token(account, db)
+    resp = httpx.get(f"{API[account.environment]}/sell/account/v1/subscription",
+                     headers=_bearer(token), timeout=20.0)
+    if resp.status_code != 200:
+        return {"ok": False, "http_status": resp.status_code, "error": resp.text[:300]}
+    return {"ok": True, "http_status": 200, "data": resp.json()}
+
+
 # --- Listing traffic (sell.analytics.readonly) ----------------------------
 
 def traffic(account: EbayAccount, db: Session, days: int = 30) -> list[dict]:

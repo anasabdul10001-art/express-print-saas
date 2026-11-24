@@ -328,6 +328,10 @@ def _fetch_transactions(account, db, access_token, kind, notes):
     return out
 
 
+# Monthly eBay Store subscription (Finances API feeType); kept apart from per-listing fees.
+STORE_SUBSCRIPTION_CATEGORY = "eBay-Shop-Abo"
+
+
 def _tx_amount(tx):
     """Signed amount of a transaction: DEBIT (money out) positive, CREDIT negative."""
     value = _dec((tx.get("amount") or {}).get("value"))
@@ -399,8 +403,9 @@ def sync_fees(
             if not ref or amount is None or ref in known:
                 continue
             when = _parse_ebay_date(tx.get("transactionDate")) or datetime.now(timezone.utc)
+            category = STORE_SUBSCRIPTION_CATEGORY if tx.get("feeType") == "EBAY_STORE_SUBSCRIPTION_FEE" else "eBay-Gebühren (Angebote)"
             db.add(Expense(
-                tenant_id=tenant_id, amount=amount, category="eBay-Gebühren (Angebote)",
+                tenant_id=tenant_id, amount=amount, category=category,
                 description=(tx.get("transactionMemo") or tx.get("feeType") or "eBay-Gebühr")[:255],
                 expense_date=when.astimezone(ZoneInfo("Europe/Berlin")).date(), external_ref=ref[:100],
             ))
