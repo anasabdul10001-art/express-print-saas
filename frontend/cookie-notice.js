@@ -21,12 +21,12 @@
 
     var TEXT = {
         de: {
-            message: "Diese Website verwendet ausschließlich technisch notwendige Daten in deinem Browser (Login-Sitzung, Spracheinstellung) – keine Tracking- oder Werbe-Cookies.",
+            message: "Diese Website speichert in deinem Browser nur technisch Notwendiges (Anmeldung, Sprache, Druckeinstellungen, diesen Hinweis) – keine Tracking- oder Werbe-Cookies.",
             linkText: "Mehr in der Datenschutzerklärung",
             button: "Verstanden",
         },
         en: {
-            message: "This website only uses technically necessary browser storage (login session, language preference) – no tracking or advertising cookies.",
+            message: "This website only stores what is technically necessary in your browser (sign-in, language, print settings, this notice) – no tracking or advertising cookies.",
             linkText: "More in our privacy policy",
             button: "Got it",
         },

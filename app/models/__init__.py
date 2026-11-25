@@ -11,6 +11,7 @@ from app.models.stock_movement import StockMovement
 from app.models.expense import Expense, ExpenseReceipt
 from app.models.purchase import Purchase, PurchaseLine
 from app.models.cash_event import CashEvent
+from app.models.eks_profile import EksProfile
 from app.models.password_reset_token import PasswordResetToken
 from app.models.market_research import TrackedSearch, MarketSnapshot
 from app.models.plan import Plan, SiteSettings
@@ -24,7 +25,7 @@ from app.models.site_page import SitePage
 
 __all__ = [
     "Tenant", "User", "PrintAgent", "PrintJob", "Product", "Order", "OrderItem",
-    "EbayAccount", "EbayOAuthState", "ShopifyAccount", "ShopifyOAuthState", "AmazonAccount", "AmazonOAuthState", "StockMovement", "Expense", "ExpenseReceipt", "Purchase", "PurchaseLine", "CashEvent", "PasswordResetToken",
+    "EbayAccount", "EbayOAuthState", "ShopifyAccount", "ShopifyOAuthState", "AmazonAccount", "AmazonOAuthState", "StockMovement", "Expense", "ExpenseReceipt", "Purchase", "PurchaseLine", "CashEvent", "EksProfile", "PasswordResetToken",
     "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings", "PaymentMethod", "Invoice",
     "DhlAccount", "Affiliate", "AffiliateReferral", "AffiliateCommission", "AffiliatePayout",
     "AffiliatePasswordToken", "SitePage", "SalesInvoice", "SellerProfile",

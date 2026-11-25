@@ -112,7 +112,7 @@ def providers() -> list[dict]:
         chain.append({"name": "Groq", "url": "https://api.groq.com/openai/v1/chat/completions",
                       "key": settings.groq_api_key, "model": settings.groq_vision_model, "max_images": 3,
                       "extra": {"response_format": {"type": "json_object"}}})
-    if settings.mistral_api_key:
+    if settings.mistral_api_key and settings.mistral_training_disabled:
         chain.append({"name": "Mistral", "url": "https://api.mistral.ai/v1/chat/completions",
                       "key": settings.mistral_api_key, "model": settings.mistral_vision_model, "max_images": MAX_PAGES,
                       "extra": {"response_format": {"type": "json_object"}}})

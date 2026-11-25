@@ -20,4 +20,6 @@ def init_sentry() -> None:
         dsn=settings.sentry_dsn,
         environment=settings.sentry_environment,
         traces_sample_rate=settings.sentry_traces_sample_rate,
+        # request bodies can hold personal data (addresses, the EKS details)
+        max_request_body_size="never",
     )

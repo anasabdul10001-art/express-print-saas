@@ -12,6 +12,12 @@
     <script src="i18n.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen">
+<div id="signup-closed" class="hidden bg-amber-50 border-b border-amber-200 text-amber-900 text-sm text-center p-2">Die Registrierung ist derzeit geschlossen. ShipSync richtet sich ausschließlich an Unternehmer. · Sign-up is currently closed.</div>
+<script>
+    fetch((["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com") + "/auth/registration-status")
+        .then(r => r.json()).then(s => { if (!s.open) document.getElementById("signup-closed").classList.remove("hidden"); })
+        .catch(() => {});
+</script>
     <nav class="bg-white border-b border-slate-200 px-6 py-4">
         <div class="max-w-6xl mx-auto flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-2">
@@ -54,8 +60,8 @@
         </div>
 
         <p class="text-center text-slate-400 text-xs mt-14">
-            <span data-i18n="pricing.footNote">Alle Preise zzgl. MwSt. Fragen?</span>
-            <a href="mailto:hallo@expressprint.example" class="text-red-600 font-semibold" data-i18n="pricing.contactUs">Kontaktiere uns</a>.
+            <span data-i18n="pricing.footNote">Angebot nur für Unternehmer. Alle Preise ohne Umsatzsteuer gemäß § 19 UStG. Fragen?</span>
+            <a href="impressum.html" class="text-red-600 font-semibold" data-i18n="pricing.contactUs">Kontaktiere uns</a>.
         </p>
     </main>
 
@@ -95,7 +101,7 @@
             const limits = [
                 limitLine(plan.order_limit, t("pricing.limitOrders")),
                 limitLine(plan.printer_limit, t("pricing.limitPrinters")),
-                limitLine(plan.user_limit, t("pricing.limitUsers")),
+                
             ].join("");
             const features = (plan.features || []).map(featureLine).join("");
 

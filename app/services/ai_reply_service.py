@@ -38,37 +38,27 @@ def mask_personal_data(text: str, names: list[str] | None = None) -> str:
 
 
 def _providers() -> list[tuple[str, callable]]:
+    if not settings.ai_reply_enabled:
+        return []
     chain = []
     if settings.groq_api_key:
         chain.append(("groq", lambda m: _openai_style(
             "https://api.groq.com/openai/v1/chat/completions", settings.groq_api_key, settings.groq_model, m)))
-    if settings.gemini_api_key:
-        chain.append(("gemini", _gemini))
     if settings.openrouter_api_key:
         chain.append(("openrouter", lambda m: _openai_style(
-            "https://openrouter.ai/api/v1/chat/completions", settings.openrouter_api_key, settings.openrouter_model, m)))
-    if settings.nvidia_api_key:
-        chain.append(("nvidia", lambda m: _openai_style(
-            "https://integrate.api.nvidia.com/v1/chat/completions", settings.nvidia_api_key, settings.nvidia_model, m)))
+            "https://openrouter.ai/api/v1/chat/completions", settings.openrouter_api_key, settings.openrouter_model, m,
+            # only hosts that do not keep prompts for training
+            {"provider": {"data_collection": "deny"}})))
     return chain
 
 
-def _openai_style(url: str, key: str, model: str, user_msg: str) -> str:
+def _openai_style(url: str, key: str, model: str, user_msg: str, extra: dict | None = None) -> str:
     resp = httpx.post(url, headers={"Authorization": f"Bearer {key}"}, timeout=30.0, json={
         "model": model, "temperature": 0.3, "max_tokens": 400,
-        "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user_msg}]})
+        "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user_msg}],
+        **(extra or {})})
     resp.raise_for_status()
     return resp.json()["choices"][0]["message"]["content"].strip()
-
-
-def _gemini(user_msg: str) -> str:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
-    resp = httpx.post(url, headers={"x-goog-api-key": settings.gemini_api_key}, timeout=30.0, json={
-        "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
-        "contents": [{"role": "user", "parts": [{"text": user_msg}]}],
-        "generationConfig": {"temperature": 0.3, "maxOutputTokens": 400}})
-    resp.raise_for_status()
-    return resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 
 def configured() -> bool:
@@ -78,7 +68,7 @@ def configured() -> bool:
 def suggest_reply(message: str, facts: str = "", buyer_names: list[str] | None = None) -> dict:
     chain = _providers()
     if not chain:
-        raise ValueError("Kein KI-Schlüssel eingerichtet (GROQ_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY oder NVIDIA_API_KEY).")
+        raise ValueError("KI-Antwortvorschläge sind nicht eingerichtet.")
     prompt = (
         f"Bestell-Fakten:\n{mask_personal_data(facts, buyer_names) or '(keine)'}\n\n"
         f"Nachricht des Käufers:\n{mask_personal_data(message, buyer_names)}\n\nSchreibe die Antwort."

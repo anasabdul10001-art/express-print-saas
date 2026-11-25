@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auftragsverarbeitung — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="site-logo.js"></script>
+    <script src="cookie-notice.js"></script>
+    <script src="operator.js" defer></script>
+</head>
+<body class="bg-white text-slate-900 min-h-screen">
+<nav class="bg-white border-b border-slate-200 px-6 py-4"><a href="index.html" class="font-bold text-red-600">ShipSync</a></nav>
+<main class="max-w-3xl mx-auto p-6 py-12 space-y-6 text-slate-600 text-sm leading-relaxed [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-slate-900 [&_ul]:list-disc [&_ul]:pl-5 [&_section]:space-y-2">
+    <h1 class="text-3xl font-bold text-slate-900">Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO)</h1>
+    <p>zwischen dem Kunden („Verantwortlicher“) und <span data-operator="name">[wird noch ergänzt]</span>,
+        <span data-operator="street">[wird noch ergänzt]</span>, <span data-operator="city">[wird noch ergänzt]</span>
+        („Auftragsverarbeiter“). Er ist Bestandteil des Nutzungsvertrags (<a class="underline" href="policies.html">AGB</a>)
+        und wird mit der Registrierung in elektronischer Form geschlossen. Fassung vom 25.11.2026.</p>
+
+    <section><h2>1. Gegenstand, Dauer, Art und Zweck</h2>
+        <p>Der Auftragsverarbeiter verarbeitet personenbezogene Daten, um die Software ShipSync bereitzustellen:
+            Bestellungen verbundener Verkaufskonten abgleichen, Versandetiketten und Packzettel erstellen und drucken,
+            Rechnungen erstellen, Buchhaltungsunterlagen führen und auswerten. Die Verarbeitung dauert so lange wie
+            der Nutzungsvertrag, zuzüglich der Zeit bis zur Löschung nach Ziffer 9.</p></section>
+
+    <section><h2>2. Datenarten und betroffene Personen</h2>
+        <p><b>Betroffene:</b> Käufer und Empfänger der Bestellungen des Verantwortlichen, seine Lieferanten und
+            Zahlungsempfänger sowie Personen, die in hochgeladenen Unterlagen genannt sind.</p>
+        <p><b>Daten:</b> Name, Benutzername, Lieferanschrift, gegebenenfalls Telefonnummer; Bestell-, Zahlungs- und
+            Versanddaten; Nachrichten von Käufern (beim Anzeigen); Angaben in Rechnungen und Belegen.</p></section>
+
+    <section><h2>3. Weisungen</h2>
+        <p>Der Auftragsverarbeiter verarbeitet die Daten nur auf dokumentierte Weisung des Verantwortlichen, auch bei
+            Übermittlungen in Drittländer, es sei denn, das Recht der EU oder eines Mitgliedstaats verpflichtet ihn
+            dazu; dann informiert er vorher, soweit das erlaubt ist. Weisungen sind dieser Vertrag und die Bedienung
+            der Funktionen. Hält er eine Weisung für rechtswidrig, teilt er das unverzüglich mit.</p></section>
+
+    <section><h2>4. Vertraulichkeit</h2>
+        <p>Zur Verarbeitung befugte Personen sind zur Vertraulichkeit verpflichtet.</p></section>
+
+    <section><h2>5. Sicherheit (Art. 32 DSGVO)</h2>
+        <p>Der Auftragsverarbeiter trifft die Maßnahmen im Anhang und darf sie weiterentwickeln, ohne das
+            Schutzniveau zu senken.</p></section>
+
+    <section><h2>6. Weitere Auftragsverarbeiter</h2>
+        <p>Der Verantwortliche genehmigt allgemein den Einsatz der folgenden weiteren Auftragsverarbeiter. Der
+            Auftragsverarbeiter kündigt neue oder ersetzte in Textform mindestens 14 Tage vorher an; der
+            Verantwortliche kann widersprechen und den Vertrag zum Wechseltermin kündigen. Weitere
+            Auftragsverarbeiter werden auf dieselben Datenschutzpflichten verpflichtet.</p>
+        <ul>
+            <li><b>Render Services, Inc.</b> – Hosting der Anwendung</li>
+            <li><b>Supabase</b> – Datenbank, Dateispeicher, Ablage der Datensicherungen</li>
+            <li><b>GitHub</b> – Ausführung der automatischen Datensicherung</li>
+            <li><b>Resend</b> – Versand von E-Mails</li>
+            <li>Nur wenn der Verantwortliche die jeweilige Funktion nutzt und sie eingerichtet ist:
+                <b>Groq, Mistral, OpenRouter</b> (Rechnungen mit KI lesen, Antwortvorschläge)</li>
+        </ul>
+        <p>eBay, Shopify, Amazon und DHL erhalten Daten auf Weisung des Verantwortlichen über dessen eigene Konten bei
+            diesen Anbietern.</p></section>
+
+    <section><h2>7. Unterstützung</h2>
+        <p>Der Auftragsverarbeiter unterstützt den Verantwortlichen mit geeigneten Maßnahmen bei Anfragen betroffener
+            Personen (z. B. Auskunft, Löschung, Datenübertragbarkeit; ShipSync bietet dafür einen Datenexport) sowie
+            bei den Pflichten aus Art. 32 bis 36 DSGVO.</p></section>
+
+    <section><h2>8. Verletzungen des Schutzes personenbezogener Daten</h2>
+        <p>Der Auftragsverarbeiter meldet dem Verantwortlichen eine ihm bekannt gewordene Verletzung unverzüglich mit
+            den Angaben, die er dafür hat, und ergänzt sie, sobald er mehr weiß.</p></section>
+
+    <section><h2>9. Löschung und Rückgabe</h2>
+        <p>Nach Ende der Leistungen löscht der Auftragsverarbeiter nach Wahl des Verantwortlichen die Daten oder gibt
+            sie zurück, soweit keine gesetzliche Pflicht zur Speicherung besteht. In Datensicherungen bleiben sie bis
+            zu deren Löschung. Während der Laufzeit entfernt ShipSync Käuferadressen abgeschlossener Bestellungen nach
+            der vom Verantwortlichen eingestellten Frist; ausgestellte Rechnungen bleiben unverändert.</p></section>
+
+    <section><h2>10. Nachweise und Prüfungen</h2>
+        <p>Der Auftragsverarbeiter stellt die Informationen bereit, die zum Nachweis der Pflichten aus Art. 28 DSGVO
+            nötig sind, und ermöglicht Überprüfungen, auch Inspektionen durch den Verantwortlichen oder eine von ihm
+            beauftragte, zur Vertraulichkeit verpflichtete Person, nach angemessener Ankündigung.</p></section>
+
+    <section><h2>Anhang: Technische und organisatorische Maßnahmen</h2>
+        <ul>
+            <li>Übertragung zwischen Browser und Dienst verschlüsselt (HTTPS).</li>
+            <li>Passwörter und Schlüssel der Druckprogramme nur als Hashwert gespeichert.</li>
+            <li>Zugangsdaten verbundener Konten und die gespeicherten EKS-Angaben verschlüsselt gespeichert.</li>
+            <li>Trennung der Kundenkonten in der Anwendung; jeder Zugriff wird dem eigenen Konto zugeordnet.</li>
+            <li>Begrenzung der Anfragen bei Anmeldung und besonders sensiblen Funktionen.</li>
+            <li>Löschmeldungen von eBay werden mit geprüfter Signatur verarbeitet.</li>
+            <li>Automatisches Entfernen alter Käuferadressen und Druckdaten.</li>
+            <li>Vorgesehen ist eine tägliche automatisierte Datensicherung; bei einem erfolgreichen Lauf werden
+                Sicherungen, die älter als 30 Tage sind, gelöscht.</li>
+            <li>Automatisierte Tests vor Änderungen an der Software.</li>
+        </ul></section>
+</main>
+</body>
+</html>

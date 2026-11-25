@@ -8,9 +8,10 @@ from sqlalchemy import text
 from app.config import settings
 from app.core.rate_limit import limiter
 from app.core.sentry import init_sentry
-from app.database import Base, engine
+from app.database import Base, SessionLocal, engine
+from app.services import site_page_fixes
 from app import models  # noqa: F401 - import registers all models with Base, needed for create_all() below
-from app.routers import accounting, admin, affiliate_portal, alerts, amazon, auth, billing, dhl, ebay, ebay_create_listing, ebay_offers, euer, expenses, market_research, orders, plans, pricing, print_agents, print_jobs, products, purchases, sales_invoices, shopify, tenants, uploads
+from app.routers import account_data, accounting, admin, affiliate_portal, alerts, amazon, auth, billing, dhl, ebay, ebay_create_listing, ebay_offers, eks, euer, expenses, market_research, orders, plans, pricing, print_agents, print_jobs, products, purchases, sales_invoices, shopify, tenants, uploads
 
 # Before the app is created: a no-op until settings.sentry_dsn is set (see
 # app/core/sentry.py) - safe to always call.
@@ -86,6 +87,10 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS ebay_immutable_id VARCHAR(255)"))
     connection.execute(text("ALTER TABLE print_jobs ADD COLUMN IF NOT EXISTS label_pdf_data BYTEA"))
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS early_service_consent_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS business_confirmed_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_version VARCHAR(20)"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS buyer_data_retention_months INTEGER NOT NULL DEFAULT 36"))
     connection.execute(text("ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS password_hash VARCHAR"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)"))
@@ -115,11 +120,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Wrong passages in the public pages stored in the database (see the service).
+with SessionLocal() as _session:
+    site_page_fixes.apply(_session)
+
 app.include_router(auth.router)
 app.include_router(tenants.router)
 app.include_router(products.router)
 app.include_router(accounting.router)
 app.include_router(euer.router)
+app.include_router(eks.router)
+app.include_router(account_data.router)
 app.include_router(pricing.router)
 app.include_router(orders.router)
 app.include_router(purchases.router)
@@ -155,6 +166,7 @@ def health_check():
 # Render deployment. Mounted last so it never shadows the API routes above.
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
-from app.services import auto_sync  # noqa: E402
+from app.services import auto_sync, retention_service  # noqa: E402
 
 auto_sync.start()
+retention_service.start()

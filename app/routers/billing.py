@@ -16,12 +16,9 @@ before relying on this in production, same caveat as
 app/services/dhl_service.py carries for DHL.
 
 Amount handling note: `invoice.paid`'s amount_paid is treated as the GROSS
-amount actually charged, with net/VAT re-derived at this app's fixed 19%
-rate (INVOICE_VAT_RATE) so every invoice this app issues stays internally
-consistent, regardless of how the Stripe Price itself is configured
-(tax-inclusive vs. exclusive). [PLATZHALTER: verify this matches the real
-Stripe Price setup - and how EU B2B reverse-charge customers, if any,
-should be handled - before going live.]
+amount actually charged. The invoice splits it with billing_service.invoice_vat_rate():
+no VAT for a small business (§ 19 UStG, the default), otherwise 19 %. The Stripe
+price must be set up as the final amount the customer pays.
 """
 
 from decimal import Decimal
@@ -37,7 +34,7 @@ from app.models.tenant import Tenant
 from app.models.user import User
 from app.routers.admin import _get_or_create_settings
 from app.schemas.billing import CheckoutSessionOut, CheckoutSessionRequest, PortalSessionOut
-from app.services.billing_service import INVOICE_VAT_RATE, issue_invoice
+from app.services.billing_service import invoice_vat_rate, issue_invoice
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
@@ -151,7 +148,7 @@ def _handle_invoice_paid(db: Session, stripe_invoice: dict) -> None:
         return
 
     gross_amount = Decimal(stripe_invoice.get("amount_paid", 0)) / 100
-    net_amount = (gross_amount / (1 + INVOICE_VAT_RATE / 100)).quantize(Decimal("0.01"))
+    net_amount = (gross_amount / (1 + invoice_vat_rate() / 100)).quantize(Decimal("0.01"))
     currency = (stripe_invoice.get("currency") or "eur").upper()
 
     settings_row = _get_or_create_settings(db)

@@ -51,6 +51,9 @@ class Tenant(Base):
     # Accounting VAT mode: 'kleinunternehmer' (no VAT, par. 19 UStG) or 'regular' (19%).
     vat_mode = Column(String(20), nullable=False, default="kleinunternehmer", server_default="kleinunternehmer")
 
+    # After how many months buyer names and addresses are removed from finished orders.
+    buyer_data_retention_months = Column(Integer, nullable=False, default=36, server_default="36")
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
 

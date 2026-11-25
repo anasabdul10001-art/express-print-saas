@@ -405,6 +405,22 @@
                 </button>
             </div>
         </div>
+        <section class="bg-white border border-slate-200 rounded-xl p-6 space-y-3 text-sm">
+            <h3 class="text-lg font-bold">Datenschutz</h3>
+            <label class="block">Käuferdaten abgeschlossener Bestellungen entfernen nach
+                <select id="retention" class="ml-1 p-2 border border-slate-300 rounded">
+                    <option value="6">6 Monaten</option><option value="12">12 Monaten</option>
+                    <option value="24">24 Monaten</option><option value="36">36 Monaten</option>
+                </select>
+            </label>
+            <p class="text-slate-500">Entfernt werden Benutzername, Name, Anschrift, Telefonnummer, Sendungsnummer und gespeicherte Etiketten. Beträge und ausgestellte Rechnungen bleiben. <b>Das kann nicht rückgängig gemacht werden.</b> Brauchst du eine Rechnung für eine Bestellung, erstelle sie vorher.</p>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" id="retention-save" class="bg-slate-900 text-white font-semibold px-4 py-2 rounded">Frist speichern</button>
+                <button type="button" id="data-export" class="border border-slate-300 rounded px-4 py-2">Meine Daten herunterladen</button>
+                <a href="../avv.html" class="underline text-sky-700 self-center">Vertrag zur Auftragsverarbeitung</a>
+            </div>
+            <p id="privacy-message" class="hidden p-2 rounded"></p>
+        </section>
     </main>
     </div>
     </div>
@@ -976,6 +992,33 @@
         loadTenant();
         loadAccount();
         loadDhlStatus();
+
+        function privacyMessage(text, isError) {
+            const box = document.getElementById("privacy-message");
+            box.className = "p-2 rounded " + (isError ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800");
+            box.textContent = text;
+        }
+        let savedRetention = null;
+        (async () => {
+            const r = await fetch(`${API_URL}/account/retention`, { headers: authHeaders() });
+            if (r.ok) { savedRetention = (await r.json()).months; document.getElementById("retention").value = savedRetention; }
+        })();
+        document.getElementById("retention-save").onclick = async () => {
+            const months = Number(document.getElementById("retention").value);
+            if (savedRetention && months < savedRetention && !confirm(`Mit der kürzeren Frist werden Käuferdaten von Bestellungen, die älter als ${months} Monate sind, beim nächsten täglichen Lauf endgültig entfernt. Fortfahren?`)) return;
+            const r = await fetch(`${API_URL}/account/retention`, { method: "PUT", headers: authHeaders(true), body: JSON.stringify({ months }) });
+            if (r.ok) { savedRetention = months; privacyMessage("Gespeichert.", false); }
+            else privacyMessage("Die Frist konnte nicht gespeichert werden.", true);
+        };
+        document.getElementById("data-export").onclick = async () => {
+            const r = await fetch(`${API_URL}/account/export`, { headers: authHeaders() });
+            if (!r.ok) { privacyMessage("Der Download hat nicht geklappt. Bitte später erneut versuchen.", true); return; }
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(await r.blob());
+            a.download = "shipsync-meine-daten.zip";
+            document.body.appendChild(a); a.click(); a.remove();
+            URL.revokeObjectURL(a.href);
+        };
     </script>
 </body>
 </html>

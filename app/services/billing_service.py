@@ -13,6 +13,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.models.affiliate import Affiliate, AffiliateCommission, AffiliateReferral
 from app.models.invoice import Invoice
 from app.models.plan import SiteSettings
@@ -22,6 +23,11 @@ from app.services.email_service import send_invoice_email
 from app.services.invoice_service import generate_invoice_pdf
 
 INVOICE_VAT_RATE = Decimal("19.00")
+
+
+def invoice_vat_rate() -> Decimal:
+    """A small business (§ 19 UStG) must not show VAT: a wrongly shown amount is owed (§ 14c UStG)."""
+    return Decimal("0.00") if settings.operator_small_business else INVOICE_VAT_RATE
 
 
 def award_affiliate_commission(db: Session, tenant: Tenant, invoice: Invoice) -> None:
@@ -94,7 +100,8 @@ def issue_invoice(
     if not settings_row.company_legal_name or not settings_row.company_address:
         raise ValueError("Bitte zuerst die Rechnungsdaten (Firmenname, Adresse) in den Einstellungen ausfüllen.")
 
-    vat_amount = (net_amount * INVOICE_VAT_RATE / 100).quantize(Decimal("0.01"))
+    vat_rate = invoice_vat_rate()
+    vat_amount = (net_amount * vat_rate / 100).quantize(Decimal("0.01"))
     gross_amount = net_amount + vat_amount
 
     # Sequential + gapless per §14 UStG: reserved by incrementing the
@@ -110,7 +117,7 @@ def issue_invoice(
         issue_date=datetime.now(timezone.utc).date(),
         description=description,
         net_amount=net_amount,
-        vat_rate=INVOICE_VAT_RATE,
+        vat_rate=vat_rate,
         vat_amount=vat_amount,
         gross_amount=gross_amount,
         currency=currency,

@@ -17,6 +17,7 @@ def _keys(monkeypatch):
     limiter.reset()
     for name, value in (("groq_api_key", "g"), ("mistral_api_key", "m"), ("openrouter_api_key", "o")):
         monkeypatch.setattr(ai.settings, name, value)
+    monkeypatch.setattr(ai.settings, "mistral_training_disabled", True)
 
 
 def _answer(**changes):
@@ -183,3 +184,9 @@ def test_the_endpoint_needs_login_and_a_supported_file(client, register):
     headers, _ = register()
     r = client.post("/purchases/read", headers=headers, files={"file": ("r.txt", b"hello", "text/plain")})
     assert r.status_code == 400
+
+
+def test_mistral_is_not_used_until_its_training_is_switched_off(monkeypatch):
+    monkeypatch.setattr(ai.settings, "mistral_training_disabled", False)
+    assert [p["name"] for p in ai.providers()] == ["Groq", "OpenRouter"]
+

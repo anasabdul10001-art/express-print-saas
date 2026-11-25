@@ -5,6 +5,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.services import legal_texts
 from app.config import settings
 from app.core.deps import TRIAL_EXPIRED_DETAIL, get_current_user, get_db, trial_expired
 from app.core.rate_limit import limiter
@@ -38,17 +39,23 @@ AVATAR_BUCKET = "product-images"
 ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
 
+@router.get("/registration-status")
+def registration_status():
+    return {"open": settings.registration_open}
+
+
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
+    if not settings.registration_open:
+        raise HTTPException(status_code=403, detail="Die Registrierung ist derzeit geschlossen.")
     existing = db.query(User).filter(User.email == payload.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    if not payload.early_service_consent:
-        raise HTTPException(
-            status_code=400,
-            detail="Bitte bestätige, dass die Nutzung sofort beginnen soll, um die Registrierung abzuschließen.",
-        )
+    if not payload.business_confirmed:
+        raise HTTPException(status_code=400, detail="ShipSync wird nur Unternehmern (§ 14 BGB) angeboten.")
+    if not payload.terms_accepted:
+        raise HTTPException(status_code=400, detail="Bitte die AGB und den Vertrag zur Auftragsverarbeitung annehmen.")
 
     plan = None
     if payload.plan_name:
@@ -84,7 +91,9 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         password_hash=hash_password(payload.password),
         full_name=payload.full_name,
         role="owner",
-        early_service_consent_at=datetime.now(timezone.utc),
+        business_confirmed_at=datetime.now(timezone.utc),
+        terms_accepted_at=datetime.now(timezone.utc),
+        terms_version=legal_texts.TERMS_VERSION,
     )
     db.add(user)
 
