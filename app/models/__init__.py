@@ -9,6 +9,7 @@ from app.models.amazon_account import AmazonAccount, AmazonOAuthState
 from app.models.shopify_account import ShopifyAccount, ShopifyOAuthState
 from app.models.stock_movement import StockMovement
 from app.models.expense import Expense
+from app.models.purchase import Purchase, PurchaseLine
 from app.models.password_reset_token import PasswordResetToken
 from app.models.market_research import TrackedSearch, MarketSnapshot
 from app.models.plan import Plan, SiteSettings
@@ -22,7 +23,7 @@ from app.models.site_page import SitePage
 
 __all__ = [
     "Tenant", "User", "PrintAgent", "PrintJob", "Product", "Order", "OrderItem",
-    "EbayAccount", "EbayOAuthState", "ShopifyAccount", "ShopifyOAuthState", "AmazonAccount", "AmazonOAuthState", "StockMovement", "Expense", "PasswordResetToken",
+    "EbayAccount", "EbayOAuthState", "ShopifyAccount", "ShopifyOAuthState", "AmazonAccount", "AmazonOAuthState", "StockMovement", "Expense", "Purchase", "PurchaseLine", "PasswordResetToken",
     "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings", "PaymentMethod", "Invoice",
     "DhlAccount", "Affiliate", "AffiliateReferral", "AffiliateCommission", "AffiliatePayout",
     "AffiliatePasswordToken", "SitePage", "SalesInvoice", "SellerProfile",

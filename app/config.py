@@ -95,6 +95,12 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.5-flash-lite"
     openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
     nvidia_model: str = "meta/llama-3.3-70b-instruct"
+    # --- Reading supplier invoices (free tiers, tried in this order: Groq, Mistral,
+    # OpenRouter; Groq and OpenRouter use the keys above) ---
+    mistral_api_key: str = ""
+    groq_vision_model: str = "qwen/qwen3.8-27b"
+    mistral_vision_model: str = "mistral-small-latest"
+    openrouter_vision_model: str = "google/gemma-4-31b-it:free"
     # Background order sync every N minutes (0 = off). The orders page also
     # syncs by itself while it is open.
     auto_sync_minutes: int = 0
