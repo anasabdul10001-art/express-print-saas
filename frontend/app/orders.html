@@ -204,6 +204,21 @@
             </button>
         </div>
 
+        <!-- Seller details for the buyer invoices -->
+        <details id="invoice-settings" class="bg-white border border-slate-200 rounded-xl p-4 text-sm">
+            <summary class="cursor-pointer font-semibold">Rechnungsdaten (für Kunden-Rechnungen)</summary>
+            <form class="mt-3 grid gap-3 sm:grid-cols-2" onsubmit="saveInvoiceProfile(event)">
+                <label class="block">Name / Firma <input id="ip-legal_name" maxlength="255" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                <label class="block">E-Mail <input id="ip-email" type="email" maxlength="255" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                <label class="block sm:col-span-2">Anschrift <textarea id="ip-address" rows="3" maxlength="1000" class="mt-1 w-full p-2 border border-slate-300 rounded"></textarea></label>
+                <label class="block">Steuernummer <input id="ip-tax_number" maxlength="50" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                <label class="block">USt-IdNr. <input id="ip-vat_id" maxlength="30" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                <label class="block">Nummernkreis (Kürzel) <input id="ip-number_prefix" maxlength="10" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                <div class="flex items-end"><button class="bg-slate-900 text-white font-semibold px-4 py-2 rounded">Speichern</button></div>
+                <p class="sm:col-span-2 text-xs text-slate-400">Steuernummer oder USt-IdNr. ist Pflicht. Ob mit oder ohne Umsatzsteuer, richtet sich nach der Einstellung unter Buchhaltung. Eine erstellte Rechnung wird nicht geändert oder gelöscht, nur storniert.</p>
+            </form>
+        </details>
+
         <!-- Print filter -->
         <div id="filter-bar" class="flex gap-2 text-sm font-semibold">
             <button type="button" data-filter="unshipped" onclick="setFilter('unshipped')" class="px-3 py-1.5 rounded-full border transition"></button>
@@ -582,6 +597,102 @@
             });
         }
 
+        const INVOICE_FIELDS = ["legal_name", "address", "tax_number", "vat_id", "email", "number_prefix"];
+        let invoicesByOrder = {};
+
+        function apiError(data, fallback) {
+            return typeof data.detail === "string" ? data.detail : fallback;
+        }
+
+        async function loadInvoiceProfile() {
+            try {
+                const response = await fetch(`${API_URL}/sales-invoices/profile`, { headers: authHeaders() });
+                if (!response.ok) return;
+                const data = await response.json();
+                INVOICE_FIELDS.forEach(f => document.getElementById(`ip-${f}`).value = data[f] || "");
+            } catch (err) {}
+        }
+
+        async function saveInvoiceProfile(event) {
+            event.preventDefault();
+            const body = Object.fromEntries(INVOICE_FIELDS.map(f => [f, document.getElementById(`ip-${f}`).value]));
+            try {
+                const response = await fetch(`${API_URL}/sales-invoices/profile`, { method: "PUT", headers: authHeaders(true), body: JSON.stringify(body) });
+                const data = await response.json().catch(() => ({}));
+                showBanner(response.ok ? "Rechnungsdaten gespeichert." : apiError(data, "Speichern fehlgeschlagen. Bitte Eingaben prüfen (Kürzel: nur Buchstaben, Zahlen, Bindestrich)."), !response.ok);
+            } catch (err) { showBanner(t("orders.serverErrorReload"), true); }
+        }
+
+        async function loadInvoices() {
+            const map = {};
+            try {
+                const response = await fetch(`${API_URL}/sales-invoices`, { headers: authHeaders() });
+                if (response.ok) {
+                    // Newest first from the API; shown oldest first per order.
+                    (await response.json()).reverse().forEach(i => { if (i.order_id) (map[i.order_id] ||= []).push(i); });
+                }
+            } catch (err) {}
+            invoicesByOrder = map;
+        }
+
+        function invoiceControls(order) {
+            const all = invoicesByOrder[order.id] || [];
+            const active = all.some(i => i.kind === "invoice" && !i.cancelled);
+            const links = all.map(i => `
+                <button type="button" onclick='downloadInvoice(${JSON.stringify(i.id)}, ${JSON.stringify(i.number)})' class="underline ${i.cancelled ? "text-slate-400 line-through" : "text-sky-700"}">${i.kind === "storno" ? "Storno" : "Rechnung"} ${i.number}</button>
+                ${i.has_xml ? `<button type="button" onclick='downloadInvoice(${JSON.stringify(i.id)}, ${JSON.stringify(i.number)}, "xml")' class="underline text-slate-500" title="E-Rechnung (XML, EN 16931)">XML</button>` : ""}
+                ${i.kind === "invoice" && !i.cancelled ? `<button type="button" onclick='cancelInvoice(${JSON.stringify(i.id)}, ${JSON.stringify(i.number)})' class="text-red-600 hover:underline">stornieren</button>` : ""}`).join("");
+            const create = !active && order.status !== "canceled"
+                ? `<button type="button" onclick='createInvoice(${JSON.stringify(order.id)}, this)' class="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold py-1 px-3 rounded">Rechnung erstellen</button>` : "";
+            return links || create ? `<div class="px-4 py-2 text-xs flex flex-wrap items-center gap-3 border-b border-slate-200">${links}${create}</div>` : "";
+        }
+
+        async function invoiceRequest(path, body, successText) {
+            try {
+                const response = await fetch(`${API_URL}${path}`, { method: "POST", headers: authHeaders(true), body: body ? JSON.stringify(body) : undefined });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) { showBanner(apiError(data, "Das hat nicht geklappt."), true); return; }
+                showBanner(successText(data), false);
+                await loadInvoices();
+                renderOrders(allOrders);
+            } catch (err) { showBanner(t("orders.serverErrorReload"), true); }
+        }
+
+        function askDeliveryDate() {
+            const today = new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+            const answer = prompt("Liefer- bzw. Versanddatum der Ware (TT.MM.JJJJ):", today);
+            if (answer === null) return null;
+            const m = answer.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+            if (!m) { showBanner("Bitte das Datum als TT.MM.JJJJ eingeben.", true); return null; }
+            return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+        }
+
+        async function createInvoice(orderId, button) {
+            const deliveryDate = askDeliveryDate();
+            if (!deliveryDate) return;
+            if (!confirm("Rechnung jetzt erstellen? Sie bekommt eine feste Nummer und kann nur noch storniert werden.")) return;
+            button.disabled = true;
+            await invoiceRequest("/sales-invoices", { order_id: orderId, delivery_date: deliveryDate }, d => `Rechnung ${d.number} erstellt.`);
+            button.disabled = false;
+        }
+
+        async function cancelInvoice(id, number) {
+            if (!confirm(`Rechnung ${number} stornieren? Es wird eine Stornorechnung erstellt.`)) return;
+            await invoiceRequest(`/sales-invoices/${id}/cancel`, null, d => `Stornorechnung ${d.number} erstellt.`);
+        }
+
+        async function downloadInvoice(id, number, type = "pdf") {
+            try {
+                const response = await fetch(`${API_URL}/sales-invoices/${id}/${type}`, { headers: authHeaders() });
+                if (!response.ok) { showBanner("Download fehlgeschlagen.", true); return; }
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(await response.blob());
+                a.download = `${number}.${type}`;
+                document.body.appendChild(a); a.click(); a.remove();
+                URL.revokeObjectURL(a.href);
+            } catch (err) { showBanner(t("orders.serverErrorReload"), true); }
+        }
+
         function renderOrders(orders) {
             allOrders = orders;
             renderFilterBar();
@@ -667,6 +778,7 @@
                                 ${t("orders.shipTo")} ${formatRecipientAddress(order.recipient_address)}
                             </div>
                         ` : ""}
+                        ${invoiceControls(order)}
                         ${order.tracking_number ? `
                             <div class="px-4 py-2 text-xs text-slate-500 border-b border-slate-200">
                                 ${t("orders.tracking")} <span class="font-mono">${order.tracking_number}</span>
@@ -697,12 +809,14 @@
                 const response = await fetch(`${API_URL}/orders`, { headers: authHeaders() });
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
+                await loadInvoices();
                 renderOrders(data);
             } catch (err) {
                 showBanner(t("orders.serverErrorReload"), true);
             }
         }
 
+        loadInvoiceProfile();
         loadOrders();
         document.addEventListener("langchange", loadOrders);
 
