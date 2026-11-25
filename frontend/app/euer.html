@@ -26,6 +26,7 @@
         <label class="block">Aufteilung <select id="group" class="mt-1 block p-2 border border-slate-300 rounded"><option value="quarter">Quartale</option><option value="month">Monate</option><option value="year">Ganzes Jahr</option></select></label>
         <button type="button" id="show" class="bg-slate-900 text-white font-semibold px-4 py-2 rounded">Anzeigen</button>
         <button type="button" id="csv" class="border border-slate-300 rounded px-4 py-2 bg-white">Alle Buchungen als CSV</button>
+        <button type="button" id="zip" class="bg-red-600 text-white font-semibold rounded px-4 py-2 disabled:opacity-50">Alles mit Belegen (ZIP)</button>
     </div>
 
     <div id="warnings" class="space-y-2"></div>
@@ -63,14 +64,28 @@ async function load() {
         <tbody>${d.income_keys.map(k => row(d.labels[k], k)).join("")}${row("Betriebseinnahmen", "income", "font-bold bg-slate-50")}${d.cost_keys.map(k => row(d.labels[k], k)).join("")}${row("Betriebsausgaben", "costs", "font-bold bg-slate-50")}${row("Überschuss / Verlust", "surplus", "font-bold text-base")}</tbody></table>`;
 }
 $("show").onclick = load;
-$("csv").onclick = async () => {
-    const r = await fetch(`${API_URL}/accounting/euer/bookings.csv?${range()}`, { headers: AUTH });
-    if (!r.ok) { banner("Die CSV-Datei konnte nicht erstellt werden."); return; }
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(await r.blob());
-    a.download = `euer-buchungen-${$("year").value}.csv`;
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(a.href);
+async function save(path, name, failure) {
+    $("banner").className = "hidden";
+    try {
+        const r = await fetch(`${API_URL}/accounting/euer/${path}?${range()}`, { headers: AUTH });
+        if (r.status === 401) { window.location.href = "../login.html"; return; }
+        if (!r.ok) {
+            const data = await r.json().catch(() => ({}));
+            banner(typeof data.detail === "string" ? data.detail : failure);
+            return;
+        }
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(await r.blob());
+        a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(a.href);
+    } catch (e) { banner(failure); }
+}
+$("csv").onclick = () => save("bookings.csv", `euer-buchungen-${$("year").value}.csv`, "Die CSV-Datei konnte nicht erstellt werden.");
+$("zip").onclick = async () => {
+    $("zip").disabled = true;
+    await save("export.zip", `buchhaltung-${$("year").value}.zip`, "Die ZIP-Datei konnte nicht erstellt werden.");
+    $("zip").disabled = false;
 };
 const thisYear = new Date().getFullYear();
 $("year").innerHTML = [0, 1, 2, 3, 4].map(i => `<option>${thisYear - i}</option>`).join("");

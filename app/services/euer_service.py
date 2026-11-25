@@ -88,9 +88,9 @@ def entries(db: Session, tenant_id, start: date, end: date) -> tuple[list[dict],
     estimated: set = set()  # orders for which some amount has no transaction day of its own
     sales_without_fees = 0
 
-    def add(day, kind, amount, text, estimate_of=None):
+    def add(day, kind, amount, text, estimate_of=None, source=None):
         if amount and start <= day <= end:
-            rows.append({"day": day, "kind": kind, "amount": amount, "text": text})
+            rows.append({"day": day, "kind": kind, "amount": amount, "text": text, "source": source})
             if estimate_of is not None:
                 estimated.add(estimate_of)
 
@@ -134,13 +134,19 @@ def entries(db: Session, tenant_id, start: date, end: date) -> tuple[list[dict],
         if purchase.paid_date is None:
             purchases_without_paid_date += 1
         add(purchase.paid_date or purchase.invoice_date, "goods", purchase.total,
-            f"{purchase.supplier} {purchase.invoice_number or ''}".strip())
+            f"{purchase.supplier} {purchase.invoice_number or ''}".strip(), source=("purchase", purchase.id))
 
-    large, turn_of_year = [], 0
+    large, turn_of_year, without_receipt = [], 0, 0
     for expense in db.query(Expense).filter(
             Expense.tenant_id == tenant_id, Expense.expense_date >= start, Expense.expense_date <= end):
         category = expense.category or "Sonstiges"
-        add(expense.expense_date, "expenses", expense.amount, f"{category}: {expense.description}")
+        paid_to = " ".join(x for x in (expense.supplier, expense.invoice_number) if x)
+        add(expense.expense_date, "expenses", expense.amount,
+            f"{category}: {expense.description}" + (f" ({paid_to})" if paid_to else ""),
+            source=("expense", expense.id))
+        # entries imported from eBay are documented by eBay's own invoices
+        if not expense.external_ref and not expense.receipts:
+            without_receipt += 1
         if expense.amount > ASSET_HINT_LIMIT:
             large.append(f"{expense.expense_date.strftime('%d.%m.%Y')} {expense.description} ({expense.amount} €)")
         day = expense.expense_date
@@ -153,6 +159,7 @@ def entries(db: Session, tenant_id, start: date, end: date) -> tuple[list[dict],
         "sales_without_fees": sales_without_fees,
         "purchases_without_paid_date": purchases_without_paid_date,
         "large_expenses": large,
+        "expenses_without_receipt": without_receipt,
         "turn_of_year_expenses": turn_of_year,
     }
 
@@ -171,6 +178,9 @@ def warnings_for(checks: dict, totals: dict, vat_mode: str) -> list[str]:
                    "Ein neuer eBay-Abgleich kann fehlende Daten ergänzen, soweit eBay sie noch liefert.")
     if checks["sales_without_fees"]:
         out.append(f"Bei {checks['sales_without_fees']} eBay-Verkauf/Verkäufen sind die Gebühren noch unbekannt.")
+    if checks["expenses_without_receipt"]:
+        out.append(f"{checks['expenses_without_receipt']} Ausgabe(n) ohne hochgeladenen Beleg. "
+                   "Bitte unter „Ausgaben“ ergänzen.")
     if checks["large_expenses"]:
         out.append("Ausgaben über 800 € können ein Wirtschaftsgut sein, das abgeschrieben werden muss "
                    "(Grenze § 6 Abs. 2 EStG: 800 € netto). Bitte prüfen: " + "; ".join(checks["large_expenses"][:10]))
