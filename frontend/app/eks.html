@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anlage EKS — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="trial-guard.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<main class="max-w-6xl mx-auto p-4 sm:p-6 space-y-4 text-sm">
+    <div class="flex items-center justify-between gap-2">
+        <h1 class="text-2xl font-bold">Anlage EKS (Jobcenter)</h1>
+        <a href="accounting.html" class="text-slate-500 hover:text-red-600">← Buchhaltung</a>
+    </div>
+    <div id="banner" class="hidden p-3 rounded"></div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-2 text-slate-600">
+        <p>Hilfsrechnung zum Übertragen in das Formular <a class="underline text-sky-700" href="https://www.arbeitsagentur.de/datei/anlageeks_ba013054.pdf" target="_blank" rel="noopener">Anlage EKS</a> (Stand 10/2026; bitte prüfen, ob dein Jobcenter diese Fassung verwendet). Die Zeilennummern sind die des Formulars. Es wird nichts an das Jobcenter gesendet.</p>
+        <p>Gezeigt werden <b>tatsächliche</b> Beträge, z. B. für die abschließende Erklärung. Für eine vorläufige Erklärung kann der Zeitraum davor als Grundlage dienen; geschätzt wird hier nichts. Die Absetzungen (Tabelle C) füllst du selbst aus.</p>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-end gap-3">
+        <label class="block">Erster Monat <input id="from" type="month" class="mt-1 block p-2 border border-slate-300 rounded"></label>
+        <label class="block">Letzter Monat <input id="to" type="month" class="mt-1 block p-2 border border-slate-300 rounded"></label>
+        <button type="button" id="show" class="bg-slate-900 text-white font-semibold px-4 py-2 rounded">Anzeigen</button>
+        <button type="button" id="csv" class="border border-slate-300 rounded px-4 py-2 bg-white">Als CSV</button>
+    </div>
+
+    <details id="profile" class="bg-white border border-slate-200 rounded-xl p-4">
+        <summary class="font-bold cursor-pointer">Persönliche Angaben für das Formular (Abschnitte A, B, D) – <span id="profile-state">…</span></summary>
+        <div class="space-y-4 mt-3">
+            <p class="text-slate-600">Einmal eingeben, dann stehen sie in jedem PDF. Das Speichern ist freiwillig: du kannst die Felder auch jedes Mal selbst im PDF ausfüllen. Gespeichert wird verschlüsselt; sichtbar nur für den Kontoinhaber; jederzeit löschbar. Unterschriften, Abschnitt F, Tabelle C und die Fragen auf Seite 9 werden nicht gespeichert.</p>
+            <fieldset class="space-y-2">
+                <legend class="font-bold">A. Antragstellende Person</legend>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <label class="block">Vorname<input data-f="applicant_first_name" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Nachname<input data-f="applicant_last_name" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Geburtsdatum<input data-f="applicant_birth_date" autocomplete="off" placeholder="TT.MM.JJJJ" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Nummer der Bedarfsgemeinschaft<input data-f="community_number" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                </div>
+            </fieldset>
+            <fieldset class="space-y-2">
+                <legend class="font-bold">B. Selbständige Person</legend>
+                <button type="button" id="same-person" class="underline text-sky-700">Ich bin es selbst: Angaben aus A übernehmen</button>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <label class="block">Vorname<input data-f="self_employed_first_name" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Nachname<input data-f="self_employed_last_name" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Geburtsdatum<input data-f="self_employed_birth_date" autocomplete="off" placeholder="TT.MM.JJJJ" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                </div>
+            </fieldset>
+            <fieldset class="space-y-2">
+                <legend class="font-bold">D. Tätigkeit</legend>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    <label class="block">Firmenname<input data-f="company_name" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Straße (Betriebsstätte)<input data-f="street" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Hausnummer<input data-f="house_number" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Postleitzahl<input data-f="postal_code" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Ort<input data-f="city" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Gewerbe oder Tätigkeit<input data-f="activity" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Beginn<input data-f="activity_start" autocomplete="off" placeholder="MM.JJJJ" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Ende (falls beendet)<input data-f="activity_end" autocomplete="off" placeholder="MM.JJJJ" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                    <label class="block">Rechtsform<input data-f="legal_form" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                </div>
+            </fieldset>
+            <label class="flex items-start gap-2"><input id="consent" type="checkbox" class="mt-1"> <span>Ich möchte, dass ShipSync diese Angaben speichert, um das Formular auszufüllen.</span></label>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" id="profile-save" class="bg-slate-900 text-white font-semibold px-4 py-2 rounded">Speichern</button>
+                <button type="button" id="profile-delete" class="text-red-600 border border-red-300 rounded px-4 py-2">Gespeicherte Angaben löschen</button>
+            </div>
+            <div id="profile-message" class="hidden p-3 rounded"></div>
+        </div>
+    </details>
+
+    <div class="bg-white border-2 border-red-500 rounded-xl p-4 space-y-2">
+        <div class="font-bold">Offizielles Formular ausgefüllt herunterladen (höchstens 6 Monate)</div>
+        <label class="flex items-start gap-2"><input id="final" type="checkbox" class="mt-1"> <span>Als <b>abschließende</b> Erklärung ankreuzen (nur wenn der Zeitraum vorbei ist)</span></label>
+        <label class="flex items-start gap-2"><input id="sums" type="checkbox" checked class="mt-1"> <span>Summen und Gewinn eintragen. <b>Ergänzt du danach selbst Beträge, musst du die Summen und den Gewinn im PDF ändern</b> oder hier abwählen und selbst rechnen.</span></label>
+        <label class="flex items-start gap-2"><input id="personal" type="checkbox" checked class="mt-1"> <span>Gespeicherte persönliche Angaben (A, B, D) mit eintragen</span></label>
+        <button type="button" id="pdf" class="bg-red-600 text-white font-bold px-4 py-2 rounded disabled:opacity-50">Anlage EKS als PDF</button>
+        <p class="text-slate-600">Eingetragen werden Zeitraum, Monate, Tabellen A und B und die Anmerkungen. Abschnitte A, B und D nur, wenn du sie oben gespeichert hast. Die übrigen Fragen, Tabelle C, leere Zeilen und die Unterschriften füllst du selbst aus. Vor dem Abgeben alles mit Kontoauszug und Belegen vergleichen.</p>
+        <div id="pdf-note" class="hidden p-3 rounded bg-amber-100 text-amber-900"></div>
+    </div>
+
+    <div id="warnings" class="space-y-2"></div>
+    <div id="summary" class="font-semibold"></div>
+    <div id="result" class="overflow-x-auto"></div>
+    <div id="remarks"></div>
+</main>
+
+<script>
+const API_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com";
+const token = localStorage.getItem("access_token");
+if (!token) window.location.href = "../login.html";
+const AUTH = { "Authorization": `Bearer ${token}` };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const num = v => Number(v).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function banner(text) {
+    const b = $("banner");
+    b.className = "p-3 rounded bg-red-100 text-red-800";
+    b.innerText = text;
+}
+// whole calendar months: from the first day of the first to the last day of the last
+function range() {
+    if (!$("from").value || !$("to").value) return null;
+    const [y, m] = $("to").value.split("-").map(Number);
+    return `start=${$("from").value}-01&end=${$("to").value}-${new Date(Date.UTC(y, m, 0)).getUTCDate()}`;
+}
+async function fetchIt(path, extra = "") {
+    $("banner").className = "hidden";
+    const q = range();
+    if (!q) { banner("Bitte beide Monate wählen."); return null; }
+    try {
+        const r = await fetch(`${API_URL}/accounting/eks${path}?${q}${extra}`, { headers: AUTH });
+        if (r.status === 401) { window.location.href = "../login.html"; return null; }
+        if (!r.ok) {
+            const data = await r.json().catch(() => ({}));
+            banner(typeof data.detail === "string" ? data.detail : "Die Zahlen konnten nicht geladen werden.");
+            return null;
+        }
+        return r;
+    } catch (e) { banner("Server nicht erreichbar."); return null; }
+}
+async function load() {
+    ["warnings", "summary", "result", "remarks"].forEach(id => $(id).innerHTML = "");
+    const r = await fetchIt("");
+    if (!r) return;
+    const d = await r.json();
+    $("warnings").innerHTML = d.warnings.map(w => `<div class="p-3 rounded bg-amber-100 text-amber-900">${esc(w)}</div>`).join("");
+    $("summary").textContent = `Gewinn im Zeitraum: ${num(d.profit_total)} € · im Durchschnitt je Monat: ${num(d.profit_monthly_average)} € (nur die ausgefüllten Zeilen)`;
+    const styles = { line: "", subtotal: "bg-slate-50", sum: "font-bold bg-slate-50", profit: "font-bold" };
+    $("result").innerHTML = `<table class="w-full bg-white border border-slate-200">
+        <thead><tr class="border-b text-slate-500"><th class="text-left p-2">Zeile</th><th class="text-left">Bezeichnung</th>${d.months.map(m => `<th class="text-right px-2">${esc(m)}</th>`).join("")}<th class="text-right px-2">Summe</th></tr></thead>
+        <tbody>${d.rows.map(row => `<tr class="border-b ${styles[row.kind]}"><td class="p-2 whitespace-nowrap">${esc(row.line)}</td><td class="pr-2">${esc(row.name)}</td>${row.months === null ? `<td colspan="${d.months.length + 1}" class="text-right px-2 text-slate-400">selbst ausfüllen</td>` : [...row.months, row.total].map(v => `<td class="text-right px-2 whitespace-nowrap">${num(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    $("remarks").innerHTML = d.remarks.length ? `<h2 class="font-bold mt-2 mb-1">Woraus die Zeilen bestehen (für die Anmerkungen im Formular)</h2><ul class="list-disc pl-5">${d.remarks.map(x => `<li>${esc(x.line)}: ${esc(x.what)} – ${num(x.amount)} €</li>`).join("")}</ul>` : "";
+}
+async function saveFile(r, name) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(await r.blob());
+    a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(a.href);
+}
+$("show").onclick = load;
+$("csv").onclick = async () => {
+    const r = await fetchIt("/table.csv");
+    if (r) await saveFile(r, `eks-${$("from").value}-${$("to").value}.csv`);
+};
+$("pdf").onclick = async () => {
+    $("pdf").disabled = true;
+    $("pdf-note").classList.add("hidden");
+    const r = await fetchIt("/form.pdf", `&final=${$("final").checked}&sums=${$("sums").checked}&personal=${$("personal").checked}`);
+    if (r) {
+        await saveFile(r, `Anlage-EKS-${$("from").value}-${$("to").value}.pdf`);
+        if (r.headers.get("X-Remarks-Complete") === "0") {
+            $("pdf-note").textContent = "Die Anmerkungen passen nicht ganz in die Felder des Formulars. Bitte zusätzlich die CSV-Datei herunterladen und als Aufstellung beifügen.";
+            $("pdf-note").classList.remove("hidden");
+        }
+    }
+    $("pdf").disabled = false;
+};
+const profileInputs = () => [...document.querySelectorAll("[data-f]")];
+function profileMessage(text, isError) {
+    const box = $("profile-message");
+    box.className = "p-3 rounded " + (isError ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800");
+    box.textContent = text;
+}
+async function profileCall(method, body) {
+    const r = await fetch(`${API_URL}/accounting/eks/profile`, {
+        method, headers: body ? { ...AUTH, "Content-Type": "application/json" } : AUTH, body: body ? JSON.stringify(body) : undefined });
+    if (r.status === 401) { window.location.href = "../login.html"; throw new Error("login"); }
+    const data = r.status === 204 ? {} : await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail
+        : (data.detail || []).map(d => d.msg.replace(/^Value error, /, "")).join(" ") || "Fehler");
+    return data;
+}
+function showProfile(saved, details) {
+    $("profile-state").textContent = saved ? "gespeichert" : "noch nichts gespeichert";
+    $("consent").checked = saved;
+    profileInputs().forEach(i => i.value = (details && details[i.dataset.f]) || "");
+}
+async function loadProfile() {
+    try { const d = await profileCall("GET"); showProfile(d.saved, d.details); }
+    catch (e) { $("profile-state").textContent = "nicht geladen"; profileMessage(e.message, true); }
+}
+$("same-person").onclick = () => ["first_name", "last_name", "birth_date"].forEach(k =>
+    document.querySelector(`[data-f="self_employed_${k}"]`).value = document.querySelector(`[data-f="applicant_${k}"]`).value);
+$("profile-save").onclick = async () => {
+    const details = Object.fromEntries(profileInputs().map(i => [i.dataset.f, i.value]));
+    try {
+        await profileCall("PUT", { consent: $("consent").checked, details });
+        $("profile-state").textContent = "gespeichert";
+        profileMessage("Gespeichert.", false);
+    } catch (e) { profileMessage(e.message, true); }
+};
+$("profile-delete").onclick = async () => {
+    if (!confirm("Die gespeicherten persönlichen Angaben endgültig löschen?")) return;
+    try { await profileCall("DELETE"); showProfile(false, null); profileMessage("Gelöscht.", false); }
+    catch (e) { profileMessage(e.message, true); }
+};
+loadProfile();
+// default: the last six full months
+const month = back => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - back); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
+$("from").value = month(6);
+$("to").value = month(1);
+load();
+</script>
+</body>
+</html>

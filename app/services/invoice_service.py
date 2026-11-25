@@ -49,7 +49,8 @@ def generate_invoice_pdf(invoice: Invoice, settings_row: SiteSettings) -> bytes:
     pdf.set_font("Helvetica", "B", 10)
     pdf.set_draw_color(200, 200, 200)
     pdf.cell(130, 8, "Beschreibung", border="B")
-    pdf.cell(0, 8, "Netto", border="B", align="R", new_x="LMARGIN", new_y="NEXT")
+    without_vat = invoice.vat_rate == 0
+    pdf.cell(0, 8, "Betrag" if without_vat else "Netto", border="B", align="R", new_x="LMARGIN", new_y="NEXT")
 
     pdf.set_font("Helvetica", size=10)
     pdf.cell(130, 8, invoice.description)
@@ -57,14 +58,20 @@ def generate_invoice_pdf(invoice: Invoice, settings_row: SiteSettings) -> bytes:
 
     pdf.ln(6)
 
-    pdf.cell(150, 6, "Nettobetrag")
-    pdf.cell(0, 6, f"{invoice.net_amount:.2f} {invoice.currency}", align="R", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(150, 6, f"zzgl. {invoice.vat_rate:.0f}% USt.")
-    pdf.cell(0, 6, f"{invoice.vat_amount:.2f} {invoice.currency}", align="R", new_x="LMARGIN", new_y="NEXT")
+    if not without_vat:
+        pdf.cell(150, 6, "Nettobetrag")
+        pdf.cell(0, 6, f"{invoice.net_amount:.2f} {invoice.currency}", align="R", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(150, 6, f"zzgl. {invoice.vat_rate:.0f}% USt.")
+        pdf.cell(0, 6, f"{invoice.vat_amount:.2f} {invoice.currency}", align="R", new_x="LMARGIN", new_y="NEXT")
 
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(150, 9, "Gesamtbetrag")
     pdf.cell(0, 9, f"{invoice.gross_amount:.2f} {invoice.currency}", align="R", new_x="LMARGIN", new_y="NEXT")
+
+    if without_vat:
+        pdf.set_font("Helvetica", size=10)
+        pdf.multi_cell(0, 5, "Steuerbefreiung für Kleinunternehmer nach § 19 UStG: Es wird keine Umsatzsteuer berechnet.",
+                       new_x="LMARGIN", new_y="NEXT")
 
     pdf.ln(12)
     pdf.set_font("Helvetica", size=8)

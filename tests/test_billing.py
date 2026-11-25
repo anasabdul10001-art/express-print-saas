@@ -239,6 +239,7 @@ def test_webhook_checkout_completed_updates_tenant(client, register, monkeypatch
 
 
 def test_webhook_invoice_paid_creates_invoice_and_awards_commission(client, register, monkeypatch):
+    monkeypatch.setattr("app.config.settings.operator_small_business", False)  # the 19 % case
     _configure_stripe(monkeypatch)
     admin_headers, _ = register(email="webhookadmin@example.com")
     _make_superadmin(admin_headers, client)
@@ -250,7 +251,7 @@ def test_webhook_invoice_paid_creates_invoice_and_awards_commission(client, regi
 
     referred = client.post("/auth/register", json={
         "email": "webhookreferred@example.com", "password": "testpass123", "company_name": "Webhook Referred Co",
-        "early_service_consent": True, "referral_code": affiliate["referral_code"],
+        "business_confirmed": True, "terms_accepted": True, "referral_code": affiliate["referral_code"],
     })
     assert referred.status_code == 201
     tenants = client.get("/admin/tenants", headers=admin_headers).json()
@@ -286,6 +287,61 @@ def test_webhook_invoice_paid_creates_invoice_and_awards_commission(client, regi
     assert invoices_after == invoices_before + 1
     assert float(invoice_row.gross_amount) == 34.51
     assert float(invoice_row.net_amount) == 29.00
+
+    affiliates_after = client.get("/admin/affiliates", headers=admin_headers).json()
+    affiliate_after = next(a for a in affiliates_after if a["id"] == affiliate["id"])
+    assert float(affiliate_after["balance_owed"]) == round(34.51 * 0.10, 2)
+
+
+def test_webhook_invoice_for_a_small_business_has_no_vat(client, register, monkeypatch):
+    monkeypatch.setattr("app.config.settings.operator_small_business", True)
+    _configure_stripe(monkeypatch)
+    admin_headers, _ = register(email="webhookadmin@example.com")
+    _make_superadmin(admin_headers, client)
+    _set_billing_details(client, admin_headers)
+
+    affiliate = client.post("/admin/affiliates", headers=admin_headers, json={
+        "name": "Webhook Referrer", "commission_type": "PERCENTAGE_RECURRING", "commission_value": 10,
+    }).json()
+
+    referred = client.post("/auth/register", json={
+        "email": "webhookreferred@example.com", "password": "testpass123", "company_name": "Webhook Referred Co",
+        "business_confirmed": True, "terms_accepted": True, "referral_code": affiliate["referral_code"],
+    })
+    assert referred.status_code == 201
+    tenants = client.get("/admin/tenants", headers=admin_headers).json()
+    tenant = next(t for t in tenants if t["company_name"] == "Webhook Referred Co")
+
+    engine = create_engine(settings.database_url)
+    with engine.begin() as conn:
+        conn.execute(
+            text("UPDATE tenants SET stripe_customer_id = 'cus_invoicepaid' WHERE id = :id"),
+            {"id": tenant["id"]},
+        )
+        invoices_before = conn.execute(text("SELECT COUNT(*) FROM invoices")).scalar()
+
+    # 34.51 gross ~= 29.00 net at 19% VAT, in cents as Stripe would send it.
+    fake_event = {
+        "type": "invoice.paid",
+        "data": {"object": {
+            "customer": "cus_invoicepaid",
+            "amount_paid": 3451,
+            "currency": "eur",
+        }},
+    }
+    monkeypatch.setattr(stripe.Webhook, "construct_event", lambda payload, sig_header, secret: fake_event)
+
+    response = client.post("/billing/webhooks/stripe", content=b"{}", headers={"stripe-signature": "valid"})
+    assert response.status_code == 200
+
+    with engine.begin() as conn:
+        invoices_after = conn.execute(text("SELECT COUNT(*) FROM invoices")).scalar()
+        invoice_row = conn.execute(
+            text("SELECT net_amount, gross_amount FROM invoices WHERE tenant_id = :id"), {"id": tenant["id"]}
+        ).first()
+    assert invoices_after == invoices_before + 1
+    assert float(invoice_row.gross_amount) == 34.51
+    assert float(invoice_row.net_amount) == 34.51
 
     affiliates_after = client.get("/admin/affiliates", headers=admin_headers).json()
     affiliate_after = next(a for a in affiliates_after if a["id"] == affiliate["id"])

@@ -76,7 +76,10 @@ def test_suggest_reply_falls_through_providers(register, client, monkeypatch):
     assert no_key.status_code == 503
 
     monkeypatch.setattr(ai_reply_service.settings, "groq_api_key", "g")
-    monkeypatch.setattr(ai_reply_service.settings, "nvidia_api_key", "n")
+    monkeypatch.setattr(ai_reply_service.settings, "openrouter_api_key", "o")
+    # keys alone are not enough: the drafts are off until switched on
+    assert client.post("/ebay/suggest-reply", headers=headers, json={"message": "Hallo"}).status_code == 503
+    monkeypatch.setattr(ai_reply_service.settings, "ai_reply_enabled", True)
     seen = []
 
     def fake_post(url, **k):
@@ -88,7 +91,8 @@ def test_suggest_reply_falls_through_providers(register, client, monkeypatch):
     monkeypatch.setattr(ai_reply_service.httpx, "post", fake_post)
     out = client.post("/ebay/suggest-reply", headers=headers,
                       json={"message": "Schreib an max@x.de", "buyer_name": "Max Muster"}).json()
-    assert out == {"reply": "Guten Tag, ich sehe nach.", "provider": "nvidia"}
+    assert out == {"reply": "Guten Tag, ich sehe nach.", "provider": "openrouter"}
+    assert "'data_collection': 'deny'" in seen[-1][1]
     assert all("max@x.de" not in body for _, body in seen)
 
 

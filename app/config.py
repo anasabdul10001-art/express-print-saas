@@ -86,21 +86,39 @@ class Settings(BaseSettings):
         "https://api.ebay.com/oauth/api_scope/sell.payment.dispute "
         "https://api.ebay.com/oauth/api_scope/commerce.notification.subscription"
     )
-    # --- AI reply suggestions (free tiers; first configured key is tried first) ---
+    # --- AI reply suggestions and invoice reading (Groq, OpenRouter) ---
     groq_api_key: str = ""
-    gemini_api_key: str = ""
     openrouter_api_key: str = ""
-    nvidia_api_key: str = ""
     groq_model: str = "llama-3.3-70b-versatile"
-    gemini_model: str = "gemini-3.5-flash-lite"
     openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
-    nvidia_model: str = "meta/llama-3.3-70b-instruct"
     # --- Reading supplier invoices (free tiers, tried in this order: Groq, Mistral,
     # OpenRouter; Groq and OpenRouter use the keys above) ---
     mistral_api_key: str = ""
     groq_vision_model: str = "qwen/qwen3.8-27b"
     mistral_vision_model: str = "mistral-small-latest"
     openrouter_vision_model: str = "google/gemma-4-31b-it:free"
+    # Public sign-up. Closed unless switched on (REGISTRATION_OPEN=true), until the
+    # legal pages and contracts for offering ShipSync to others are complete.
+    registration_open: bool = False
+    # --- Who runs this installation (shown on Impressum, privacy page, terms) ---
+    # Set on the server; deliberately not part of the public repository.
+    operator_name: str = ""
+    operator_street: str = ""
+    operator_city: str = ""  # postcode and town
+    operator_country: str = "Deutschland"
+    operator_email: str = ""  # empty: the address already on the stored Impressum
+    operator_phone: str = ""
+    operator_vat_id: str = ""
+    # § 19 UStG: no VAT on the subscription invoices and prices. Set to false when VAT-liable.
+    operator_small_business: bool = True
+    # Daily removal of personal data that is no longer needed (services/retention_service.py)
+    retention_enabled: bool = True
+    # AI safeguards. Reply drafts send buyer messages (eBay content) to AI services, so
+    # they stay off until eBay's licence and the provider's data terms are checked.
+    ai_reply_enabled: bool = False
+    # Mistral's free tier trains on requests unless switched off in its admin panel;
+    # it is only used after that has been done and confirmed here.
+    mistral_training_disabled: bool = False
     # Background order sync every N minutes (0 = off). The orders page also
     # syncs by itself while it is open.
     auto_sync_minutes: int = 0

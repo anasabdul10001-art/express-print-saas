@@ -36,13 +36,13 @@ def test_faq_page_has_default_content(client):
     assert "Frage" in body["content"]
 
 
-def test_withdrawal_page_has_official_template_content(client):
+def test_withdrawal_page_says_the_offer_is_for_businesses_only(client):
     response = client.get("/pages/withdrawal")
     assert response.status_code == 200
     body = response.json()
     assert body["slug"] == "withdrawal"
     assert "Widerrufsrecht" in body["content"]
-    assert "Muster-Widerrufsformular" in body["content"]
+    assert "ausschließlich an <strong>Unternehmer" in body["content"] and "§ 14 BGB" in body["content"]
 
 
 def test_admin_pages_requires_superadmin(client, register):

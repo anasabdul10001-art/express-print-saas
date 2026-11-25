@@ -248,7 +248,7 @@ def test_affiliate_sees_only_own_commissions_and_payouts(client, register):
 
     referred_response = client.post("/auth/register", json={
         "email": "referredbya2@example.com", "password": "testpass123", "company_name": "Referred by A",
-        "early_service_consent": True, "referral_code": affiliate_a["referral_code"],
+        "business_confirmed": True, "terms_accepted": True, "referral_code": affiliate_a["referral_code"],
     })
     assert referred_response.status_code == 201
 

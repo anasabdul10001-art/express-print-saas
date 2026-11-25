@@ -1,10 +1,11 @@
 """Registration, login, and the /auth/me profile-management endpoints."""
+import pytest
 
 
 def test_register_creates_tenant_and_returns_token(client):
     response = client.post("/auth/register", json={
         "email": "owner@example.com", "password": "testpass123",
-        "company_name": "Acme GmbH", "country_code": "DE", "early_service_consent": True,
+        "company_name": "Acme GmbH", "country_code": "DE", "business_confirmed": True, "terms_accepted": True,
     })
     assert response.status_code == 201
     body = response.json()
@@ -15,7 +16,7 @@ def test_register_creates_tenant_and_returns_token(client):
 def test_register_rejects_duplicate_email(client):
     payload = {
         "email": "dupe@example.com", "password": "testpass123", "company_name": "Co A",
-        "country_code": "DE", "early_service_consent": True,
+        "country_code": "DE", "business_confirmed": True, "terms_accepted": True,
     }
     assert client.post("/auth/register", json=payload).status_code == 201
     response = client.post("/auth/register", json=payload)
@@ -25,33 +26,22 @@ def test_register_rejects_duplicate_email(client):
 def test_register_rejects_short_password(client):
     response = client.post("/auth/register", json={
         "email": "shortpw@example.com", "password": "short", "company_name": "Co",
-        "country_code": "DE", "early_service_consent": True,
+        "country_code": "DE", "business_confirmed": True, "terms_accepted": True,
     })
     assert response.status_code == 422
 
 
-def test_register_requires_early_service_consent_field(client):
-    """Missing entirely (not just false) - Pydantic itself rejects it since
-    there's no default (see RegisterRequest.early_service_consent)."""
-    response = client.post("/auth/register", json={
-        "email": "noconsentfield@example.com", "password": "testpass123", "company_name": "Co",
-    })
-    assert response.status_code == 422
+@pytest.mark.parametrize("missing", ["business_confirmed", "terms_accepted"])
+def test_register_requires_both_confirmations(client, missing):
+    body = {"email": "x@example.com", "password": "testpass123", "company_name": "Co",
+            "business_confirmed": True, "terms_accepted": True}
+    del body[missing]
+    assert client.post("/auth/register", json=body).status_code == 422
+    # declined is refused too: ShipSync is for businesses and needs the accepted terms
+    assert client.post("/auth/register", json={**body, missing: False}).status_code == 400
 
 
-def test_register_rejects_declined_early_service_consent(client):
-    """§ 356 Abs. 4 BGB: since ShipSync grants full access immediately, a
-    customer must affirmatively accept losing the 14-day withdrawal right -
-    declining it (false) blocks the registration rather than silently
-    proceeding."""
-    response = client.post("/auth/register", json={
-        "email": "declinedconsent@example.com", "password": "testpass123", "company_name": "Co",
-        "country_code": "DE", "early_service_consent": False,
-    })
-    assert response.status_code == 400
-
-
-def test_register_stores_consent_timestamp(client, register):
+def test_register_stores_when_and_which_terms_were_confirmed(client, register):
     from sqlalchemy import create_engine, text
     from app.config import settings
 
@@ -60,10 +50,10 @@ def test_register_stores_consent_timestamp(client, register):
 
     engine = create_engine(settings.database_url)
     with engine.begin() as conn:
-        row = conn.execute(
-            text("SELECT early_service_consent_at FROM users WHERE id = :id"), {"id": me["id"]}
-        ).first()
-    assert row.early_service_consent_at is not None
+        row = conn.execute(text(
+            "SELECT business_confirmed_at, terms_accepted_at, terms_version FROM users WHERE id = :id"),
+            {"id": me["id"]}).first()
+    assert row.business_confirmed_at and row.terms_accepted_at and row.terms_version
 
 
 def test_login_succeeds_with_correct_credentials(client, register):

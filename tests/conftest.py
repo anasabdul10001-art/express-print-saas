@@ -23,6 +23,9 @@ os.environ.setdefault("FRONTEND_URL", "http://localhost:8899")
 os.environ.setdefault("TOKEN_ENCRYPTION_KEY", Fernet.generate_key().decode())
 os.environ.setdefault("DHL_API_KEY", "test-dhl-api-key")
 os.environ.setdefault("DHL_ENVIRONMENT", "SANDBOX")
+os.environ.setdefault("OPERATOR_SMALL_BUSINESS", "false")  # billing tests use the 19 % case; the app default is true
+os.environ.setdefault("RETENTION_ENABLED", "false")  # tests call the clean-up themselves
+os.environ.setdefault("REGISTRATION_OPEN", "true")  # sign-up is closed by default
 
 import pytest
 from fastapi.testclient import TestClient
@@ -87,7 +90,7 @@ def register(client):
             "password": "testpass123",
             "company_name": f"Test Co {counter['n']}",
             "country_code": "DE",
-            "early_service_consent": True,
+            "business_confirmed": True, "terms_accepted": True,
         }
         payload.update(overrides)
         response = client.post("/auth/register", json=payload)

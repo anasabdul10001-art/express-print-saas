@@ -88,9 +88,10 @@ def entries(db: Session, tenant_id, start: date, end: date) -> tuple[list[dict],
     estimated: set = set()  # orders for which some amount has no transaction day of its own
     sales_without_fees = 0
 
-    def add(day, kind, amount, text, estimate_of=None, source=None):
+    def add(day, kind, amount, text, estimate_of=None, source=None, category=None):
         if amount and start <= day <= end:
-            rows.append({"day": day, "kind": kind, "amount": amount, "text": text, "source": source})
+            rows.append({"day": day, "kind": kind, "amount": amount, "text": text, "source": source,
+                         "category": category})
             if estimate_of is not None:
                 estimated.add(estimate_of)
 
@@ -143,7 +144,7 @@ def entries(db: Session, tenant_id, start: date, end: date) -> tuple[list[dict],
         paid_to = " ".join(x for x in (expense.supplier, expense.invoice_number) if x)
         add(expense.expense_date, "expenses", expense.amount,
             f"{category}: {expense.description}" + (f" ({paid_to})" if paid_to else ""),
-            source=("expense", expense.id))
+            source=("expense", expense.id), category=category)
         # entries imported from eBay are documented by eBay's own invoices
         if not expense.external_ref and not expense.receipts:
             without_receipt += 1

@@ -28,6 +28,10 @@ class User(Base):
     # 14-day withdrawal right once the service is fully performed (§ 356 Abs. 4
     # BGB - see the "withdrawal" SitePage in app/routers/plans.py). Null would
     # only happen for accounts created before this consent was required.
-    early_service_consent_at = Column(DateTime(timezone=True), nullable=True)
+    early_service_consent_at = Column(DateTime(timezone=True), nullable=True)  # accounts before 25.11.2026
+    # Confirmations given at sign-up since ShipSync is offered to businesses only.
+    business_confirmed_at = Column(DateTime(timezone=True), nullable=True)
+    terms_accepted_at = Column(DateTime(timezone=True), nullable=True)
+    terms_version = Column(String(20), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
