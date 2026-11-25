@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException, Header, status
 from fastapi.security import OAuth2PasswordBearer
@@ -130,6 +130,9 @@ def get_current_affiliate(
     return affiliate
 
 
+LAST_SEEN_EVERY = timedelta(minutes=4)
+
+
 def get_print_agent_from_api_key(
     authorization: str = Header(..., alias="Authorization"),
     db: Session = Depends(get_db),
@@ -153,8 +156,12 @@ def get_print_agent_from_api_key(
     if agent.status == "disabled":
         raise HTTPException(status_code=403, detail="This print agent has been disabled")
 
-    agent.last_seen_at = datetime.now(timezone.utc)
-    agent.status = "online"
-    db.commit()
+    # Written only now and then: the agent polls every few seconds and a write each time
+    # would keep the database busy for nothing.
+    now = datetime.now(timezone.utc)
+    if agent.status != "online" or agent.last_seen_at is None or now - agent.last_seen_at >= LAST_SEEN_EVERY:
+        agent.last_seen_at = now
+        agent.status = "online"
+        db.commit()
 
     return agent
