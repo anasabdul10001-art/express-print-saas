@@ -148,6 +148,11 @@
     <main class="max-w-4xl mx-auto p-6 space-y-6">
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
+        <section id="alerts-box" class="hidden bg-white border border-slate-200 rounded-xl p-4">
+            <h2 class="text-lg font-bold mb-3">Hinweise</h2>
+            <ul id="alerts-list" class="space-y-2"></ul>
+        </section>
+
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div class="bg-red-50 p-4 rounded-xl">
                 <p class="text-slate-500 text-xs mb-1" data-i18n="dashboard.ordersToday">Bestellungen heute</p>
@@ -580,6 +585,37 @@
             }
         }
 
+        const ALERT_STYLE = {
+            critical: "border-red-500 bg-red-50",
+            warning: "border-amber-400 bg-amber-50",
+            info: "border-sky-400 bg-sky-50",
+        };
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
+
+        async function loadAlerts() {
+            try {
+                const response = await fetch(`${API_URL}/alerts`, { headers: authHeaders() });
+                if (!response.ok) return;
+                const alerts = await response.json();
+                document.getElementById("alerts-box").classList.toggle("hidden", alerts.length === 0);
+                document.getElementById("alerts-list").innerHTML = alerts.map(a => `
+                    <li class="border-l-4 rounded p-3 text-sm ${ALERT_STYLE[a.severity] || ALERT_STYLE.info}">
+                        <details>
+                            <summary class="cursor-pointer font-semibold">${escapeHtml(a.title)} (${a.count})</summary>
+                            <ul class="mt-2 list-disc pl-5 text-slate-600">
+                                ${a.items.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+                                ${a.count > a.items.length ? `<li>… und ${a.count - a.items.length} weitere</li>` : ""}
+                            </ul>
+                            <a href="${escapeHtml(a.link)}" class="inline-block mt-2 font-semibold underline">Ansehen</a>
+                        </details>
+                    </li>`).join("");
+            } catch (err) {}
+        }
+
+        loadAlerts();
         loadAmazonStatus();
         loadSummary();
         loadProfitHistory();
