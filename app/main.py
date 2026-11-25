@@ -10,7 +10,7 @@ from app.core.rate_limit import limiter
 from app.core.sentry import init_sentry
 from app.database import Base, engine
 from app import models  # noqa: F401 - import registers all models with Base, needed for create_all() below
-from app.routers import accounting, admin, affiliate_portal, alerts, amazon, auth, billing, dhl, ebay, ebay_create_listing, ebay_offers, expenses, market_research, orders, plans, pricing, print_agents, print_jobs, products, purchases, sales_invoices, shopify, tenants, uploads
+from app.routers import accounting, admin, affiliate_portal, alerts, amazon, auth, billing, dhl, ebay, ebay_create_listing, ebay_offers, euer, expenses, market_research, orders, plans, pricing, print_agents, print_jobs, products, purchases, sales_invoices, shopify, tenants, uploads
 
 # Before the app is created: a no-op until settings.sentry_dsn is set (see
 # app/core/sentry.py) - safe to always call.
@@ -117,6 +117,7 @@ app.include_router(auth.router)
 app.include_router(tenants.router)
 app.include_router(products.router)
 app.include_router(accounting.router)
+app.include_router(euer.router)
 app.include_router(pricing.router)
 app.include_router(orders.router)
 app.include_router(purchases.router)

@@ -38,6 +38,7 @@ import httpx
 from sqlalchemy.orm import Session
 from uuid import UUID
 
+from app.models.cash_event import CashEvent
 from app.models.ebay_account import EbayAccount
 from app.models.expense import Expense
 from app.models.order import Order, OrderItem
@@ -348,6 +349,32 @@ def _tx_amount(tx):
     return -value if tx.get("bookingEntry") == "CREDIT" else value
 
 
+def _record_events(db: Session, tenant_id: UUID, found: dict) -> None:
+    """Saves the day of each order transaction for the cash-basis report. `found` maps
+    (order, kind, eBay transaction id) to (amount, day); known ones are updated, never doubled."""
+    if not found:
+        return
+    known = {(e.order_id, e.kind, e.external_ref): e for e in db.query(CashEvent).filter(
+        CashEvent.tenant_id == tenant_id, CashEvent.order_id.in_({key[0] for key in found}))}
+    for (order_id, kind, ref), (amount, day) in found.items():
+        event = known.get((order_id, kind, ref))
+        if event is None:
+            db.add(CashEvent(tenant_id=tenant_id, order_id=order_id, kind=kind, external_ref=ref,
+                             amount=amount, booked_on=day))
+        elif event.amount != amount or event.booked_on != day:
+            event.amount, event.booked_on = amount, day
+
+
+def _collect(found: dict, order, kind: str, tx: dict, amount) -> None:
+    """Adds one transaction to `found`; without an id or a date it is left out."""
+    ref, when = tx.get("transactionId"), _parse_ebay_date(tx.get("transactionDate"))
+    if not ref or when is None or amount is None:
+        return
+    key = (order.id, kind, str(ref)[:100])
+    before = found.get(key, (Decimal("0"), None))[0]
+    found[key] = (before + amount, when.astimezone(ZoneInfo("Europe/Berlin")).date())
+
+
 def sync_fees(
     account: EbayAccount, tenant_id: UUID, db: Session, access_token: str, notes: list[str] | None = None
 ) -> int:
@@ -357,6 +384,7 @@ def sync_fees(
     as expenses. Best effort: a failing call is reported in `notes` and never breaks the order sync.
     """
     updated = 0
+    found: dict = {}  # dated money movements, saved at the end
 
     def order_for(ref):
         return db.query(Order).filter(Order.tenant_id == tenant_id, Order.external_order_ref == ref).first()
@@ -368,6 +396,8 @@ def sync_fees(
         for tx in sales:
             fee = _dec((tx.get("totalFeeAmount") or {}).get("value"))
             order = order_for(tx.get("orderId")) if tx.get("orderId") else None
+            if order and fee:
+                _collect(found, order, "sale_fee", tx, fee)
             if order and fee is not None and order.ebay_fees != fee:
                 order.ebay_fees = fee
                 updated += 1
@@ -381,6 +411,11 @@ def sync_fees(
                 entry = per_order.setdefault(tx["orderId"], [Decimal("0"), Decimal("0")])
                 entry[0] += amount + credit  # what the buyer got back = eBay's net refund + the fee it returned
                 entry[1] += credit
+                order = order_for(tx["orderId"])
+                if order:
+                    _collect(found, order, "refund", tx, amount + credit)
+                    if credit:
+                        _collect(found, order, "fee_credit", tx, credit)
         for ref, (refunded, credit) in per_order.items():
             order = order_for(ref)
             if order:
@@ -396,6 +431,9 @@ def sync_fees(
             amount = _tx_amount(tx)
             if tx.get("orderId") and amount is not None:
                 per_order_labels[tx["orderId"]] = per_order_labels.get(tx["orderId"], Decimal("0")) + amount
+                order = order_for(tx["orderId"])
+                if order:
+                    _collect(found, order, "label", tx, amount)
         for ref, cost in per_order_labels.items():
             order = order_for(ref)
             if order and order.shipping_label_cost != cost:
@@ -420,6 +458,7 @@ def sync_fees(
             known.add(ref)
             updated += 1
 
+    _record_events(db, tenant_id, found)
     db.commit()
     return updated
 
