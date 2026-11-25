@@ -1,16 +1,20 @@
+import uuid
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
-from app.models.expense import Expense
+from app.models.expense import Expense, ExpenseReceipt
 from app.models.user import User
-from app.schemas.expense import ExpenseCreate, ExpenseOut, ExpenseSummaryOut, ExpenseUpdate
+from app.schemas.expense import ExpenseCreate, ExpenseOut, ExpenseSummaryOut, ExpenseUpdate, ReceiptOut
+from app.services import document_files
 
 router = APIRouter(prefix="/expenses", tags=["expenses"])
+
+MAX_RECEIPTS = 5
 
 
 @router.get("", response_model=list[ExpenseOut])
@@ -94,4 +98,61 @@ def delete_expense(
         raise HTTPException(status_code=404, detail="Ausgabe nicht gefunden")
 
     db.delete(expense)
+    db.commit()
+
+
+def _receipt(db: Session, tenant_id, expense_id, receipt_id) -> ExpenseReceipt:
+    receipt = db.query(ExpenseReceipt).filter(
+        ExpenseReceipt.id == receipt_id, ExpenseReceipt.expense_id == expense_id,
+        ExpenseReceipt.tenant_id == tenant_id).first()
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Beleg nicht gefunden")
+    return receipt
+
+
+@router.post("/{expense_id}/receipts", response_model=ReceiptOut, status_code=201)
+def add_receipt(
+    expense_id: uuid.UUID,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # the row lock keeps two uploads at once from passing the limit together
+    expense = (db.query(Expense)
+               .filter(Expense.id == expense_id, Expense.tenant_id == current_user.tenant_id)
+               .with_for_update().first())
+    if not expense:
+        raise HTTPException(status_code=404, detail="Ausgabe nicht gefunden")
+    if db.query(ExpenseReceipt.id).filter(ExpenseReceipt.expense_id == expense_id).count() >= MAX_RECEIPTS:
+        raise HTTPException(status_code=400, detail=f"Höchstens {MAX_RECEIPTS} Belege je Ausgabe.")
+    content = file.file.read(document_files.MAX_FILE_BYTES + 1)
+    receipt = ExpenseReceipt(
+        tenant_id=current_user.tenant_id, expense_id=expense_id,
+        file_name=(file.filename or "beleg")[-255:], content_type=document_files.file_type(content),
+        file_data=content)
+    db.add(receipt)
+    db.commit()
+    db.refresh(receipt)
+    return receipt
+
+
+@router.get("/{expense_id}/receipts/{receipt_id}")
+def download_receipt(
+    expense_id: uuid.UUID,
+    receipt_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    receipt = _receipt(db, current_user.tenant_id, expense_id, receipt_id)
+    return document_files.download(receipt.file_name, receipt.content_type, receipt.file_data)
+
+
+@router.delete("/{expense_id}/receipts/{receipt_id}", status_code=204)
+def delete_receipt(
+    expense_id: uuid.UUID,
+    receipt_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    db.delete(_receipt(db, current_user.tenant_id, expense_id, receipt_id))
     db.commit()

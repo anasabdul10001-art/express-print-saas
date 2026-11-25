@@ -1,18 +1,17 @@
 """The cash-basis report (EÜR) as figures and as a list of every booking."""
 
-import csv
-import io
 from datetime import date
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
+from app.core.rate_limit import limiter
 from app.models.tenant import Tenant
 from app.models.user import User
-from app.services import euer_service
+from app.services import euer_service, export_service
 
 router = APIRouter(prefix="/accounting/euer", tags=["accounting"])
 
@@ -35,13 +34,12 @@ def euer_report(
     db: Session = Depends(get_db),
 ):
     _check(start, end)
-    mode = db.query(Tenant.vat_mode).filter(Tenant.id == current_user.tenant_id).scalar()
-    return euer_service.report(db, current_user.tenant_id, start, end, group_by, mode)
+    return euer_service.report(db, current_user.tenant_id, start, end, group_by,
+                               _vat_mode(db, current_user.tenant_id))
 
 
-def _safe(text: str) -> str:
-    """A spreadsheet must show typed text, never run it as a formula."""
-    return "'" + text if text[:1] in ("=", "+", "-", "@", "\t", "\r") else text
+def _vat_mode(db: Session, tenant_id) -> str:
+    return db.query(Tenant.vat_mode).filter(Tenant.id == tenant_id).scalar()
 
 
 @router.get("/bookings.csv")
@@ -53,14 +51,33 @@ def euer_bookings(
 ):
     _check(start, end)
     rows, _ = euer_service.entries(db, current_user.tenant_id, start, end)
-    buffer = io.StringIO()
-    writer = csv.writer(buffer, delimiter=";")
-    writer.writerow(["Zahlungsdatum", "Art", "Position", "Betrag (€)", "Beleg / Bezug"])
-    for row in rows:
-        income = row["kind"] in euer_service.INCOME
-        writer.writerow([row["day"].strftime("%d.%m.%Y"), "Einnahme" if income else "Ausgabe",
-                         euer_service.LABELS[row["kind"]], f"{row['amount']:.2f}".replace(".", ","),
-                         _safe(row["text"])])
     return Response(
-        content="﻿" + buffer.getvalue(), media_type="text/csv; charset=utf-8",
+        content=export_service.bookings_csv(rows), media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="euer-buchungen-{start}-{end}.csv"'})
+
+
+@router.get("/export.zip")
+@limiter.limit("4/minute")
+def euer_export(
+    request: Request,
+    start: date,
+    end: date,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """All bookings with their documents and the issued invoices, as one ZIP."""
+    _check(start, end)
+    try:
+        archive = export_service.build(db, current_user.tenant_id, start, end,
+                                       _vat_mode(db, current_user.tenant_id))
+    except export_service.TooLarge:
+        raise HTTPException(status_code=400, detail="Zu viele Belege für eine Datei. Bitte einen kürzeren "
+                                                    "Zeitraum wählen.")
+
+    def chunks():
+        with archive:
+            while block := archive.read(256 * 1024):
+                yield block
+
+    return StreamingResponse(chunks(), media_type="application/zip", headers={
+        "Content-Disposition": f'attachment; filename="buchhaltung-{start}-{end}.zip"'})

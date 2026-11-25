@@ -10,6 +10,8 @@ class ExpenseCreate(BaseModel):
     amount: Decimal = Field(..., gt=0)
     expense_date: date
     category: str | None = Field(None, max_length=50)
+    supplier: str | None = Field(None, max_length=255)
+    invoice_number: str | None = Field(None, max_length=100)
 
 
 class ExpenseUpdate(BaseModel):
@@ -18,6 +20,16 @@ class ExpenseUpdate(BaseModel):
     amount: Decimal | None = Field(None, gt=0)
     expense_date: date | None = None
     category: str | None = Field(None, max_length=50)
+    supplier: str | None = Field(None, max_length=255)
+    invoice_number: str | None = Field(None, max_length=100)
+
+
+class ReceiptOut(BaseModel):
+    id: uuid.UUID
+    file_name: str
+
+    class Config:
+        from_attributes = True
 
 
 class ExpenseOut(BaseModel):
@@ -26,6 +38,9 @@ class ExpenseOut(BaseModel):
     amount: Decimal
     expense_date: date
     category: str | None = None
+    supplier: str | None = None
+    invoice_number: str | None = None
+    receipts: list[ReceiptOut] = []
 
     class Config:
         from_attributes = True

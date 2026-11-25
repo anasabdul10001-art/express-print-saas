@@ -4,10 +4,8 @@ import json
 import uuid
 from datetime import date, datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
-from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import Response
 from pydantic import BaseModel, Field, ValidationError, model_validator
 from sqlalchemy.orm import Session
 
@@ -17,12 +15,11 @@ from app.models.product import Product
 from app.models.purchase import Purchase, PurchaseLine
 from app.models.stock_movement import StockMovement
 from app.models.user import User
-from app.services import invoice_ai_service, purchase_service
+from app.services import document_files, invoice_ai_service, purchase_service
 
 router = APIRouter(prefix="/purchases", tags=["purchases"])
 
-MAX_FILE_BYTES = 8 * 1024 * 1024
-FILE_TYPES = ((b"%PDF", "application/pdf"), (b"\x89PNG\r\n\x1a\n", "image/png"), (b"\xff\xd8\xff", "image/jpeg"))
+MAX_FILE_BYTES = document_files.MAX_FILE_BYTES
 ZERO = Decimal("0")
 
 
@@ -52,15 +49,6 @@ class PurchaseIn(BaseModel):
         if self.expected_total is not None and self.expected_total != total:
             raise ValueError(f"Die Zeilen und Nebenkosten ergeben {total} €, auf der Rechnung steht {self.expected_total} €.")
         return self
-
-
-def _file_type(content: bytes) -> str:
-    if len(content) > MAX_FILE_BYTES:
-        raise HTTPException(status_code=400, detail="Datei zu groß (max. 8 MB).")
-    content_type = next((kind for magic, kind in FILE_TYPES if content.startswith(magic)), None)
-    if not content_type:
-        raise HTTPException(status_code=400, detail="Bitte die Rechnung als PDF, JPG oder PNG hochladen.")
-    return content_type
 
 
 def _plan(db: Session, tenant_id, data: PurchaseIn, lock: bool) -> list[tuple]:
@@ -141,7 +129,7 @@ def read_with_ai(
 ):
     """Suggests the form's content from the invoice file. Saves and changes nothing."""
     content = file.file.read(MAX_FILE_BYTES + 1)
-    content_type = _file_type(content)
+    content_type = document_files.file_type(content)
     products = (db.query(Product.id, Product.title).filter(Product.tenant_id == current_user.tenant_id)
                 .order_by(Product.title).limit(300).all())
     db.close()  # reading takes a while; no database connection is held during it
@@ -179,7 +167,7 @@ async def book(
     except ValueError:
         raise HTTPException(status_code=422, detail="Ungültige Eingabe.")
     content = await file.read(MAX_FILE_BYTES + 1)
-    content_type = _file_type(content)
+    content_type = document_files.file_type(content)
 
     tenant_id = current_user.tenant_id
     number = payload.invoice_number.strip()
@@ -223,9 +211,7 @@ def list_purchases(current_user: User = Depends(get_current_user), db: Session =
 @router.get("/{purchase_id}/file")
 def download(purchase_id: uuid.UUID, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     purchase = _own(db, current_user.tenant_id, purchase_id)
-    return Response(content=purchase.file_data, media_type=purchase.content_type, headers={
-        "Content-Disposition": f"attachment; filename*=UTF-8''{quote(purchase.file_name)}",
-        "X-Content-Type-Options": "nosniff"})
+    return document_files.download(purchase.file_name, purchase.content_type, purchase.file_data)
 
 
 @router.post("/{purchase_id}/cancel")

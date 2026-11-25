@@ -198,10 +198,18 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm mb-1" data-i18n="expenses.date">Datum *</label>
+                    <label class="block text-sm mb-1">Bezahlt am *</label>
                     <input type="date" id="field-date"
                            class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                 </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <label class="block text-sm">Empfänger / Lieferant
+                    <input type="text" id="field-supplier" maxlength="255" class="mt-1 w-full p-2 rounded bg-white border border-slate-300 text-slate-900"></label>
+                <label class="block text-sm">Belegnummer
+                    <input type="text" id="field-invoice-number" maxlength="100" class="mt-1 w-full p-2 rounded bg-white border border-slate-300 text-slate-900"></label>
+                <label class="block text-sm">Beleg (PDF, JPG, PNG, max. 8 MB)
+                    <input type="file" id="field-receipt" accept=".pdf,.jpg,.jpeg,.png" class="mt-1 w-full text-sm"></label>
             </div>
             <div id="form-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <div class="flex gap-3">
@@ -230,6 +238,7 @@
                         <th class="p-3" data-i18n="expenses.colDescription">Beschreibung</th>
                         <th class="p-3">Kategorie</th>
                         <th class="p-3" data-i18n="expenses.colAmount">Betrag</th>
+                        <th class="p-3">Beleg</th>
                         <th class="p-3" data-i18n="expenses.colActions">Aktionen</th>
                     </tr>
                 </thead>
@@ -308,6 +317,9 @@
             setTimeout(() => banner.classList.add("hidden"), 4000);
         }
 
+        let EXPENSES = {};
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
         function euro(value) {
             return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)} €`;
         }
@@ -325,6 +337,7 @@
             document.getElementById("field-amount").value = "";
             document.getElementById("field-date").value = todayIso();
             document.getElementById("field-category").value = "Sonstiges";
+            ["field-supplier", "field-invoice-number", "field-receipt"].forEach(f => document.getElementById(f).value = "");
             document.getElementById("form-title").setAttribute("data-i18n", "expenses.formTitleNew");
             document.getElementById("form-title").innerText = t("expenses.formTitleNew");
             document.getElementById("save-btn").querySelector("span").setAttribute("data-i18n", "expenses.addButton");
@@ -333,7 +346,11 @@
             document.getElementById("form-error").classList.add("hidden");
         }
 
-        function editExpense(id, description, amount, expenseDate, category) {
+        function editExpense(id) {
+            const { description, amount, expense_date: expenseDate, category, supplier, invoice_number } = EXPENSES[id];
+            document.getElementById("field-supplier").value = supplier || "";
+            document.getElementById("field-invoice-number").value = invoice_number || "";
+            document.getElementById("field-receipt").value = "";
             document.getElementById("expense-id").value = id;
             document.getElementById("field-description").value = description;
             document.getElementById("field-amount").value = amount;
@@ -394,7 +411,15 @@
                 amount: Number(amountRaw),
                 expense_date: expenseDate,
                 category: document.getElementById("field-category").value,
+                supplier: document.getElementById("field-supplier").value.trim() || null,
+                invoice_number: document.getElementById("field-invoice-number").value.trim() || null,
             };
+            const receipt = document.getElementById("field-receipt").files[0];
+            if (receipt && receipt.size > 8 * 1024 * 1024) {
+                errorBox.innerText = "Datei zu groß (max. 8 MB).";
+                errorBox.classList.remove("hidden");
+                return;
+            }
 
             try {
                 const response = await fetch(
@@ -416,7 +441,10 @@
                     return;
                 }
 
-                showBanner(id ? t("expenses.updated") : t("expenses.created"), false);
+                let receiptError = null;
+                if (receipt) receiptError = await uploadReceipt(data.id, receipt);
+                if (receiptError) showBanner("Ausgabe gespeichert, aber der Beleg nicht: " + receiptError, true);
+                else showBanner(id ? t("expenses.updated") : t("expenses.created"), false);
                 resetForm();
                 loadExpenses();
                 loadSummary();
@@ -426,8 +454,53 @@
             }
         }
 
-        async function deleteExpense(id, description) {
-            if (!confirm(t("expenses.confirmDelete").replace("{description}", description))) return;
+        // Returns null on success, otherwise the reason as text.
+        async function uploadReceipt(expenseId, file) {
+            try {
+                const form = new FormData();
+                form.append("file", file);
+                const r = await fetch(`${API_URL}/expenses/${expenseId}/receipts`, { method: "POST", headers: authHeaders(), body: form });
+                if (r.ok) return null;
+                const data = await r.json().catch(() => ({}));
+                return typeof data.detail === "string" ? data.detail : `Fehler ${r.status}`;
+            } catch (err) {
+                return "Server nicht erreichbar.";
+            }
+        }
+
+        async function downloadReceipt(expenseId, receiptId) {
+            const r = await fetch(`${API_URL}/expenses/${expenseId}/receipts/${receiptId}`, { headers: authHeaders() });
+            if (!r.ok) { showBanner("Der Beleg konnte nicht geladen werden.", true); return; }
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(await r.blob());
+            a.download = EXPENSES[expenseId].receipts.find(x => x.id === receiptId).file_name;
+            document.body.appendChild(a); a.click(); a.remove();
+            URL.revokeObjectURL(a.href);
+        }
+
+        async function deleteReceipt(expenseId, receiptId) {
+            if (!confirm("Diesen Beleg endgültig löschen?")) return;
+            const r = await fetch(`${API_URL}/expenses/${expenseId}/receipts/${receiptId}`, { method: "DELETE", headers: authHeaders() });
+            if (!r.ok) showBanner("Der Beleg konnte nicht gelöscht werden.", true);
+            loadExpenses();
+        }
+
+        function attachReceipt(expenseId) {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".pdf,.jpg,.jpeg,.png";
+            input.onchange = async () => {
+                const error = await uploadReceipt(expenseId, input.files[0]);
+                if (error) showBanner(error, true);
+                loadExpenses();
+            };
+            input.click();
+        }
+
+        async function deleteExpense(id) {
+            const expense = EXPENSES[id];
+            const warning = expense.receipts.length ? "\n\nAchtung: Die hochgeladenen Belege werden mit gelöscht." : "";
+            if (!confirm(t("expenses.confirmDelete").replace("{description}", expense.description) + warning)) return;
 
             try {
                 const response = await fetch(`${API_URL}/expenses/${id}`, {
@@ -460,16 +533,18 @@
             emptyState.classList.add("hidden");
             tableWrap.classList.remove("hidden");
 
+            EXPENSES = Object.fromEntries(expenses.map(e => [e.id, e]));
             tbody.innerHTML = expenses.map(e => `
                 <tr class="border-b border-slate-200">
                     <td class="p-3 text-slate-500">${e.expense_date}</td>
-                    <td class="p-3">${e.description}</td>
-                    <td class="p-3 text-slate-500">${e.category || "Sonstiges"}</td>
+                    <td class="p-3">${esc(e.description)}<div class="text-xs text-slate-400">${esc([e.supplier, e.invoice_number].filter(Boolean).join(" · "))}</div></td>
+                    <td class="p-3 text-slate-500">${esc(e.category || "Sonstiges")}</td>
                     <td class="p-3 text-red-600">${euro(e.amount)}</td>
+                    <td class="p-3 text-xs">${e.receipts.map(x => `<div class="whitespace-nowrap"><button type="button" class="underline text-sky-700" onclick="downloadReceipt('${esc(e.id)}','${esc(x.id)}')">${esc(x.file_name)}</button> <button type="button" class="text-red-600" title="Beleg löschen" onclick="deleteReceipt('${esc(e.id)}','${esc(x.id)}')">×</button></div>`).join("")}<button type="button" class="text-slate-500 underline" onclick="attachReceipt('${esc(e.id)}')">+ Beleg</button></td>
                     <td class="p-3 space-x-2">
-                        <button onclick='editExpense(${JSON.stringify(e.id)}, ${JSON.stringify(e.description)}, ${e.amount}, ${JSON.stringify(e.expense_date)}, ${JSON.stringify(e.category || "Sonstiges")})'
+                        <button onclick="editExpense('${esc(e.id)}')"
                                 class="text-blue-600 hover:text-blue-700 text-xs">${t("expenses.edit")}</button>
-                        <button onclick='deleteExpense(${JSON.stringify(e.id)}, ${JSON.stringify(e.description)})'
+                        <button onclick="deleteExpense('${esc(e.id)}')"
                                 class="text-red-600 hover:text-red-700 text-xs">${t("expenses.delete")}</button>
                     </td>
                 </tr>

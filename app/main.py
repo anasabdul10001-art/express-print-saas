@@ -48,6 +48,8 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS item_returned_to_stock BOOLEAN NOT NULL DEFAULT FALSE"))
     connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_shipping_cost DECIMAL(10,2)"))
     connection.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS category VARCHAR(50)"))
+    connection.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS supplier VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(100)"))
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS signing_key_id VARCHAR(255)"))
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS signing_jwe TEXT"))
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS signing_private_key_encrypted TEXT"))
