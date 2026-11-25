@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EÜR — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="trial-guard.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<main class="max-w-5xl mx-auto p-4 sm:p-6 space-y-4 text-sm">
+    <div class="flex items-center justify-between gap-2">
+        <h1 class="text-2xl font-bold">EÜR (nach Zahlungsdatum)</h1>
+        <a href="accounting.html" class="text-slate-500 hover:text-red-600">← Buchhaltung</a>
+    </div>
+    <div id="banner" class="hidden p-3 rounded"></div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-2 text-slate-600">
+        <p>Einnahmen und Ausgaben zählen an dem Tag, an dem das Geld bezahlt oder erhalten wurde. Ware zählt beim <b>Bezahlen der Lieferantenrechnung</b> (<a class="underline text-sky-700" href="purchases.html">Einkäufe</a>), nicht beim Verkauf. Deshalb weicht der Überschuss von der Gewinn-Übersicht in der Buchhaltung ab.</p>
+        <p>Annahme: Ein Verkauf gilt am Bestelltag als erhalten (Zahlung des Käufers), nicht erst bei der eBay-Auszahlung. Bitte mit Steuerberater oder Finanzamt klären.</p>
+        <p>Nicht bezahlte Ware, Verpackung oder Material nur einmal erfassen: entweder als Einkauf oder als Ausgabe. Abschreibungen (AfA) werden nicht berechnet. Dies ist eine Vorbereitung, keine Steuererklärung.</p>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-end gap-3">
+        <label class="block">Jahr <select id="year" class="mt-1 block p-2 border border-slate-300 rounded"></select></label>
+        <label class="block">Aufteilung <select id="group" class="mt-1 block p-2 border border-slate-300 rounded"><option value="quarter">Quartale</option><option value="month">Monate</option><option value="year">Ganzes Jahr</option></select></label>
+        <button type="button" id="show" class="bg-slate-900 text-white font-semibold px-4 py-2 rounded">Anzeigen</button>
+        <button type="button" id="csv" class="border border-slate-300 rounded px-4 py-2 bg-white">Alle Buchungen als CSV</button>
+    </div>
+
+    <div id="warnings" class="space-y-2"></div>
+    <div id="result" class="overflow-x-auto"></div>
+</main>
+
+<script>
+const API_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com";
+const token = localStorage.getItem("access_token");
+if (!token) window.location.href = "../login.html";
+const AUTH = { "Authorization": `Bearer ${token}` };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const eur = v => Number(v).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+
+function banner(text) {
+    const b = $("banner");
+    b.className = "p-3 rounded bg-red-100 text-red-800";
+    b.innerText = text;
+}
+const range = () => `start=${$("year").value}-01-01&end=${$("year").value}-12-31`;
+async function load() {
+    $("banner").className = "hidden";
+    $("result").innerHTML = ""; $("warnings").innerHTML = "";
+    const r = await fetch(`${API_URL}/accounting/euer?${range()}&group_by=${$("group").value}`, { headers: AUTH });
+    if (r.status === 401) { window.location.href = "../login.html"; return; }
+    if (!r.ok) { banner("Die Zahlen konnten nicht geladen werden."); return; }
+    const d = await r.json();
+    $("warnings").innerHTML = d.warnings.map(w => `<div class="p-3 rounded bg-amber-100 text-amber-900">${esc(w)}</div>`).join("");
+    const columns = d.group_by === "year" ? d.periods : [...d.periods, { label: "Summe", ...d.total }];
+    if (!d.periods.length) { $("result").innerHTML = "<p class='text-slate-500'>Keine Zahlungen in diesem Jahr.</p>"; return; }
+    const row = (name, key, cls = "") => `<tr class="border-b ${cls}"><td class="py-1.5 pr-3">${esc(name)}</td>${columns.map(c => `<td class="text-right px-2 whitespace-nowrap">${eur(c[key])}</td>`).join("")}</tr>`;
+    $("result").innerHTML = `<table class="w-full bg-white border border-slate-200 rounded-xl">
+        <thead><tr class="border-b text-slate-500"><th class="text-left py-2 pl-1">Position</th>${columns.map(c => `<th class="text-right px-2">${esc(c.label)}</th>`).join("")}</tr></thead>
+        <tbody>${d.income_keys.map(k => row(d.labels[k], k)).join("")}${row("Betriebseinnahmen", "income", "font-bold bg-slate-50")}${d.cost_keys.map(k => row(d.labels[k], k)).join("")}${row("Betriebsausgaben", "costs", "font-bold bg-slate-50")}${row("Überschuss / Verlust", "surplus", "font-bold text-base")}</tbody></table>`;
+}
+$("show").onclick = load;
+$("csv").onclick = async () => {
+    const r = await fetch(`${API_URL}/accounting/euer/bookings.csv?${range()}`, { headers: AUTH });
+    if (!r.ok) { banner("Die CSV-Datei konnte nicht erstellt werden."); return; }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(await r.blob());
+    a.download = `euer-buchungen-${$("year").value}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(a.href);
+};
+const thisYear = new Date().getFullYear();
+$("year").innerHTML = [0, 1, 2, 3, 4].map(i => `<option>${thisYear - i}</option>`).join("");
+load();
+</script>
+</body>
+</html>
