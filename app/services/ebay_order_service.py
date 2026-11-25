@@ -144,23 +144,37 @@ def _apply_fulfillment(order: Order, ebay_order: dict) -> None:
         order.status = "shipped"
 
 
+ORDER_PAGE_SIZE = 200  # the most eBay returns per request
+ORDER_MAX_PAGES = 25
+
+
+def _fetch_orders(base_url: str, access_token: str) -> list[dict]:
+    """Every order eBay lists, page by page, so a new sale is never cut off."""
+    orders: list[dict] = []
+    for page in range(ORDER_MAX_PAGES):
+        resp = httpx.get(
+            f"{base_url}/sell/fulfillment/v1/order",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            params={"limit": ORDER_PAGE_SIZE, "offset": page * ORDER_PAGE_SIZE},
+            timeout=20.0,
+        )
+        if resp.status_code != 200:
+            raise ValueError(f"ebay_fetch_orders_failed: {resp.text}")
+        batch = resp.json().get("orders", [])
+        orders += batch
+        if len(batch) < ORDER_PAGE_SIZE:
+            break
+    return orders
+
+
 def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
     access_token = ebay_oauth_service.get_valid_access_token(account, db)
     base_url = EBAY_API_BASE[account.environment]
 
-    resp = httpx.get(
-        f"{base_url}/sell/fulfillment/v1/order",
-        headers={
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json",
-        },
-        params={"limit": 50},
-        timeout=20.0,
-    )
-    if resp.status_code != 200:
-        raise ValueError(f"ebay_fetch_orders_failed: {resp.text}")
-
-    ebay_orders = resp.json().get("orders", [])
+    ebay_orders = _fetch_orders(base_url, access_token)
 
     # Accounts connected before the identity scope existed have no stored
     # username; every order names its seller, so fill it in from there.

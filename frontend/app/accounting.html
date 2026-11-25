@@ -178,7 +178,9 @@
                     </select>
                 </label>
                 <button onclick="loadAccounting()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Anzeigen</button>
+                <button id="sync-btn" onclick="syncSales(true)" class="border border-slate-300 hover:bg-slate-50 font-semibold py-2 px-4 rounded transition disabled:opacity-50">Verkäufe aktualisieren</button>
             </div>
+            <p id="sync-status" class="text-xs text-slate-500" aria-live="polite"></p>
         </div>
 
         <!-- Totals -->
@@ -536,7 +538,58 @@
             }
         }
 
+        // The figures come from the orders stored here, so new sales are fetched
+        // first: on opening the page (at most every 10 minutes) and on demand.
+        const SYNC_PAUSE_MS = 10 * 60 * 1000;
+        const SYNC_KEY = "accounting_sales_synced_at";
+        let syncing = false;
+
+        function syncedText(time) {
+            return `Verkäufe zuletzt abgerufen: ${new Date(time).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr`;
+        }
+
+        async function syncSales(forced) {
+            const status = document.getElementById("sync-status");
+            const last = Number(localStorage.getItem(SYNC_KEY) || 0);
+            if (syncing) return;
+            if (!forced && Date.now() - last < SYNC_PAUSE_MS) { status.innerText = syncedText(last); return; }
+            syncing = true;
+            const button = document.getElementById("sync-btn");
+            button.disabled = true;
+            status.classList.remove("text-red-600");
+            status.innerText = "Neue Verkäufe werden abgerufen …";
+            const errors = [];
+            let connected = 0, skipped = 0;
+            try {
+                for (const channel of ["ebay", "shopify", "amazon"]) {
+                    const response = await fetch(`${API_URL}/${channel}/sync-orders`, { method: "POST", headers: authHeaders() });
+                    if (response.status === 401) { logout(); return; }
+                    if (response.status === 400) continue;  // this channel is not connected
+                    const data = await response.json().catch(() => ({}));
+                    connected++;
+                    if (!response.ok) { errors.push(data.detail || `${channel}: Abruf fehlgeschlagen`); continue; }
+                    skipped += data.skipped || 0;
+                }
+            } catch (err) {
+                errors.push("Serverfehler");
+            }
+            syncing = false;
+            button.disabled = false;
+            if (errors.length || !connected) {
+                status.classList.add("text-red-600");
+                status.innerText = errors.length
+                    ? `Verkäufe konnten nicht abgerufen werden, die Zahlen sind evtl. unvollständig. ${errors.join(" | ")}`
+                    : "Kein Verkaufskonto verbunden.";
+            } else {
+                const now = Date.now();
+                localStorage.setItem(SYNC_KEY, String(now));
+                status.innerText = syncedText(now) + (skipped ? ` · ${skipped} Bestellung(en) übersprungen, siehe „Bestellungen“` : "");
+            }
+            if (connected) await loadAccounting();
+        }
+
         applyPreset("month");
+        syncSales(false);
     </script>
 </body>
 </html>
