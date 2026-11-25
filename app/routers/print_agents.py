@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db, get_print_agent_from_api_key
@@ -12,6 +12,7 @@ from app.schemas.print_agent import (
     PrintAgentDisabledUpdate,
     PrintAgentOut,
 )
+from app.services import agent_idle_cache
 
 router = APIRouter(prefix="/print-agents", tags=["print-agents"])
 
@@ -88,7 +89,7 @@ def update_print_agent(
 @router.get("/{agent_id}/next-job")
 def get_next_job(
     agent_id: str,
-    agent: PrintAgent = Depends(get_print_agent_from_api_key),
+    authorization: str = Header(..., alias="Authorization"),
     db: Session = Depends(get_db),
 ):
     """
@@ -96,6 +97,14 @@ def get_next_job(
     (no content) when there's nothing to print - this is the normal,
     expected case most of the time, not an error.
     """
+    # While there is nothing to do, answer from memory without touching the database
+    # (the session above only connects when it is first used).
+    key_hash = hash_api_key(authorization.removeprefix("Bearer ").strip())
+    if authorization.startswith("Bearer ") and agent_idle_cache.is_idle(agent_id, key_hash):
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    seen = agent_idle_cache.generation()
+
+    agent = get_print_agent_from_api_key(authorization, db)
     if str(agent.id) != agent_id:
         raise HTTPException(status_code=403, detail="API key does not match this agent_id")
 
@@ -107,6 +116,7 @@ def get_next_job(
     )
 
     if not job:
+        agent_idle_cache.remember(agent_id, key_hash, seen)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     job.status = "processing"
