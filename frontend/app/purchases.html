@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Einkäufe — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="trial-guard.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 text-sm">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold">Einkäufe (Lieferantenrechnungen)</h1>
+        <a href="accounting.html" class="text-slate-500 hover:text-red-600">← Buchhaltung</a>
+    </div>
+    <div id="banner" class="hidden p-3 rounded"></div>
+
+    <form id="form" class="bg-white border border-slate-200 rounded-xl p-4 space-y-3" onsubmit="return false">
+        <p class="text-slate-500">Alle Beträge in Euro, so wie wirklich bezahlt (bei Dollar-Rechnungen der abgebuchte Euro-Betrag). Der Einkaufspreis je Produkt wird zum gewichteten Durchschnitt aus Lagerbestand und neuer Ware. Versand, Zoll und andere Nebenkosten werden gleichmäßig auf alle Stücke verteilt.</p>
+        <div class="border border-sky-200 bg-sky-50 rounded p-3 space-y-2">
+            <div class="flex flex-wrap items-center gap-3">
+                <button type="button" id="ai-read" class="bg-sky-700 text-white font-semibold px-4 py-2 rounded disabled:opacity-50">Rechnung mit KI lesen</button>
+                <span id="ai-info" class="text-slate-600">Zuerst unten die Rechnungsdatei auswählen.</span>
+            </div>
+            <div id="ai-result" class="hidden space-y-2"></div>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2">
+            <label class="block">Rechnungsdatei (PDF, JPG, PNG, max. 8 MB) <input id="file" type="file" accept=".pdf,.jpg,.jpeg,.png" class="mt-1 w-full"></label>
+            <label class="block">Lieferant <input id="supplier" maxlength="255" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+            <label class="block">Rechnungsnummer <input id="invoice_number" maxlength="100" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+            <label class="block">Rechnungsdatum <input id="invoice_date" type="date" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+            <label class="block">Bezahlt am <input id="paid_date" type="date" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+            <label class="block">Nebenkosten gesamt (€) <input id="extra_costs" type="number" step="0.01" min="0" value="0" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+            <label class="block">Gesamtbetrag laut Rechnung (€, zur Kontrolle) <input id="expected_total" type="number" step="0.01" min="0" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        </div>
+        <div>
+            <div class="font-semibold mb-1">Positionen</div>
+            <div id="lines" class="space-y-2"></div>
+            <button type="button" id="add-line" class="mt-2 border border-slate-300 rounded px-3 py-1.5 bg-white">+ Position</button>
+        </div>
+        <label class="flex items-start gap-2"><input id="add_to_stock" type="checkbox" checked class="mt-1"> <span>Stückzahlen zum Lagerbestand addieren. <b>Abwählen, wenn die neue Ware schon im Bestand mitgezählt ist</b> (z. B. Menge bereits bei eBay erhöht und importiert).</span></label>
+        <div class="flex flex-wrap gap-2">
+            <button type="button" id="preview" class="bg-slate-900 text-white font-semibold px-4 py-2 rounded">Vorschau berechnen</button>
+            <button type="button" id="book" class="hidden bg-red-600 text-white font-bold px-4 py-2 rounded">Einkauf buchen</button>
+        </div>
+        <div id="preview-box" class="overflow-x-auto"></div>
+    </form>
+
+    <h2 class="text-lg font-bold">Gebuchte Einkäufe</h2>
+    <div id="list" class="space-y-2"></div>
+</main>
+
+<script>
+const API_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com";
+const token = localStorage.getItem("access_token");
+if (!token) window.location.href = "../login.html";
+const AUTH = { "Authorization": `Bearer ${token}` };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const eur = v => v === null || v === undefined ? "—" : Number(v).toFixed(2).replace(".", ",") + " €";
+let PRODUCTS = [], purchasesById = {}, AI_PROVIDERS = [], AI = null;
+
+function banner(text, isError) {
+    const b = $("banner");
+    b.className = "p-3 rounded " + (isError ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800");
+    b.innerText = text;
+    b.scrollIntoView({ block: "nearest" });
+}
+async function request(path, options = {}) {
+    const r = await fetch(API_URL + path, { ...options, headers: { ...AUTH, ...(options.headers || {}) } });
+    if (r.status === 401) { window.location.href = "../login.html"; throw new Error("login"); }
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : (data.detail || []).map(d => d.msg).join("; ") || "Fehler");
+    return data;
+}
+function addLine(suggestion = null) {
+    const row = document.createElement("div");
+    row.className = "line grid gap-2 sm:grid-cols-[1fr_6rem_10rem_auto] items-end";
+    row.innerHTML = `
+        <label class="block">Produkt <select class="p mt-1 w-full p-2 border border-slate-300 rounded"><option value="">— wählen —</option>${PRODUCTS.map(p => `<option value="${esc(p.id)}">${esc(p.title)} (Bestand ${esc(p.stock_quantity)})</option>`).join("")}</select></label>
+        <label class="block">Menge <input type="number" min="1" class="q mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <label class="block">Warenwert Zeile (€) <input type="number" min="0" step="0.01" class="t mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <button type="button" class="rm text-red-600 p-2">Entfernen</button>`;
+    row.querySelector(".rm").onclick = () => { row.remove(); dirty(); };
+    if (suggestion) {
+        const note = document.createElement("div");
+        note.className = "sm:col-span-4 " + (suggestion.product_id ? "text-slate-600" : "text-amber-700");
+        note.textContent = "Rechnung: " + suggestion.description + (suggestion.product_id ? " (Zuordnung prüfen)" : " – bitte Produkt wählen oder Position entfernen");
+        row.prepend(note);
+        row.querySelector(".p").value = suggestion.product_id || "";
+        row.querySelector(".q").value = suggestion.quantity;
+        row.querySelector(".t").value = suggestion.line_total;
+    }
+    $("lines").appendChild(row);
+}
+function dirty() { $("book").classList.add("hidden"); $("preview-box").innerHTML = ""; }
+// Two invoice lines for the same product are booked as one.
+function mergeSameProduct(lines) {
+    const merged = new Map();
+    for (const l of lines) {
+        const m = merged.get(l.product_id);
+        if (!m) merged.set(l.product_id, { ...l });
+        else { m.quantity += l.quantity; m.line_total = ((Math.round(m.line_total * 100) + Math.round(l.line_total * 100)) / 100).toFixed(2); }
+    }
+    return [...merged.values()];
+}
+// Brings all amounts to a new total (paid in EUR, or including VAT), in proportion and exact to the cent.
+function scaleAmounts(newTotal) {
+    const inputs = [...document.querySelectorAll(".line .t")];
+    if (Number($("extra_costs").value) > 0) inputs.push($("extra_costs"));
+    const cents = inputs.map(i => Math.round(Number(i.value) * 100));
+    const sum = cents.reduce((a, b) => a + b, 0);
+    const target = Math.round(newTotal * 100);
+    if (!(sum > 0) || !(target > 0)) return false;
+    // rounding the running sum keeps every part >= 0 and the total exact
+    let before = 0, given = 0;
+    cents.forEach((c, i) => {
+        before += c;
+        const upTo = Math.round(before * target / sum);
+        inputs[i].value = ((upTo - given) / 100).toFixed(2);
+        given = upTo;
+    });
+    // an invoice whose lines did not add up must stay blocked until corrected
+    if (AI && AI.checked) $("expected_total").value = (target / 100).toFixed(2);
+    else $("expected_total").value = "";
+    dirty();
+    return true;
+}
+function showAiResult(d) {
+    const box = $("ai-result");
+    box.className = "space-y-2";
+    box.innerHTML = `<p><b>Gelesen mit ${esc(d.provider)}.</b> ${d.matches ? "Die Summen stimmen mit dem Rechnungsbetrag überein." : ""} Die KI kann sich irren: bitte jede Zeile, Menge, Zuordnung und das Datum mit der Rechnung vergleichen.</p>${d.warnings.map(w => `<p class="text-amber-800">${esc(w)}</p>`).join("")}${d.failures.length ? `<p class="text-slate-500">Nicht verwendet: ${esc(d.failures.join("; "))}</p>` : ""}`;
+    if (d.net && d.currency === "EUR") {
+        const wrap = document.createElement("div");
+        wrap.innerHTML = `<button type="button" class="border border-slate-400 rounded px-3 py-1.5 bg-white">MwSt anteilig auf die Beträge verteilen (Kleinunternehmer: MwSt gehört zu den Kosten)</button><p class="text-slate-600 mt-1">Wer Vorsteuer abzieht, lässt die Nettobeträge stehen und leert das Feld „Gesamtbetrag laut Rechnung“.</p>`;
+        wrap.querySelector("button").onclick = () => { if (scaleAmounts(Number(d.total))) wrap.textContent = "MwSt verteilt."; };
+        box.appendChild(wrap);
+    }
+    if (d.currency !== "EUR") {
+        const wrap = document.createElement("div");
+        wrap.className = "flex flex-wrap items-end gap-2 text-amber-800";
+        wrap.innerHTML = `<label>Die Beträge sind in ${esc(d.currency || "unbekannter Währung")}. Wirklich abgebuchter Betrag in Euro: <input id="paid_eur" type="number" min="0" step="0.01" class="ml-1 p-2 border border-slate-300 rounded text-slate-900"></label><button type="button" id="to-eur" class="border border-slate-400 rounded px-3 py-2 bg-white text-slate-900">In Euro umrechnen</button>`;
+        box.appendChild(wrap);
+        $("to-eur").onclick = () => {
+            if (!scaleAmounts(Number($("paid_eur").value))) { banner("Bitte den abgebuchten Euro-Betrag eingeben.", true); return; }
+            AI.needsEur = false;
+            wrap.textContent = "In Euro umgerechnet.";
+        };
+    }
+}
+function clearAi() { AI = null; $("ai-result").className = "hidden"; $("ai-result").innerHTML = ""; }
+async function readWithAi() {
+    const file = $("file").files[0];
+    if (!file) { banner("Bitte zuerst die Rechnungsdatei auswählen.", true); return; }
+    if (!confirm(`Die Rechnungsdatei wird zum Lesen an einen externen KI-Dienst gesendet (${AI_PROVIDERS.join(", ")}), zusammen mit deinen Produktnamen. Bank- oder Kartendaten vorher schwärzen, besonders bei Fotos und Scans. Fortfahren?`)) return;
+    $("ai-read").disabled = true;
+    $("ai-info").textContent = "Die Rechnung wird gelesen …";
+    try {
+        const form = new FormData();
+        form.append("file", file);
+        const d = await request("/purchases/read", { method: "POST", body: form });
+        if ($("file").files[0] !== file) return;
+        AI = { needsEur: d.currency !== "EUR", checked: d.matches || d.net };
+        $("supplier").value = d.supplier;
+        $("invoice_number").value = d.invoice_number;
+        $("invoice_date").value = d.invoice_date || "";
+        $("paid_date").value = "";
+        $("extra_costs").value = d.extra_costs || "0";
+        $("expected_total").value = d.total || "";
+        $("lines").innerHTML = "";
+        d.lines.forEach(l => addLine(l));
+        dirty();
+        showAiResult(d);
+    } catch (e) { banner(e.message, true); }
+    finally { $("ai-read").disabled = false; $("ai-info").textContent = "Gebucht wird erst nach deiner Prüfung."; }
+}
+function collect() {
+    if (AI && AI.needsEur) throw new Error("Bitte zuerst die Beträge in Euro umrechnen.");
+    let lines = [...document.querySelectorAll(".line")].map(r => ({ product_id: r.querySelector(".p").value, quantity: Number(r.querySelector(".q").value), line_total: r.querySelector(".t").value }));
+    if (!lines.length || lines.some(l => !l.product_id || !l.quantity || l.line_total === "")) throw new Error("Bitte jede Position vollständig ausfüllen (Produkt, Menge, Warenwert).");
+    if (!$("supplier").value.trim() || !$("invoice_date").value) throw new Error("Bitte Lieferant und Rechnungsdatum angeben.");
+    lines = mergeSameProduct(lines);
+    return {
+        supplier: $("supplier").value.trim(), invoice_number: $("invoice_number").value.trim(), invoice_date: $("invoice_date").value,
+        paid_date: $("paid_date").value || null, extra_costs: $("extra_costs").value || "0",
+        expected_total: $("expected_total").value || null, add_to_stock: $("add_to_stock").checked, lines,
+    };
+}
+$("preview").onclick = async () => {
+    dirty();
+    try {
+        const d = await request("/purchases/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(collect()) });
+        $("preview-box").innerHTML = `<p class="font-semibold mb-1">Rechnung gesamt: ${eur(d.total)}</p><table class="w-full"><thead><tr class="text-left text-slate-500 border-b"><th>Produkt</th><th>Alter Bestand</th><th>Neu</th><th>Einkaufspreis je Stück</th><th>Nebenkosten je Stück</th></tr></thead><tbody>${d.lines.map(l => `<tr class="border-b"><td class="pr-2">${esc(l.title)}</td><td>${esc(l.stock_before)}</td><td>${esc(l.quantity)}</td><td>${eur(l.old_purchase_price)} → <b>${eur(l.new_purchase_price)}</b></td><td>${eur(l.old_shipping_cost)} → <b>${eur(l.new_shipping_cost)}</b></td></tr>`).join("")}</tbody></table><p class="text-slate-500 mt-1">Durchschnittspreise werden auf Cent gerundet.</p>`;
+        $("book").classList.remove("hidden");
+    } catch (e) { banner(e.message, true); }
+};
+$("book").onclick = async () => {
+    const file = $("file").files[0];
+    if (!file) { banner("Bitte die Rechnungsdatei auswählen.", true); return; }
+    if (!confirm("Einkauf buchen? Einkaufspreise (und ggf. Bestand) werden geändert.")) return;
+    $("book").disabled = true;
+    try {
+        const form = new FormData();
+        form.append("data", JSON.stringify(collect()));
+        form.append("file", file);
+        await request("/purchases", { method: "POST", body: form });
+        $("form").reset(); $("lines").innerHTML = ""; clearAi(); dirty();
+        await loadProducts(); addLine(); await loadList();
+        banner("Einkauf gebucht.", false);
+    } catch (e) { banner(e.message, true); }
+    $("book").disabled = false;
+};
+async function download(id) {
+    const r = await fetch(`${API_URL}/purchases/${id}/file`, { headers: AUTH });
+    if (!r.ok) { banner("Datei konnte nicht geladen werden.", true); return; }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(await r.blob());
+    a.download = purchasesById[id].file_name;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(a.href);
+}
+async function cancelPurchase(id) {
+    if (!confirm("Diesen Einkauf zurücknehmen? Die alten Einkaufspreise werden wiederhergestellt. Die Rechnung bleibt als zurückgenommen gespeichert.")) return;
+    try { await request(`/purchases/${id}/cancel`, { method: "POST" }); await loadProducts(); await loadList(); banner("Einkauf zurückgenommen.", false); }
+    catch (e) { banner(e.message, true); }
+}
+async function loadList() {
+    const rows = await request("/purchases");
+    purchasesById = Object.fromEntries(rows.map(p => [p.id, p]));
+    $("list").innerHTML = rows.length ? rows.map(p => `
+        <div class="bg-white border border-slate-200 rounded-xl p-3 ${p.cancelled ? "opacity-60" : ""}">
+            <div class="flex flex-wrap justify-between gap-2"><b>${esc(p.supplier)} ${esc(p.invoice_number)}</b><span>${esc(p.invoice_date)} · ${eur(p.total)}${p.cancelled ? " · zurückgenommen" : ""}</span></div>
+            <ul class="text-slate-600 list-disc pl-5">${p.lines.map(l => `<li>${esc(l.quantity)} × ${esc(l.title)} – Einkaufspreis jetzt ${eur(l.new_purchase_price)} + Nebenkosten ${eur(l.new_shipping_cost)}</li>`).join("")}</ul>
+            <button type="button" class="underline text-sky-700" onclick="download('${esc(p.id)}')">Rechnung herunterladen</button>
+            ${p.cancelled ? "" : `<button type="button" class="ml-3 text-red-600 hover:underline" onclick="cancelPurchase('${esc(p.id)}')">zurücknehmen</button>`}
+        </div>`).join("") : "<p class='text-slate-500'>Noch keine Einkäufe gebucht.</p>";
+}
+async function loadProducts() { PRODUCTS = await request("/products"); }
+$("ai-read").onclick = readWithAi;
+$("file").addEventListener("change", () => {
+    // another file: nothing read from the previous one may stay in the form
+    if (!AI) return;
+    ["supplier", "invoice_number", "invoice_date", "paid_date", "expected_total"].forEach(id => $(id).value = "");
+    $("extra_costs").value = "0"; $("lines").innerHTML = ""; clearAi(); addLine(); dirty();
+});
+async function loadAiStatus() {
+    AI_PROVIDERS = (await request("/purchases/ai-status")).providers;
+    $("ai-read").disabled = !AI_PROVIDERS.length;
+    $("ai-info").textContent = AI_PROVIDERS.length ? "Zuerst unten die Rechnungsdatei auswählen." : "Noch kein KI-Schlüssel eingerichtet. Die Rechnung kann von Hand erfasst werden.";
+}
+$("add-line").onclick = () => { addLine(); dirty(); };
+$("form").addEventListener("input", e => { if (e.target.id !== "file") dirty(); });
+(async () => { try { await loadProducts(); addLine(); await loadList(); await loadAiStatus(); } catch (e) { banner(e.message, true); } })();
+</script>
+</body>
+</html>
