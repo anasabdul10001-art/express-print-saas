@@ -19,6 +19,7 @@ Notes worth knowing:
       value is stored in the shared Order.ebay_fees column (= marketplace fees).
 """
 
+import uuid
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from uuid import UUID
@@ -345,3 +346,114 @@ def mark_order_shipped(account: ShopifyAccount, order: Order, tracking_number: s
     order.tracking_number = tracking_number[:50]
     order.status = "shipped"
     db.commit()
+
+
+# ---------------------------------------------------------------- push price / stock
+
+PUSH_VARIANTS_QUERY = """
+query($cursor: String) {
+  productVariants(first: 100, after: $cursor) {
+    pageInfo { hasNextPage endCursor }
+    nodes { id sku price inventoryQuantity product { id } inventoryItem { id } }
+  }
+}
+"""
+LOCATIONS_QUERY = "query { locations(first: 5) { nodes { id } } }"
+PRICE_MUTATION = """
+mutation($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+  productVariantsBulkUpdate(productId: $productId, variants: $variants) { userErrors { field message } }
+}
+"""
+STOCK_MUTATION = """
+mutation($input: InventorySetQuantitiesInput!, $key: String!) {
+  inventorySetQuantities(input: $input) @idempotent(key: $key) { userErrors { field message } }
+}
+"""
+
+
+def _user_errors(result: dict, name: str) -> str | None:
+    errors = (result.get(name) or {}).get("userErrors") or []
+    return "; ".join(e.get("message", "?") for e in errors) or None
+
+
+def plan_push(account: ShopifyAccount, products: dict, include_price: bool, include_quantity: bool,
+              max_pages: int = 20) -> list[dict]:
+    """What differs between ShipSync (products by SKU) and the store. Changes nothing."""
+    changes, cursor = [], None
+    for _ in range(max_pages):
+        page = graphql(account, PUSH_VARIANTS_QUERY, {"cursor": cursor}).get("productVariants") or {}
+        for variant in page.get("nodes") or []:
+            sku = variant.get("sku") or gid_number(variant.get("id"))
+            product = products.get(sku)
+            if not product:
+                continue
+            old_price = _money({"amount": variant.get("price")})
+            new_price = None
+            if include_price and product.selling_price is not None:
+                candidate = Decimal(product.selling_price).quantize(Decimal("0.01"))
+                if old_price != candidate:
+                    new_price = candidate
+            old_quantity = variant.get("inventoryQuantity")
+            new_quantity = None
+            if include_quantity and isinstance(old_quantity, int) and old_quantity != product.stock_quantity:
+                new_quantity = max(0, int(product.stock_quantity))
+            if new_price is None and new_quantity is None:
+                continue
+            changes.append({
+                "sku": sku, "title": product.title,
+                "variant_id": variant["id"], "product_id": (variant.get("product") or {}).get("id"),
+                "inventory_item_id": (variant.get("inventoryItem") or {}).get("id"),
+                "shop_price": None if old_price is None else str(old_price),
+                "new_price": None if new_price is None else str(new_price),
+                "shop_quantity": old_quantity, "new_quantity": new_quantity, "errors": [],
+            })
+        info = page.get("pageInfo") or {}
+        if not info.get("hasNextPage"):
+            break
+        cursor = info.get("endCursor")
+    return changes
+
+
+def apply_push(account: ShopifyAccount, changes: list[dict]) -> None:
+    """Writes the planned changes to the store; failures are noted on each change."""
+    by_product: dict = {}
+    for change in changes:
+        if change["new_price"] is not None:
+            by_product.setdefault(change["product_id"], []).append(change)
+    for product_id, group in by_product.items():
+        try:
+            error = _user_errors(graphql(account, PRICE_MUTATION, {
+                "productId": product_id,
+                "variants": [{"id": c["variant_id"], "price": c["new_price"]} for c in group]}),
+                "productVariantsBulkUpdate")
+        except (ValueError, httpx.HTTPError) as exc:
+            error = str(exc)
+        if error:
+            for change in group:
+                change["errors"].append(f"Preis: {error}")
+
+    stock = [c for c in changes if c["new_quantity"] is not None]
+    if not stock:
+        return
+    try:
+        locations = (graphql(account, LOCATIONS_QUERY).get("locations") or {}).get("nodes") or []
+    except (ValueError, httpx.HTTPError) as exc:
+        locations, reason = [], str(exc)
+    else:
+        reason = "Der Shop hat mehrere Lagerorte; Mengen werden dann nicht gesendet."
+    if len(locations) != 1:
+        for change in stock:
+            change["errors"].append(f"Menge: {reason}")
+        return
+    for change in stock:
+        try:
+            # changeFromQuantity makes Shopify refuse the write if the stock changed meanwhile.
+            error = _user_errors(graphql(account, STOCK_MUTATION, {"key": str(uuid.uuid4()), "input": {
+                "name": "available", "reason": "correction", "quantities": [{
+                    "inventoryItemId": change["inventory_item_id"], "locationId": locations[0]["id"],
+                    "quantity": change["new_quantity"], "changeFromQuantity": change["shop_quantity"]}]}}),
+                "inventorySetQuantities")
+        except (ValueError, httpx.HTTPError) as exc:
+            error = str(exc)
+        if error:
+            change["errors"].append(f"Menge: {error}")

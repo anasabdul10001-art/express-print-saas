@@ -20,6 +20,7 @@
         <button data-tab="cases" class="tab px-3 py-2 rounded bg-white border border-slate-300">Rückgaben &amp; Streitfälle</button>
         <button data-tab="traffic" class="tab px-3 py-2 rounded bg-white border border-slate-300">Statistik</button>
         <button data-tab="policies" class="tab px-3 py-2 rounded bg-white border border-slate-300">Versandrichtlinien</button>
+        <button data-tab="offers" class="tab px-3 py-2 rounded bg-white border border-slate-300">Angebote an Interessenten</button>
     </nav>
 
     <section id="panel" class="space-y-3"></section>
@@ -102,7 +103,49 @@ async function showPolicies() {
         </div>`).join("");
 }
 
-const TABS = { messages: showMessages, cases: showCases, traffic: showTraffic, policies: showPolicies };
+let OFFERS = [], LIMITS = { min: 5, max: 50 };
+const euro = v => v === null ? "—" : Number(v).toFixed(2).replace(".", ",") + " €";
+async function showOffers() {
+    const d = await api("/ebay/offers/eligible");
+    OFFERS = d.items;
+    LIMITS = { min: d.min_discount, max: d.max_discount };
+    const intro = `<p class="text-sm text-slate-500">Artikel, für die eBay Interessenten meldet. Ein Angebot geht erst nach deiner Bestätigung raus, kann hier nicht zurückgenommen werden und gilt 2 Tage. Die Gewinnschwelle ist eine Schätzung.</p>`;
+    panel.innerHTML = errorsBox(d.errors) + intro + (OFFERS.length ? OFFERS.map((o, i) => `
+        <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-2 text-sm">
+            <div class="font-semibold">${esc(o.title || "Artikel " + o.listing_id)}</div>
+            <div class="text-slate-500"><a class="underline" target="_blank" rel="noopener" href="https://www.ebay.de/itm/${encodeURIComponent(o.listing_id)}">${esc(o.listing_id)}</a> · ${esc(o.account)} · Preis ${euro(o.price)} · Gewinnschwelle ca. ${euro(o.break_even)}</div>
+            <div class="flex flex-wrap items-center gap-2">
+                <label>Rabatt <input id="pct-${i}" type="number" min="${LIMITS.min}" max="${LIMITS.max}" value="${LIMITS.min}" class="w-20 p-1 border border-slate-300 rounded"> %</label>
+                <input id="msg-${i}" maxlength="2000" placeholder="Nachricht (optional)" class="flex-1 min-w-[12rem] p-1 border border-slate-300 rounded">
+                <button onclick="sendOffer(${i}, this)" class="bg-slate-900 text-white font-semibold px-3 py-1.5 rounded">Angebot senden…</button>
+            </div>
+        </div>`).join("") : "<p class='text-slate-500'>Zurzeit meldet eBay keine Artikel mit Interessenten.</p>");
+}
+async function postOffer(body) {
+    const r = await fetch(API_URL + "/ebay/offers/send", { method: "POST", headers: H, body: JSON.stringify(body) });
+    return { status: r.status, data: await r.json().catch(() => ({})) };
+}
+async function sendOffer(i, button) {
+    const o = OFFERS[i], percent = Number(document.getElementById("pct-" + i).value);
+    if (!Number.isInteger(percent) || percent < LIMITS.min || percent > LIMITS.max) {
+        banner(`Rabatt bitte als ganze Zahl von ${LIMITS.min} bis ${LIMITS.max} %.`, true); return;
+    }
+    if (!confirm(`${percent} % Rabatt für „${o.title || o.listing_id}“ an alle Interessenten senden? Hier kann das nicht zurückgenommen werden.`)) return;
+    button.disabled = true;
+    const body = { account_id: o.account_id, listing_id: o.listing_id, discount_percent: percent, message: document.getElementById("msg-" + i).value, confirm: true };
+    try {
+        let result = await postOffer(body);
+        if (result.status === 409 && String(result.data.detail).includes("Gewinnschwelle")) {
+            if (!confirm(result.data.detail + " Trotzdem senden?")) { button.disabled = false; return; }
+            result = await postOffer({ ...body, accept_loss: true });
+        }
+        if (result.status === 200) { banner(`Angebot gesendet an ${result.data.sent_to} Interessenten.`, false); button.innerText = "Gesendet"; return; }
+        banner(typeof result.data.detail === "string" ? result.data.detail : "Senden fehlgeschlagen.", true);
+    } catch (e) { banner("Keine Verbindung. Bitte bei eBay prüfen, ob das Angebot gesendet wurde.", true); }
+    button.disabled = false;
+}
+
+const TABS = { messages: showMessages, cases: showCases, traffic: showTraffic, policies: showPolicies, offers: showOffers };
 async function open(tab) {
     document.querySelectorAll(".tab").forEach(b => {
         const on = b.dataset.tab === tab;

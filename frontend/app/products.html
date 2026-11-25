@@ -146,6 +146,17 @@
         </div>
 
     <main class="max-w-5xl mx-auto p-6 space-y-6">
+        <div class="text-right"><a href="new-listing.html" class="inline-block text-sm font-semibold bg-white border border-slate-300 rounded px-3 py-2 hover:bg-slate-50">+ Neues eBay-Angebot</a></div>
+        <details id="shopify-push" class="hidden bg-white border border-slate-200 rounded-xl p-4 text-sm">
+            <summary class="cursor-pointer font-semibold">Preise und Mengen an Shopify senden</summary>
+            <div class="mt-3 flex flex-wrap items-center gap-3">
+                <label><input id="sp-price" type="checkbox" checked onchange="document.getElementById('sp-apply').classList.add('hidden')"> Preise</label>
+                <label><input id="sp-qty" type="checkbox" onchange="document.getElementById('sp-apply').classList.add('hidden')"> Mengen</label>
+                <button type="button" onclick="pushShopify(true)" class="bg-slate-900 text-white font-semibold py-2 px-4 rounded">Vergleichen</button>
+                <button type="button" id="sp-apply" onclick="pushShopify(false)" class="hidden bg-red-600 text-white font-bold py-2 px-4 rounded">Jetzt an Shopify senden</button>
+            </div>
+            <pre id="shopify-push-result" class="mt-3 whitespace-pre-wrap text-xs text-slate-600"></pre>
+        </details>
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
         <div class="flex items-center justify-between gap-4">
@@ -992,6 +1003,31 @@
                 showBanner("Serverfehler, bitte erneut versuchen.", true);
             }
         }
+
+        let shopifyPlanned = 0;
+        async function loadShopifyPush() {
+            try {
+                const r = await fetch(`${API_URL}/shopify/accounts`, { headers: authHeaders() });
+                if (r.ok && (await r.json()).some(a => a.status === "CONNECTED")) document.getElementById("shopify-push").classList.remove("hidden");
+            } catch (e) {}
+        }
+        async function pushShopify(dryRun) {
+            const box = document.getElementById("shopify-push-result");
+            const body = { dry_run: dryRun, include_price: document.getElementById("sp-price").checked, include_quantity: document.getElementById("sp-qty").checked };
+            if (!dryRun && !confirm(`${shopifyPlanned} Änderung(en) jetzt in deinen Shopify-Shop schreiben?`)) return;
+            box.textContent = "Lade…";
+            try {
+                const r = await fetch(`${API_URL}/shopify/push-listings`, { method: "POST", headers: { ...authHeaders(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok) { box.textContent = typeof d.detail === "string" ? d.detail : "Fehlgeschlagen."; return; }
+                const lines = d.items.map(i => `${i.sku}: ${i.new_price !== null ? `Preis ${i.shop_price} → ${i.new_price} ` : ""}${i.new_quantity !== null ? `Menge ${i.shop_quantity} → ${i.new_quantity} ` : ""}${i.errors.join("; ")}`);
+                const head = d.applied ? `${d.updated} geändert, ${d.failed} fehlgeschlagen.` : `${d.to_change} Abweichung(en).`;
+                box.textContent = [head, ...d.errors, ...lines].join("\n");
+                shopifyPlanned = d.to_change;
+                document.getElementById("sp-apply").classList.toggle("hidden", d.applied || !d.to_change);
+            } catch (e) { box.textContent = "Keine Verbindung. Bitte im Shop prüfen, bevor du erneut sendest."; }
+        }
+        loadShopifyPush();
 
         async function pushPrices(dryRun, explicitIds) {
             const scope = explicitIds ? "selected" : document.getElementById("bp-scope").value;

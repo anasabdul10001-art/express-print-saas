@@ -262,6 +262,7 @@ def sync_orders(account: AmazonAccount, tenant_id: UUID, db: Session) -> dict:
     account.last_sync_at = datetime.now(timezone.utc)
     db.commit()
     sync_fees(account, tenant_id, db, notes)
+    note_refunds(account, tenant_id, db, notes)
     return {"created": created, "products_created": products_created, "skipped": skipped,
             "skipped_reasons": skipped_reasons, "notes": notes}
 
@@ -312,6 +313,42 @@ def sync_fees(account: AmazonAccount, tenant_id: UUID, db: Session, notes: list[
             updated += 1
     db.commit()
     return updated
+
+
+# ----------------------------------------------------------------- refunds
+
+REFUND_LOOKBACK_DAYS = 30
+REFUND_MAX_PAGES = 3
+
+
+def note_refunds(account: AmazonAccount, tenant_id: UUID, db: Session, notes: list[str]) -> None:
+    """Points out orders for which Amazon reports a refund and none is recorded here yet.
+    The amount is NOT written to the order: Amazon's transaction total is not reliably what
+    the buyer got back, and a wrong figure would silently distort the accounting."""
+    since = (datetime.now(timezone.utc) - timedelta(days=REFUND_LOOKBACK_DAYS)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    params = {"postedAfter": since, "marketplaceId": account.marketplace_id}
+    found: set[str] = set()
+    try:
+        for _ in range(REFUND_MAX_PAGES):
+            data = call(account, db, "GET", "/finances/2024-06-19/transactions", params=params)
+            data = data.get("payload") or data
+            for tx in data.get("transactions") or []:
+                if "refund" not in f"{tx.get('transactionType', '')} {tx.get('description', '')}".lower():
+                    continue
+                found |= {r.get("relatedIdentifierValue") for r in tx.get("relatedIdentifiers") or []
+                          if r.get("relatedIdentifierName") == "ORDER_ID"}
+            if not data.get("nextToken"):
+                break
+            params = {"postedAfter": since, "nextToken": data["nextToken"]}
+    except (AmazonRateLimited, ValueError, httpx.HTTPError) as exc:
+        notes.append(f"Erstattungen: {str(exc)[:160]}")
+    refs = [REF_PREFIX + number for number in found if number]
+    if not refs:
+        return
+    for order in db.query(Order).filter(Order.tenant_id == tenant_id, Order.external_order_ref.in_(refs),
+                                        Order.refund_amount.is_(None)).all():
+        notes.append(f"Bestellung {order.external_order_ref[len(REF_PREFIX):]}: Amazon meldet eine Erstattung – "
+                     "bitte den Betrag unter „Rückgabe / Erstattung“ eintragen.")
 
 
 # ---------------------------------------------------------------- shipping
