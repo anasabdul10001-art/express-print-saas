@@ -14,6 +14,7 @@ from app.models.market_research import TrackedSearch, MarketSnapshot
 from app.models.plan import Plan, SiteSettings
 from app.models.payment_method import PaymentMethod
 from app.models.invoice import Invoice
+from app.models.sales_invoice import SalesInvoice, SellerProfile
 from app.models.dhl_account import DhlAccount
 from app.models.affiliate import Affiliate, AffiliateReferral, AffiliateCommission, AffiliatePayout
 from app.models.affiliate_password_token import AffiliatePasswordToken
@@ -24,5 +25,5 @@ __all__ = [
     "EbayAccount", "EbayOAuthState", "ShopifyAccount", "ShopifyOAuthState", "AmazonAccount", "AmazonOAuthState", "StockMovement", "Expense", "PasswordResetToken",
     "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings", "PaymentMethod", "Invoice",
     "DhlAccount", "Affiliate", "AffiliateReferral", "AffiliateCommission", "AffiliatePayout",
-    "AffiliatePasswordToken", "SitePage",
+    "AffiliatePasswordToken", "SitePage", "SalesInvoice", "SellerProfile",
 ]
