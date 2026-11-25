@@ -137,6 +137,12 @@ def _apply_amounts(order: Order, ebay_order: dict) -> None:
         order.refund_amount = refunded
 
 
+def _apply_fulfillment(order: Order, ebay_order: dict) -> None:
+    """An order shipped outside this app (e.g. directly at eBay) is shipped here too."""
+    if ebay_order.get("orderFulfillmentStatus") == "FULFILLED" and order.status != "canceled":
+        order.status = "shipped"
+
+
 def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
     access_token = ebay_oauth_service.get_valid_access_token(account, db)
     base_url = EBAY_API_BASE[account.environment]
@@ -190,6 +196,7 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
                 already_imported.ordered_at = _parse_ebay_date(ebay_order.get("creationDate"))
             # A refund can arrive long after the sale; eBay is the source of truth.
             _apply_amounts(already_imported, ebay_order)
+            _apply_fulfillment(already_imported, ebay_order)
             lines = ebay_order.get("lineItems", [])
             if len(lines) == len(already_imported.items):
                 for item, line in zip(already_imported.items, lines):
@@ -254,6 +261,7 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             **_extract_ship_to(ebay_order),
         )
         _apply_amounts(order, ebay_order)
+        _apply_fulfillment(order, ebay_order)
         db.add(order)
         db.flush()
 
