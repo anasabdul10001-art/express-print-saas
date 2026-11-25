@@ -239,6 +239,29 @@
                 <div class="border border-slate-200 rounded-lg p-3"><p class="text-slate-500 text-xs">Zahllast an Finanzamt (Schätzung)</p><p id="v-pay" class="text-lg font-bold">—</p></div>
             </div>
             <p id="vat-hint" class="hidden text-xs text-slate-400">Annahme: Verkaufspreise und Einkaufskosten sind Brutto (inkl. 19 %). Nur eine Übersicht – bitte mit Steuerberater/ELSTER abgleichen.</p>
+
+            <div id="vat-report" class="hidden border-t border-slate-100 pt-3 space-y-3">
+                <div class="flex flex-wrap items-center gap-3 text-sm">
+                    <span class="font-semibold">USt-Voranmeldung (Vorbereitung) für den gewählten Zeitraum:</span>
+                    <select id="vr-group" class="p-2 border border-slate-300 rounded">
+                        <option value="month">pro Monat</option>
+                        <option value="quarter">pro Quartal</option>
+                        <option value="year">pro Jahr</option>
+                    </select>
+                    <label class="flex items-center gap-2"><input id="vr-fees" type="checkbox" checked> eBay-Gebühren enthalten USt (Vorsteuer abziehen)</label>
+                    <button type="button" onclick="loadVatReport()" class="px-3 py-2 rounded border border-slate-300 hover:bg-slate-50 font-semibold">Anzeigen</button>
+                    <button type="button" onclick="downloadVatReport()" class="px-3 py-2 rounded bg-slate-900 text-white font-semibold">CSV herunterladen</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead><tr class="text-left text-slate-500 border-b border-slate-200">
+                            <th class="py-2 pr-4">Zeitraum</th><th class="py-2 pr-4 text-right">Netto-Umsatz (Kz 81)</th><th class="py-2 pr-4 text-right">USt 19 % (Kz 81)</th>
+                            <th class="py-2 pr-4 text-right">Vorsteuer (Kz 66)</th><th class="py-2 text-right">Zahllast (Kz 83)</th></tr></thead>
+                        <tbody id="vr-rows"></tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-slate-400">Vorsteuer ist aus den Brutto-Beträgen geschätzt (Ware, Etiketten, Rückversand, Ausgaben, eBay-Gebühren), nicht aus den echten Rechnungen. Annahme: alle Umsätze in Deutschland zu 19 %. Kein Ersatz für Steuerberater/ELSTER.</p>
+            </div>
         </div>
 
         <div id="warnings" class="space-y-2"></div>
@@ -406,12 +429,47 @@
             document.getElementById("vat-cards").classList.toggle("hidden", !regular);
             document.getElementById("vat-hint").classList.toggle("hidden", !regular);
             document.getElementById("vat-note").innerText = regular ? "" : "Als Kleinunternehmer wird keine Umsatzsteuer ausgewiesen.";
+            document.getElementById("vat-report").classList.toggle("hidden", !regular);
             if (regular && data.vat) {
                 document.getElementById("v-net").innerText = money(data.vat.net_sales);
                 document.getElementById("v-sales").innerText = money(data.vat.sales_vat);
                 document.getElementById("v-input").innerText = money(data.vat.input_vat_estimate);
                 document.getElementById("v-pay").innerText = money(data.vat.payable_estimate);
             }
+        }
+
+        function vatReportQuery(output) {
+            const q = new URLSearchParams({
+                start: document.getElementById("f-start").value, end: document.getElementById("f-end").value,
+                group_by: document.getElementById("vr-group").value,
+                fees_include_vat: document.getElementById("vr-fees").checked, output,
+            });
+            return `${API_URL}/accounting/vat-report?${q}`;
+        }
+
+        async function loadVatReport() {
+            try {
+                const response = await fetch(vatReportQuery("json"), { headers: authHeaders() });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) { showBanner(typeof data.detail === "string" ? data.detail : "Bericht konnte nicht geladen werden.", true); return; }
+                const row = (r, bold) => `<tr class="border-b border-slate-100 ${bold ? "font-bold" : ""}"><td class="py-2 pr-4">${esc(r.period)}</td>
+                    <td class="py-2 pr-4 text-right">${money(r.net_sales)}</td><td class="py-2 pr-4 text-right">${money(r.sales_vat)}</td>
+                    <td class="py-2 pr-4 text-right">${money(r.input_vat)}</td><td class="py-2 text-right">${money(r.payable)}</td></tr>`;
+                document.getElementById("vr-rows").innerHTML = data.rows.map(r => row(r, false)).join("") + row(data.total, true);
+            } catch (err) { showBanner("Serverfehler, bitte erneut versuchen.", true); }
+        }
+
+        async function downloadVatReport() {
+            try {
+                const response = await fetch(vatReportQuery("csv"), { headers: authHeaders() });
+                if (!response.ok) { showBanner("CSV konnte nicht erstellt werden.", true); return; }
+                const blob = await response.blob();
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `ust-vorbereitung-${document.getElementById("f-start").value}-${document.getElementById("f-end").value}.csv`;
+                document.body.appendChild(a); a.click(); a.remove();
+                URL.revokeObjectURL(a.href);
+            } catch (err) { showBanner("Serverfehler, bitte erneut versuchen.", true); }
         }
 
         async function saveVatMode() {
