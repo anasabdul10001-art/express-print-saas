@@ -1,3 +1,4 @@
+import logging
 import uuid
 from decimal import Decimal
 
@@ -12,10 +13,11 @@ from app.models.print_job import PrintJob
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.schemas.print_job import PrintJobStatusUpdate, TestPrintJobCreate
-from app.services import dhl_service
+from app.services import dhl_service, picking_slip_service
 from app.services.dhl_service import DhlShipmentError
 
 router = APIRouter(prefix="/print-jobs", tags=["print-jobs"])
+log = logging.getLogger("print_jobs")
 
 
 def _resolve_package(order: Order, tenant: Tenant) -> tuple[Decimal, int, int, int]:
@@ -91,10 +93,7 @@ def trigger_print_for_order(
     db: Session = Depends(get_db),
 ):
     """
-    Manual trigger for the DASHBOARD_MANUAL workflow's "Print Label" button.
-    Also usable as an override in INSTANT mode (e.g. a reprint), and as the
-    entry point for INTEGRATED mode - see the TODO below for what's still
-    missing there.
+    The "Print Label" button. Also usable in INSTANT mode (e.g. a reprint).
     """
     order = (
         db.query(Order)
@@ -120,23 +119,8 @@ def trigger_print_for_order(
     if not agent:
         raise HTTPException(status_code=400, detail="No active print agent found for this account")
 
-    if tenant.print_mode == "INTEGRATED":
-        # TODO: this mode needs a PDF-composition step that doesn't exist
-        # yet - merging the courier's shipping-label PDF with a generated
-        # picking slip (product photo + name + shelf_location per item)
-        # into a single PDF. That's a separate piece of work (likely
-        # reportlab/pypdf, run server-side, producing the label_pdf_url
-        # below instead of a raw courier URL). Flagging honestly rather
-        # than faking it - this endpoint intentionally rejects for now
-        # so we don't print an incomplete label by accident.
-        raise HTTPException(
-            status_code=501,
-            detail="INTEGRATED print mode is configured but the combined "
-                   "label+picking-slip PDF generator isn't built yet.",
-        )
-
-    # INSTANT and DASHBOARD_MANUAL both end up here: a normal shipping-label
-    # print job. If this tenant has connected their own DHL account, buy a
+    # All print modes queue a shipping-label job here (the integrated mode adds the
+    # picking slip when the label is downloaded). If this tenant has connected their own DHL account, buy a
     # real label from DHL now; otherwise fall back to the placeholder URL,
     # same as before this integration existed - connecting DHL is optional,
     # and everyone who hasn't shouldn't lose the ability to print at all.
@@ -264,7 +248,18 @@ def get_print_job_label(job_id: str, db: Session = Depends(get_db)):
     job = db.query(PrintJob).filter(PrintJob.id == job_id).first()
     if not job or not job.label_pdf_data:
         raise HTTPException(status_code=404, detail="Label not found")
-    return Response(content=job.label_pdf_data, media_type="application/pdf")
+    content = job.label_pdf_data
+    # Composed on download, so the stored label stays untouched and a reprint never gets two slips.
+    tenant = db.get(Tenant, job.tenant_id)
+    if tenant and tenant.print_mode == "INTEGRATED" and job.order_id:
+        order = (db.query(Order).options(joinedload(Order.items).joinedload(OrderItem.product))
+                 .filter(Order.id == job.order_id).first())
+        if order:
+            try:
+                content = picking_slip_service.combine(content, order)
+            except Exception:  # noqa: BLE001 - the label alone is better than no label
+                log.warning("picking slip failed for job %s", job.id, exc_info=True)
+    return Response(content=content, media_type="application/pdf")
 
 
 @router.patch("/{job_id}/status")

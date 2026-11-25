@@ -64,7 +64,7 @@ class Settings(BaseSettings):
     shopify_redirect_uri: str = "https://express-print-saas.onrender.com/shopify/callback"
     shopify_api_version: str = "2026-07"
     shopify_scopes: str = (
-        "read_products,read_inventory,read_orders,"
+        "read_products,write_products,read_inventory,write_inventory,read_orders,"
         "read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders"
     )
     # --- Amazon SP-API (Login with Amazon app; the SP-API needs no AWS signing any more) ---

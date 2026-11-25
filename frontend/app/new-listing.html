@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neues eBay-Angebot — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="trial-guard.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<main class="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold">Neues eBay-Angebot</h1>
+        <a href="products.html" class="text-sm text-slate-500 hover:text-red-600">← Produkte</a>
+    </div>
+    <p class="text-sm text-slate-500">„Prüfen“ lässt eBay das Angebot kontrollieren, ohne es einzustellen. Eingestellt wird erst nach „Veröffentlichen“ und deiner Bestätigung. Varianten, GPSR- und WEEE-Angaben werden noch nicht unterstützt.</p>
+
+    <form id="form" class="bg-white border border-slate-200 rounded-xl p-4 grid gap-3 sm:grid-cols-2 text-sm" onsubmit="return false">
+        <label class="block sm:col-span-2">eBay-Konto <select id="account_id" class="mt-1 w-full p-2 border border-slate-300 rounded"></select></label>
+        <label class="block sm:col-span-2">Titel (max. 80 Zeichen) <input id="title" maxlength="80" required class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <label class="block sm:col-span-2">Beschreibung <textarea id="description" rows="6" maxlength="20000" required class="mt-1 w-full p-2 border border-slate-300 rounded"></textarea></label>
+        <label class="block">Kategorie-Nummer <input id="category_id" inputmode="numeric" required class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <label class="block">Zustand <select id="condition_id" class="mt-1 w-full p-2 border border-slate-300 rounded"><option value="1000">Neu</option><option value="1500">Neu: Sonstige</option><option value="3000">Gebraucht</option></select></label>
+        <label class="block">Preis (€) <input id="price" type="number" step="0.01" min="1" required class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <label class="block">Menge <input id="quantity" type="number" min="1" value="1" required class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <label class="block">Standort (Ort) <input id="location" maxlength="45" required class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <label class="block">PLZ <input id="postal_code" inputmode="numeric" maxlength="5" required class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <label class="block sm:col-span-2">Bild-Adressen (https, eine pro Zeile, max. 12) <textarea id="picture_urls" rows="3" required class="mt-1 w-full p-2 border border-slate-300 rounded"></textarea></label>
+        <label class="block sm:col-span-2">Artikelmerkmale (eine pro Zeile, „Name: Wert“) <textarea id="specifics" rows="3" placeholder="Marke: Markenlos" class="mt-1 w-full p-2 border border-slate-300 rounded"></textarea></label>
+        <label class="block">Versand <select id="shipping_policy_id" class="mt-1 w-full p-2 border border-slate-300 rounded"></select></label>
+        <label class="block">Rückgabe <select id="return_policy_id" class="mt-1 w-full p-2 border border-slate-300 rounded"></select></label>
+        <label class="block">Zahlung <select id="payment_policy_id" class="mt-1 w-full p-2 border border-slate-300 rounded"></select></label>
+        <label class="block">Eigene Artikelnummer (SKU, optional) <input id="sku" maxlength="50" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <label class="block sm:col-span-2">Geplanter Start (optional, deine Ortszeit) <input id="schedule_at" type="datetime-local" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <div class="sm:col-span-2 flex flex-wrap gap-2">
+            <button type="button" id="verify" class="bg-white border border-slate-300 font-semibold px-4 py-2 rounded">Prüfen (stellt nichts ein)</button>
+            <button type="button" id="publish" class="bg-red-600 text-white font-semibold px-4 py-2 rounded">Veröffentlichen…</button>
+        </div>
+    </form>
+    <div id="result" class="space-y-2 text-sm"></div>
+</main>
+
+<script>
+const API_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com";
+const token = localStorage.getItem("access_token");
+if (!token) window.location.href = "../login.html";
+const H = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let draftId = crypto.randomUUID();
+
+function show(text, kind) {
+    const colour = { error: "bg-red-100 text-red-800", ok: "bg-emerald-100 text-emerald-800", warning: "bg-amber-50 text-amber-900" }[kind];
+    $("result").insertAdjacentHTML("beforeend", `<div class="p-3 rounded ${colour}">${esc(text)}</div>`);
+}
+async function call(path, options) {
+    const r = await fetch(API_URL + path, { headers: H, ...options });
+    if (r.status === 401) { window.location.href = "../login.html"; throw new Error("login"); }
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Bitte die Eingaben prüfen: " + (data.detail || []).map(d => `${d.loc.at(-1)}: ${d.msg}`).join("; "));
+    return data;
+}
+async function loadPolicies() {
+    ["shipping", "return", "payment"].forEach(k => $(k + "_policy_id").innerHTML = "");
+    const p = await call(`/ebay/new-listing/policies?account_id=${encodeURIComponent($("account_id").value)}`);
+    ["shipping", "return", "payment"].forEach(k => $(k + "_policy_id").innerHTML = p[k].map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join(""));
+    if (["shipping", "return", "payment"].some(k => !p[k].length)) show("Für dieses Konto fehlen Rahmenbedingungen (Versand, Rückgabe, Zahlung) bei eBay.", "warning");
+}
+async function init() {
+    try {
+        const accounts = (await call("/ebay/accounts")).filter(a => a.status === "CONNECTED");
+        $("account_id").innerHTML = accounts.map(a => `<option value="${esc(a.id)}">${esc(a.ebay_user_id || "eBay")}</option>`).join("");
+        if (!accounts.length) { show("Kein verbundenes eBay-Konto gefunden.", "warning"); return; }
+        $("account_id").onchange = () => loadPolicies().catch(e => show(e.message, "error"));
+        await loadPolicies();
+    } catch (e) { show(e.message, "error"); }
+}
+function draft() {
+    const body = {};
+    ["account_id", "title", "description", "category_id", "price", "location", "postal_code", "shipping_policy_id", "return_policy_id", "payment_policy_id", "sku"].forEach(k => body[k] = $(k).value.trim());
+    body.draft_id = draftId;
+    body.quantity = Number($("quantity").value);
+    body.condition_id = Number($("condition_id").value);
+    body.picture_urls = $("picture_urls").value.split("\n").map(s => s.trim()).filter(Boolean);
+    body.specifics = Object.fromEntries($("specifics").value.split("\n").filter(l => l.includes(":")).map(l => [l.slice(0, l.indexOf(":")).trim(), l.slice(l.indexOf(":") + 1).trim()]));
+    body.schedule_at = $("schedule_at").value ? new Date($("schedule_at").value).toISOString() : null;
+    return body;
+}
+function showResult(data) {
+    (data.messages || []).forEach(m => show(m.text, m.severity === "warning" ? "warning" : "error"));
+    (data.fees || []).forEach(f => show(`Gebühr laut eBay: ${f.name} ${f.amount} €`, "warning"));
+}
+async function run(button, path, extra) {
+    $("result").innerHTML = "";
+    button.disabled = true;
+    try {
+        const data = await call(path, { method: "POST", body: JSON.stringify({ ...draft(), ...extra }) });
+        showResult(data);
+        return data;
+    } catch (e) { show(e.message, "error"); return null; }
+    finally { button.disabled = false; }
+}
+$("verify").onclick = async () => {
+    const data = await run($("verify"), "/ebay/new-listing/verify");
+    if (data && data.ok) show("eBay hat keine Fehler gemeldet. Es wurde nichts eingestellt.", "ok");
+};
+$("publish").onclick = async () => {
+    const when = $("schedule_at").value ? "zum geplanten Zeitpunkt" : "SOFORT";
+    if (!confirm(`„${$("title").value}“ für ${$("price").value} € (Menge ${$("quantity").value}) ${when} bei eBay einstellen? Es können eBay-Gebühren entstehen.`)) return;
+    const data = await run($("publish"), "/ebay/new-listing/publish", { confirm: true });
+    if (data && data.ok) {
+        show(`Angebot angelegt. eBay-Artikelnummer: ${data.item_id}`, "ok");
+        $("publish").disabled = true;
+    }
+};
+$("form").addEventListener("input", () => { if ($("publish").disabled) { draftId = crypto.randomUUID(); $("publish").disabled = false; } });
+init();
+</script>
+</body>
+</html>

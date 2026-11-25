@@ -1,3 +1,4 @@
+import uuid
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -8,6 +9,7 @@ from app.config import settings
 from app.core.deps import get_current_user, get_db
 from app.models.order import Order
 from app.models.shopify_account import ShopifyAccount
+from app.models.product import Product
 from app.models.user import User
 from app.schemas.shopify import ShopifyAccountOut, ShopifyAuthorizeUrlOut
 from app.services import ebay_order_service, shopify_oauth_service, shopify_service
@@ -144,3 +146,36 @@ def ship_order(order_id: str, body: ShipOrderIn, current_user: User = Depends(ge
     except (ValueError, httpx.HTTPError) as exc:
         raise HTTPException(status_code=502, detail=f"Shopify-Versandmeldung fehlgeschlagen: {exc}")
     return {"status": order.status, "tracking_number": order.tracking_number}
+
+
+class PushIn(BaseModel):
+    product_ids: list[uuid.UUID] | None = None
+    include_price: bool = True
+    include_quantity: bool = False
+    # True only compares. Nothing is written to the store unless this is False.
+    dry_run: bool = True
+
+
+@router.post("/push-listings")
+def push_listings(payload: PushIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Sends ShipSync prices / stock to the connected stores (matched by SKU)."""
+    query = db.query(Product).filter(Product.tenant_id == current_user.tenant_id, Product.active.is_(True))
+    if payload.product_ids is not None:
+        query = query.filter(Product.id.in_(payload.product_ids))
+    products = {p.sku: p for p in query.all()}
+
+    def run(account):
+        changes = shopify_service.plan_push(account, products, payload.include_price, payload.include_quantity)
+        if len(changes) > 200:
+            raise ValueError("Maximal 200 Änderungen pro Vorgang.")
+        if not payload.dry_run:
+            shopify_service.apply_push(account, changes)
+        return [{**c, "shop": _name(account)} for c in changes]
+
+    results, errors = _run_for_all(current_user, db, run, "Abgleich")
+    items = [{k: v for k, v in change.items() if not k.endswith("_id")} for group in results for change in group]
+    return {
+        "applied": not payload.dry_run, "to_change": len(items),
+        "updated": 0 if payload.dry_run else sum(1 for c in items if not c["errors"]),
+        "failed": sum(1 for c in items if c["errors"]), "items": items, "errors": errors,
+    }

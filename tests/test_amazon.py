@@ -429,7 +429,7 @@ def test_fees_come_from_the_expenses_breakdown_for_old_enough_orders(register, c
     with SessionLocal() as db:
         fees = {o.external_order_ref: o.ebay_fees for o in db.query(Order).filter_by(tenant_id=tenant_id)}
     assert float(fees["amazon:OLDER"]) == 3.15 and fees["amazon:FRESH"] is None
-    lookups = [p for path, p in seen if path.startswith("/finances")]
+    lookups = [p for path, p in seen if path.startswith("/finances") and "relatedIdentifierName" in p]
     assert lookups == [{"relatedIdentifierName": "ORDER_ID", "relatedIdentifierValue": "OLDER"}]
 
 
