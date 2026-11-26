@@ -1147,6 +1147,20 @@
             renderProducts(list, all.length === 0);
         }
 
+        const ROW_ICONS = {
+            link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+            edit: '<path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><path d="m15 5 4 4"/>',
+            restock: '<path d="M21 10V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l1-.6"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/><path d="M16 17h6"/><path d="M19 14v6"/>',
+            history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+            deactivate: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>'
+        };
+
+        // Icon-only table action; the label stays available as tooltip and for screen readers.
+        function rowAction(icon, label, onclick, colors) {
+            const esc = v => String(v).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/</g, "&lt;");
+            return `<button type="button" onclick="${esc(onclick)}" class="inline-flex items-center justify-center w-8 h-8 rounded-md ${colors}" title="${esc(label)}" aria-label="${esc(label)}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ROW_ICONS[icon]}</svg></button>`;
+        }
+
         function renderProducts(products, noProductsAtAll) {
             const tbody = document.getElementById("products-tbody");
             const emptyState = document.getElementById("empty-state");
@@ -1184,12 +1198,14 @@
                             ${p.unlisted && p.active ? "Nicht angeboten" : p.active ? t("products.statusActive") : t("products.statusInactive")}
                         </span>
                     </td>
-                    <td class="px-3 py-1 whitespace-nowrap space-x-2">
-                        ${p.unlisted && p.active ? `<button onclick='openLinkPanel(${JSON.stringify(p.id)})' class="text-sky-700 font-semibold hover:underline text-xs">Mit Angebot verknüpfen</button>` : ""}
-                        <button onclick='openForm(${JSON.stringify(p)})' class="text-blue-600 hover:text-blue-700 text-xs">${t("products.edit")}</button>
-                        <button onclick='restockProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})' class="text-blue-600 hover:text-blue-700 text-xs">${t("products.restock")}</button>
-                        <button onclick='showHistory(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})' class="text-slate-500 hover:text-slate-600 text-xs">${t("products.history")}</button>
-                        ${p.active ? `<button onclick='deactivateProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})' class="text-red-600 hover:text-red-700 text-xs">${t("products.deactivate")}</button>` : ""}
+                    <td class="px-3 py-1 whitespace-nowrap">
+                        <div class="flex items-center gap-1">
+                        ${p.unlisted && p.active ? rowAction("link", "Mit Angebot verknüpfen", `openLinkPanel(${JSON.stringify(p.id)})`, "text-sky-700 hover:bg-sky-50") : ""}
+                        ${rowAction("edit", t("products.edit"), `openForm(${JSON.stringify(p)})`, "text-blue-600 hover:bg-blue-50")}
+                        ${rowAction("restock", t("products.restock"), `restockProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})`, "text-blue-600 hover:bg-blue-50")}
+                        ${rowAction("history", t("products.history"), `showHistory(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})`, "text-slate-500 hover:bg-slate-100")}
+                        ${p.active ? rowAction("deactivate", t("products.deactivate"), `deactivateProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})`, "text-red-600 hover:bg-red-50") : ""}
+                        </div>
                     </td>
                 </tr>
             `).join("");
