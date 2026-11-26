@@ -17,7 +17,7 @@ from app.models.order import Order
 from app.models.product import Product
 from app.models.user import User
 from app.schemas.ebay import AuthorizeUrlOut, EbayAccountOut
-from app.services import ebay_signing_service, ebay_deletion_service, ai_reply_service, ebay_extras_service, ebay_listing_service, ebay_oauth_service, ebay_order_service
+from app.services import ebay_signing_service, ebay_deletion_service, ai_reply_service, ebay_extras_service, ebay_listing_service, ebay_oauth_service, ebay_order_service, ebay_stock_service
 
 router = APIRouter(prefix="/ebay", tags=["ebay"])
 
@@ -388,6 +388,45 @@ def import_products(
         raise HTTPException(status_code=502, detail=f"eBay-Import fehlgeschlagen: {'; '.join(errors)}")
     total["errors"] = errors
     return total
+
+
+class PullStockIn(BaseModel):
+    dry_run: bool = True
+    # {product_id: eBay quantity shown in the preview}; only these are changed
+    confirmed: dict[str, int] = Field(default_factory=dict)
+
+
+@router.post("/pull-stock")
+def pull_stock(
+    payload: PullStockIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Takes eBay's available quantities over into ShipSync. Nothing is changed
+    on eBay. New orders are imported first: eBay has already subtracted them, so
+    importing them afterwards would subtract them a second time. If anything
+    cannot be read from eBay, no quantity is taken over."""
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+    if not payload.dry_run and not payload.confirmed:
+        raise HTTPException(status_code=400, detail="Keine Produkte ausgewählt.")
+
+    listings, new_orders = [], 0
+    for account in accounts:
+        name = account.ebay_user_id or "eBay"
+        try:
+            new_orders += ebay_order_service.sync_orders(account, current_user.tenant_id, db)["created"]
+            listings += ebay_listing_service.fetch_active_listings(account, db)
+        except (ValueError, httpx.HTTPError) as exc:
+            raise HTTPException(status_code=502, detail=f"eBay-Abruf fehlgeschlagen, keine Menge übernommen. {name}: {exc}")
+
+    result = ebay_stock_service.compare(db, current_user.tenant_id, listings)
+    updated, outdated = 0, []
+    if not payload.dry_run:
+        updated, outdated = ebay_stock_service.apply(db, current_user.tenant_id, result["items"], payload.confirmed)
+    return {**result, "applied": not payload.dry_run, "updated": updated, "outdated": outdated,
+            "new_orders": new_orders}
 
 
 def _collect(current_user: User, db: Session, fn):
