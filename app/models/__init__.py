@@ -10,6 +10,7 @@ from app.models.shopify_account import ShopifyAccount, ShopifyOAuthState
 from app.models.stock_movement import StockMovement
 from app.models.expense import Expense, ExpenseReceipt
 from app.models.purchase import Purchase, PurchaseLine
+from app.models.supplier_item import SupplierItem
 from app.models.vat_period_input import VatPeriodInput
 from app.models.cash_event import CashEvent
 from app.models.eks_profile import EksProfile
@@ -29,5 +30,5 @@ __all__ = [
     "EbayAccount", "EbayOAuthState", "ShopifyAccount", "ShopifyOAuthState", "AmazonAccount", "AmazonOAuthState", "StockMovement", "Expense", "ExpenseReceipt", "Purchase", "PurchaseLine", "CashEvent", "EksProfile", "PasswordResetToken",
     "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings", "PaymentMethod", "Invoice",
     "DhlAccount", "Affiliate", "AffiliateReferral", "AffiliateCommission", "AffiliatePayout",
-    "AffiliatePasswordToken", "SitePage", "SalesInvoice", "SellerProfile",
+    "AffiliatePasswordToken", "SitePage", "SalesInvoice", "SellerProfile", "SupplierItem",
 ]

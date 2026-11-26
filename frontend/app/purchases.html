@@ -35,6 +35,8 @@
         </div>
         <div>
             <div class="font-semibold mb-1">Positionen</div>
+            <p class="text-slate-500 mb-2">Schreib den Namen so, wie er auf der Rechnung steht, und wähle dein Produkt. ShipSync merkt sich das für diesen Lieferanten, sobald du den Einkauf buchst.</p>
+            <datalist id="known-items"></datalist>
             <div id="lines" class="space-y-2"></div>
             <button type="button" id="add-line" class="mt-2 border border-slate-300 rounded px-3 py-1.5 bg-white">+ Position</button>
         </div>
@@ -45,6 +47,11 @@
         </div>
         <div id="preview-box" class="overflow-x-auto"></div>
     </form>
+
+    <details class="bg-white border border-slate-200 rounded-xl p-3">
+        <summary class="cursor-pointer font-semibold">Gemerkte Zuordnungen (<span id="saved-count">0</span>)</summary>
+        <ul id="saved" class="mt-2"></ul>
+    </details>
 
     <h2 class="text-lg font-bold">Gebuchte Einkäufe</h2>
     <div id="list" class="space-y-2"></div>
@@ -73,25 +80,119 @@ async function request(path, options = {}) {
     if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : (data.detail || []).map(d => d.msg).join("; ") || "Fehler");
     return data;
 }
+let SAVED = [];  // remembered links
+const supplierName = () => $("supplier").value.trim();
+const normal = s => String(s || "").normalize("NFKC").toLowerCase().split(/\s+/).filter(Boolean).join(" ");
+
+function productPicture(url) {
+    return url && /^https?:\/\//i.test(url) ? `<img src="${esc(url)}" alt="" class="w-10 h-10 object-cover rounded border border-slate-200">` : "";
+}
+function showPieces(row) {
+    const quantity = Number(row.querySelector(".q").value), per = Number(row.querySelector(".u").value);
+    row.querySelector(".pieces").textContent = quantity > 0 && per > 1 ? `= ${quantity * per} Stück im Lager` : "";
+}
+// `state` is "memory" (chosen before), "open" (the seller decides) or "" (nothing to say)
+function showHint(row, state, suggestions = []) {
+    const hint = row.querySelector(".hint");
+    const chosen = PRODUCTS.find(p => p.id === row.querySelector(".p").value);
+    const named = row.querySelector(".sn").value.trim() || row.querySelector(".sc").value.trim();
+    let html = chosen ? productPicture(chosen.image_url) : "";
+    if (state === "memory") html += `<span class="text-emerald-700">Von einer früheren Rechnung gemerkt – bitte prüfen.</span>`;
+    if (!chosen && named && state === "open") {
+        html += suggestions.length ? `<span class="text-amber-700">Noch nicht zugeordnet. Vorschläge (bitte genau prüfen: Farbe, Länge, Variante):</span>` : `<span class="text-amber-700">Noch nicht zugeordnet.</span>`;
+        html += suggestions.map(s => `<button type="button" class="pick flex items-center gap-2 border border-slate-300 rounded px-2 py-1 bg-white text-left" data-id="${esc(s.product_id)}">${productPicture(s.image_url)}<span>${esc(s.title)}</span></button>`).join("");
+        html += `<button type="button" class="create underline text-sky-700">Neues Produkt anlegen</button>`;
+    }
+    hint.innerHTML = html;
+    hint.querySelectorAll(".pick").forEach(button => button.onclick = () => {
+        row.querySelector(".p").value = button.dataset.id; row.dataset.auto = ""; showHint(row, ""); dirty();
+    });
+    const create = hint.querySelector(".create");
+    if (create) create.onclick = () => createProduct(row);
+}
+async function createProduct(row) {
+    const title = prompt("Name des neuen Produkts:", row.querySelector(".sn").value.trim());
+    if (!title || !title.trim()) return;
+    const sku = prompt("SKU (eigene Artikelnummer):", row.querySelector(".sc").value.trim() || "NEU-" + Date.now().toString().slice(-6));
+    if (!sku || !sku.trim()) return;
+    try {
+        const product = await request("/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sku: sku.trim(), title: title.trim(), stock_quantity: 0 }) });
+        await loadProducts();
+        document.querySelectorAll(".line .p").forEach(select => { const value = select.value; select.innerHTML = productOptions(); select.value = value; });
+        row.querySelector(".p").value = product.id; row.dataset.auto = ""; showHint(row, ""); dirty();
+    } catch (e) { banner(e.message, true); }
+}
+// Looks the invoice item up. A remembered product is filled in; anything else stays the seller's choice.
+async function matchRow(row, aiProduct = null) {
+    const name = row.querySelector(".sn").value.trim(), code = row.querySelector(".sc").value.trim();
+    const ticket = row.ticket = (row.ticket || 0) + 1;
+    if (row.dataset.auto) {  // what the memory filled in belongs to the previous name
+        row.querySelector(".p").value = ""; row.querySelector(".u").value = "1"; row.dataset.auto = ""; showPieces(row); dirty();
+    }
+    if (!name && !code) { showHint(row, ""); return; }
+    try {
+        const [found] = await request("/purchases/match", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ supplier: supplierName(), items: [{ name, code }] }) });
+        if (ticket !== row.ticket) return;
+        const select = row.querySelector(".p");
+        if (found.match && !select.value) {
+            select.value = found.match.product_id; row.querySelector(".u").value = found.match.units_per_pack;
+            row.dataset.auto = "1"; showPieces(row); dirty(); showHint(row, "memory"); return;
+        }
+        const suggestions = [...found.suggestions];
+        const guess = PRODUCTS.find(p => p.id === aiProduct);
+        if (guess && !suggestions.some(s => s.product_id === guess.id)) suggestions.unshift({ product_id: guess.id, title: guess.title, image_url: guess.image_url });
+        showHint(row, "open", suggestions);
+    } catch (e) { banner(e.message, true); }
+}
+function productOptions() {
+    return `<option value="">— wählen —</option>${PRODUCTS.map(p => `<option value="${esc(p.id)}">${esc(p.title)} (Bestand ${esc(p.stock_quantity)})</option>`).join("")}`;
+}
 function addLine(suggestion = null) {
     const row = document.createElement("div");
-    row.className = "line grid gap-2 sm:grid-cols-[1fr_6rem_10rem_auto] items-end";
+    row.className = "line grid gap-2 sm:grid-cols-[1fr_6rem_6rem_9rem] items-end border-t border-slate-200 pt-2";
     row.innerHTML = `
-        <label class="block">Produkt <select class="p mt-1 w-full p-2 border border-slate-300 rounded"><option value="">— wählen —</option>${PRODUCTS.map(p => `<option value="${esc(p.id)}">${esc(p.title)} (Bestand ${esc(p.stock_quantity)})</option>`).join("")}</select></label>
+        <label class="block sm:col-span-2">Bezeichnung auf der Lieferantenrechnung <input class="sn mt-1 w-full p-2 border border-slate-300 rounded" maxlength="500" list="known-items" autocomplete="off"></label>
+        <label class="block sm:col-span-2">Artikelnr. des Lieferanten (falls vorhanden) <input class="sc mt-1 w-full p-2 border border-slate-300 rounded" maxlength="100" autocomplete="off"></label>
+        <label class="block">Dein Produkt <select class="p mt-1 w-full p-2 border border-slate-300 rounded">${productOptions()}</select></label>
         <label class="block">Menge <input type="number" min="1" class="q mt-1 w-full p-2 border border-slate-300 rounded"></label>
+        <label class="block" title="Wie viele Stück in einer berechneten Einheit sind, z. B. 10 bei einer 10er-Packung">Stück je Einheit <input type="number" min="1" value="1" class="u mt-1 w-full p-2 border border-slate-300 rounded"></label>
         <label class="block">Warenwert Zeile (€) <input type="number" min="0" step="0.01" class="t mt-1 w-full p-2 border border-slate-300 rounded"></label>
-        <button type="button" class="rm text-red-600 p-2">Entfernen</button>`;
+        <div class="hint sm:col-span-4 flex flex-wrap items-center gap-2"></div>
+        <div class="sm:col-span-4 flex justify-between"><span class="pieces text-slate-500"></span><button type="button" class="rm text-red-600">Entfernen</button></div>`;
     row.querySelector(".rm").onclick = () => { row.remove(); dirty(); };
+    row.querySelector(".p").addEventListener("change", () => { row.dataset.auto = ""; showHint(row, ""); });
+    row.querySelector(".u").addEventListener("input", () => showPieces(row));
+    row.querySelector(".q").addEventListener("input", () => showPieces(row));
+    ["sn", "sc"].forEach(field => row.querySelector("." + field).addEventListener("change", () => matchRow(row)));
+    $("lines").appendChild(row);
     if (suggestion) {
-        const note = document.createElement("div");
-        note.className = "sm:col-span-4 " + (suggestion.product_id ? "text-slate-600" : "text-amber-700");
-        note.textContent = "Rechnung: " + suggestion.description + (suggestion.product_id ? " (Zuordnung prüfen)" : " – bitte Produkt wählen oder Position entfernen");
-        row.prepend(note);
-        row.querySelector(".p").value = suggestion.product_id || "";
+        row.querySelector(".sn").value = suggestion.description;
         row.querySelector(".q").value = suggestion.quantity;
         row.querySelector(".t").value = suggestion.line_total;
+        matchRow(row, suggestion.product_id);  // the AI's guess is offered, never chosen by itself
     }
-    $("lines").appendChild(row);
+}
+function showKnownItems() {
+    const own = SAVED.filter(s => normal(s.supplier) === normal(supplierName()));
+    $("known-items").innerHTML = own.filter(s => s.name).map(s => `<option value="${esc(s.name)}"></option>`).join("");
+}
+async function loadSaved() {
+    SAVED = await request("/purchases/supplier-items");
+    showKnownItems();
+    $("saved-count").textContent = SAVED.length;
+    $("saved").innerHTML = SAVED.length ? SAVED.map(s => `
+        <li class="flex flex-wrap justify-between gap-2 border-t border-slate-100 py-1">
+            <span><b>${esc(s.supplier)}</b>: ${esc(s.name || "(ohne Name)")}${s.code ? ` · Nr. ${esc(s.code)}` : ""} → ${esc(s.product)}${s.units_per_pack > 1 ? ` · ${esc(s.units_per_pack)} Stück je Einheit` : ""}</span>
+            <button type="button" class="text-red-600 hover:underline" onclick="forgetItem('${esc(s.id)}')">vergessen</button>
+        </li>`).join("") : "<li class='text-slate-500'>Noch nichts gemerkt.</li>";
+}
+async function forgetItem(id) {
+    if (!confirm("Diese Zuordnung vergessen? Gebuchte Einkäufe bleiben unverändert.")) return;
+    try {
+        const r = await fetch(`${API_URL}/purchases/supplier-items/${id}`, { method: "DELETE", headers: AUTH });
+        if (!r.ok) throw new Error("Die Zuordnung konnte nicht gelöscht werden.");
+        await loadSaved();
+    } catch (e) { banner(e.message, true); }
 }
 function dirty() { $("book").classList.add("hidden"); $("preview-box").innerHTML = ""; }
 // Two invoice lines for the same product are booked as one.
@@ -169,6 +270,7 @@ async function readWithAi() {
         $("expected_total").value = d.total || "";
         $("lines").innerHTML = "";
         d.lines.forEach(l => addLine(l));
+        showKnownItems();
         dirty();
         showAiResult(d);
     } catch (e) { banner(e.message, true); }
@@ -176,14 +278,18 @@ async function readWithAi() {
 }
 function collect() {
     if (AI && AI.needsEur) throw new Error("Bitte zuerst die Beträge in Euro umrechnen.");
-    let lines = [...document.querySelectorAll(".line")].map(r => ({ product_id: r.querySelector(".p").value, quantity: Number(r.querySelector(".q").value), line_total: r.querySelector(".t").value }));
-    if (!lines.length || lines.some(l => !l.product_id || !l.quantity || l.line_total === "")) throw new Error("Bitte jede Position vollständig ausfüllen (Produkt, Menge, Warenwert).");
+    const rows = [...document.querySelectorAll(".line")].map(r => ({
+        product_id: r.querySelector(".p").value, units: Number(r.querySelector(".u").value), count: Number(r.querySelector(".q").value),
+        line_total: r.querySelector(".t").value, name: r.querySelector(".sn").value.trim(), code: r.querySelector(".sc").value.trim() }));
+    if (!rows.length || rows.some(l => !l.product_id || !l.count || !(l.units >= 1) || l.line_total === "")) throw new Error("Bitte jede Position vollständig ausfüllen (Produkt, Menge, Stück je Einheit, Warenwert).");
+    const supplier_items = rows.filter(l => l.name || l.code).map(l => ({ name: l.name, code: l.code, product_id: l.product_id, units_per_pack: l.units }));
+    let lines = rows.map(l => ({ product_id: l.product_id, quantity: l.count * l.units, line_total: l.line_total }));
     if (!$("supplier").value.trim() || !$("invoice_date").value) throw new Error("Bitte Lieferant und Rechnungsdatum angeben.");
     lines = mergeSameProduct(lines);
     return {
         supplier: $("supplier").value.trim(), invoice_number: $("invoice_number").value.trim(), invoice_date: $("invoice_date").value,
         paid_date: $("paid_date").value || null, extra_costs: $("extra_costs").value || "0",
-        expected_total: $("expected_total").value || null, add_to_stock: $("add_to_stock").checked, lines,
+        expected_total: $("expected_total").value || null, add_to_stock: $("add_to_stock").checked, lines, supplier_items,
     };
 }
 $("preview").onclick = async () => {
@@ -205,7 +311,7 @@ $("book").onclick = async () => {
         form.append("file", file);
         await request("/purchases", { method: "POST", body: form });
         $("form").reset(); $("lines").innerHTML = ""; clearAi(); dirty();
-        await loadProducts(); addLine(); await loadList();
+        await loadProducts(); addLine(); await loadList(); await loadSaved();
         banner("Einkauf gebucht.", false);
     } catch (e) { banner(e.message, true); }
     $("book").disabled = false;
@@ -249,8 +355,12 @@ async function loadAiStatus() {
     $("ai-info").textContent = AI_PROVIDERS.length ? "Zuerst unten die Rechnungsdatei auswählen." : "Noch kein KI-Schlüssel eingerichtet. Die Rechnung kann von Hand erfasst werden.";
 }
 $("add-line").onclick = () => { addLine(); dirty(); };
+$("supplier").addEventListener("change", () => {  // links belong to one supplier
+    showKnownItems();
+    document.querySelectorAll(".line").forEach(row => { if (row.dataset.auto || !row.querySelector(".p").value) matchRow(row); });
+});
 $("form").addEventListener("input", e => { if (e.target.id !== "file") dirty(); });
-(async () => { try { await loadProducts(); addLine(); await loadList(); await loadAiStatus(); } catch (e) { banner(e.message, true); } })();
+(async () => { try { await loadProducts(); addLine(); await loadList(); await loadSaved(); await loadAiStatus(); } catch (e) { banner(e.message, true); } })();
 </script>
 </body>
 </html>

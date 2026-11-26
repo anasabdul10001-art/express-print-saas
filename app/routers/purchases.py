@@ -15,8 +15,9 @@ from app.core.rate_limit import limiter
 from app.models.product import Product
 from app.models.purchase import Purchase, PurchaseLine
 from app.models.stock_movement import StockMovement
+from app.models.supplier_item import SupplierItem
 from app.models.user import User
-from app.services import document_files, invoice_ai_service, purchase_service
+from app.services import document_files, invoice_ai_service, purchase_service, supplier_item_service
 
 router = APIRouter(prefix="/purchases", tags=["purchases"])
 
@@ -31,6 +32,24 @@ class LineIn(BaseModel):
     line_total: Decimal = Field(..., ge=0, le=1000000, decimal_places=2)
 
 
+class SupplierItemIn(BaseModel):
+    """What this invoice calls one of the products, to recognise it next time."""
+    name: str = Field("", max_length=500)
+    code: str = Field("", max_length=100)
+    product_id: uuid.UUID
+    units_per_pack: int = Field(1, ge=1, le=10000)
+
+
+class MatchItemIn(BaseModel):
+    name: str = Field("", max_length=500)
+    code: str = Field("", max_length=100)
+
+
+class MatchIn(BaseModel):
+    supplier: str = Field("", max_length=255)
+    items: list[MatchItemIn] = Field(..., min_length=1, max_length=100)
+
+
 class PurchaseIn(BaseModel):
     supplier: str = Field(..., min_length=1, max_length=255)
     invoice_number: str = Field("", max_length=100)
@@ -41,11 +60,14 @@ class PurchaseIn(BaseModel):
     # The grand total on the invoice, if the seller types it in: it must match the lines.
     expected_total: Decimal | None = Field(None, ge=0, decimal_places=2)
     lines: list[LineIn] = Field(..., min_length=1, max_length=100)
+    supplier_items: list[SupplierItemIn] = Field(default_factory=list, max_length=300)
 
     @model_validator(mode="after")
     def checks(self):
         if len({line.product_id for line in self.lines}) != len(self.lines):
             raise ValueError("Jedes Produkt darf nur in einer Zeile stehen.")
+        if {item.product_id for item in self.supplier_items} - {line.product_id for line in self.lines}:
+            raise ValueError("Eine Zuordnung gehört zu keinem Produkt dieser Rechnung.")
         total = sum((line.line_total for line in self.lines), ZERO) + self.extra_costs
         if self.expected_total is not None and self.expected_total != total:
             raise ValueError(f"Die Zeilen und Nebenkosten ergeben {total} €, auf der Rechnung steht {self.expected_total} €.")
@@ -147,6 +169,33 @@ def read_with_ai(
     return result
 
 
+@router.post("/match")
+def match_items(payload: MatchIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Which product each invoice item is: remembered, otherwise suggestions. Saves nothing."""
+    return supplier_item_service.match(db, current_user.tenant_id, payload.supplier,
+                                       [(item.name, item.code) for item in payload.items])
+
+
+@router.get("/supplier-items")
+def list_supplier_items(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    rows = (db.query(SupplierItem, Product.title).join(Product, Product.id == SupplierItem.product_id)
+            .filter(SupplierItem.tenant_id == current_user.tenant_id)
+            .order_by(SupplierItem.supplier_norm, SupplierItem.item_name))
+    return [{"id": str(item.id), "supplier": item.supplier, "name": item.item_name, "code": item.item_code,
+             "units_per_pack": item.units_per_pack, "product": title} for item, title in rows]
+
+
+@router.delete("/supplier-items/{item_id}", status_code=204)
+def delete_supplier_item(item_id: uuid.UUID, current_user: User = Depends(get_current_user),
+                         db: Session = Depends(get_db)):
+    item = db.query(SupplierItem).filter(SupplierItem.id == item_id,
+                                         SupplierItem.tenant_id == current_user.tenant_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Zuordnung nicht gefunden.")
+    db.delete(item)
+    db.commit()
+
+
 @router.post("/preview")
 def preview(payload: PurchaseIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     plan = _plan(db, current_user.tenant_id, payload, lock=False)
@@ -197,6 +246,8 @@ async def book(
             db.add(StockMovement(tenant_id=tenant_id, product_id=product.id, quantity_change=line.quantity,
                                  reason="restock", reference=(number or purchase.supplier)[:255]))
     db.add(purchase)
+    # only a booked invoice teaches a link: every product was checked against the account above
+    supplier_item_service.remember(db, tenant_id, payload.supplier, payload.supplier_items)
     db.commit()
     db.refresh(purchase)
     return _out(purchase)
