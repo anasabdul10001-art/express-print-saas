@@ -1,11 +1,14 @@
-// Dashboard chart "Verkaufsmarge": selectable period, euro axis with grid lines.
+// Dashboard chart: sales (bars, like eBay) or sales margin (line), selectable period,
+// euro axis with grid lines.
 // Needs API_URL, authHeaders(), logout() (dashboard.html) and t()/getLang() (i18n.js).
 (function () {
     const STORAGE_KEY = "dashboard_chart_period";
+    const METRIC_KEY = "dashboard_chart_metric";
     // Longer ranges are summed per month, otherwise the days sit too close to read.
     const MAX_DAILY_POINTS = 92;
 
     const select = document.getElementById("chart-period");
+    const metricSelect = document.getElementById("chart-metric");
     const customBox = document.getElementById("chart-custom");
     const fromInput = document.getElementById("chart-from");
     const toInput = document.getElementById("chart-to");
@@ -107,7 +110,9 @@
 
     function render() {
         if (!history || !history.length) return;
-        const values = history.map(p => Number(p.profit));
+        const metric = metricSelect.value; // "revenue" or "profit"
+        const bars = metric === "revenue";
+        const values = history.map(p => Number(p[metric]));
         const sum = key => history.reduce((s, p) => s + Number(p[key]), 0);
         totals.textContent = `${t("dashboard.chartRevenue")}: ${money(sum("revenue"))}  ·  `
             + `${t("dashboard.chartMargin")}: ${money(sum("profit"))}  ·  `
@@ -143,10 +148,13 @@
         }).join("");
 
         const stepX = history.length > 1 ? plotW / (history.length - 1) : 0;
+        const slot = plotW / history.length;
         const points = history.map((p, i) => ({
             ...p,
-            x: history.length > 1 ? margin.left + i * stepX : margin.left + plotW / 2,
-            y: yOf(Number(p.profit)),
+            // A bar sits in the middle of its slot; the line runs from edge to edge.
+            x: bars ? margin.left + (i + 0.5) * slot
+                : history.length > 1 ? margin.left + i * stepX : margin.left + plotW / 2,
+            y: yOf(values[i]),
         }));
         const line = points.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ");
         const area = `${line} L ${points[points.length - 1].x.toFixed(1)} ${zeroY.toFixed(1)} L ${points[0].x.toFixed(1)} ${zeroY.toFixed(1)} Z`;
@@ -165,13 +173,18 @@
         const radius = history.length > 45 ? 2 : 3.5;
         const dots = points.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${radius}" fill="#dc2626"/>`).join("");
 
+        const barWidth = Math.min(36, Math.max(2, slot * 0.6));
+        const series = bars
+            ? points.map(c => `<rect class="chart-bar" x="${(c.x - barWidth / 2).toFixed(1)}" y="${Math.min(c.y, zeroY).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${Math.abs(zeroY - c.y).toFixed(1)}" fill="#dc2626"/>`).join("")
+            : `<path d="${area}" fill="#fee2e2" fill-opacity="0.7" stroke="none"/>
+                <path d="${line}" fill="none" stroke="#dc2626" stroke-width="2"/>`;
+
         container.innerHTML = `
             <svg viewBox="0 0 ${width} ${height}" width="100%" style="display:block;touch-action:pan-y">
                 ${grid}
-                <path d="${area}" fill="#fee2e2" fill-opacity="0.7" stroke="none"/>
-                <path d="${line}" fill="none" stroke="#dc2626" stroke-width="2"/>
+                ${series}
                 <line id="chart-cursor" y1="${margin.top}" y2="${margin.top + plotH}" stroke="#94a3b8" stroke-dasharray="3 3" visibility="hidden"/>
-                ${dots}
+                ${bars ? "" : dots}
                 ${labels}
             </svg>
             <div id="chart-tip" class="hidden absolute pointer-events-none bg-slate-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap"></div>
@@ -221,6 +234,12 @@
 
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved && [...select.options].some(o => o.value === saved)) select.value = saved;
+
+    if (localStorage.getItem(METRIC_KEY) === "profit") metricSelect.value = "profit";
+    metricSelect.addEventListener("change", () => {
+        localStorage.setItem(METRIC_KEY, metricSelect.value);
+        render(); // both figures are already loaded
+    });
 
     select.addEventListener("change", () => {
         localStorage.setItem(STORAGE_KEY, select.value);
