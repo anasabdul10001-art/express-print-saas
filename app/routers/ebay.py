@@ -1,3 +1,4 @@
+import re
 import json
 
 import httpx
@@ -6,7 +7,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -434,27 +435,18 @@ def get_messages(current_user: User = Depends(get_current_user), db: Session = D
 
 
 class SuggestReplyIn(BaseModel):
-    message: str
-    order_ref: str | None = None
-    buyer_name: str | None = None
+    message: str = Field(min_length=1, max_length=2000)
+    buyer_name: str | None = None  # only used to mask it, never sent
 
 
 @router.post("/suggest-reply")
-def suggest_reply(body: SuggestReplyIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Drafts a German reply (never sends anything). Order facts come from our
-    own database - status, tracking, item titles - and no address data."""
-    facts = ""
-    if body.order_ref:
-        order = (
-            db.query(Order)
-            .filter(Order.tenant_id == current_user.tenant_id, Order.external_order_ref == body.order_ref)
-            .first()
-        )
-        if order:
-            titles = ", ".join(i.product.title for i in order.items if i.product)
-            facts = f"Status: {order.status}. Artikel: {titles}. Sendungsnummer: {order.tracking_number or 'noch keine'}."
+def suggest_reply(body: SuggestReplyIn, current_user: User = Depends(get_current_user)):
+    """Drafts a German reply (never sends anything). Only the masked message text
+    goes to the AI service - no order, item or address data."""
+    if re.search(r"<\s*(?:!doctype|html|head|body|table|div|style)\b", body.message, re.I):
+        raise HTTPException(status_code=422, detail="Bitte nur den Nachrichtentext einfügen, keine HTML-E-Mail.")
     try:
-        return ai_reply_service.suggest_reply(body.message, facts, [body.buyer_name] if body.buyer_name else None)
+        return ai_reply_service.suggest_reply(body.message, [body.buyer_name] if body.buyer_name else None)
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
 
