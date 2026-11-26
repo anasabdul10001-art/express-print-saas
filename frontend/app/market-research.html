@@ -10,6 +10,7 @@
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
+    <script src="../list-numbers.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div class="flex min-h-screen">
@@ -184,7 +185,7 @@
             </button>
         </div>
 
-        <div id="results-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        <div id="results-grid" data-numbered="cards" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
         <!-- Tracked searches -->
         <div class="pt-4 border-t border-slate-200">
@@ -195,7 +196,7 @@
                 an dem du "Verfolgen" gedrückt hast - keine rückwirkenden Daten möglich.
             </p>
             <div id="tracked-empty" class="hidden text-slate-500 text-sm" data-i18n="market.trackedEmpty">Noch keine Suchbegriffe werden verfolgt.</div>
-            <div id="tracked-list" class="space-y-3"></div>
+            <div id="tracked-list" data-numbered="list" class="space-y-3"></div>
         </div>
     </main>
     </div>
@@ -412,7 +413,7 @@
                 }
 
                 panel.innerHTML = `
-                    <table class="w-full text-xs">
+                    <table data-numbered="table" class="w-full text-xs">
                         <thead>
                             <tr class="text-left text-slate-400 border-b border-slate-100">
                                 <th class="py-2">${t("market.colDate")}</th>

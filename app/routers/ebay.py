@@ -160,7 +160,8 @@ def push_prices(
     if not accounts:
         raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
 
-    query = db.query(Product).filter(Product.tenant_id == current_user.tenant_id, Product.active.is_(True))
+    query = db.query(Product).filter(Product.tenant_id == current_user.tenant_id, Product.active.is_(True),
+                                     Product.unlisted.is_(False))
     if payload.product_ids is not None:
         if not payload.product_ids:
             raise HTTPException(status_code=400, detail="Keine Produkte ausgewählt.")

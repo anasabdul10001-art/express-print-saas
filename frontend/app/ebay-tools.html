@@ -6,6 +6,7 @@
     <title>eBay-Zentrale — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="trial-guard.js"></script>
+    <script src="../list-numbers.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
 <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
@@ -50,11 +51,12 @@ async function api(path, options) {
     return data;
 }
 
+const numbered = html => `<div data-numbered="list" class="space-y-3">${html}</div>`;
 let MESSAGES = [];
 async function showMessages() {
     const data = await api("/ebay/messages");
     MESSAGES = data.items;
-    panel.innerHTML = errorsBox(data.errors) + (data.items.length ? data.items.map((m, i) => `
+    panel.innerHTML = errorsBox(data.errors) + (data.items.length ? numbered(data.items.map((m, i) => `
         <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
             <div class="flex justify-between text-sm"><span class="font-semibold">${esc(m.sender)} <span class="text-slate-400 font-normal">· ${esc(m.account)}</span></span><span class="text-slate-400">${esc((m.date || "").slice(0, 10))}</span></div>
             <div class="text-sm font-semibold">${esc(m.subject)}</div>
@@ -63,7 +65,7 @@ async function showMessages() {
                 <textarea id="ask-${i}" maxlength="2000" rows="3" class="mt-1 w-full border border-slate-300 rounded p-2 text-sm text-slate-800">${esc(m.text || "")}</textarea></label>
             <button onclick="suggest(${i})" class="text-sm bg-slate-900 text-white font-semibold px-3 py-1.5 rounded">KI-Antwort vorschlagen</button>` : `<p class="text-xs text-slate-400">KI-Antwortvorschläge sind nicht eingeschaltet (AI_REPLY_ENABLED und GROQ_API_KEY oder OPENROUTER_API_KEY in Render).</p>`}
             <div id="reply-${i}"></div>
-        </div>`).join("") : "<p class='text-slate-500'>Keine Nachrichten.</p>");
+        </div>`).join("")) : "<p class='text-slate-500'>Keine Nachrichten.</p>");
 }
 async function suggest(i) {
     const m = MESSAGES[i], box = document.getElementById("reply-" + i);
@@ -82,11 +84,11 @@ async function suggest(i) {
 async function showCases() {
     const d = await api("/ebay/cases");
     const label = { return: "Rückgabe", cancellation: "Stornierung", inquiry: "Anfrage", dispute: "Zahlungsstreit" };
-    panel.innerHTML = errorsBox(d.errors) + (d.items.length ? d.items.map(c => `
+    panel.innerHTML = errorsBox(d.errors) + (d.items.length ? numbered(d.items.map(c => `
         <div class="bg-white border border-slate-200 rounded-xl p-3 text-sm flex justify-between gap-3">
             <span><b>${label[c.type]}</b> · ${esc(c.buyer)} · ${esc(c.detail)}</span>
             <span class="text-slate-500">${esc(c.status)} · ${esc((c.date || "").slice(0, 10))}</span>
-        </div>`).join("") : "<p class='text-slate-500'>Keine offenen Fälle.</p>");
+        </div>`).join("")) : "<p class='text-slate-500'>Keine offenen Fälle.</p>");
 }
 
 async function showTraffic() {
@@ -94,7 +96,7 @@ async function showTraffic() {
     panel.innerHTML = errorsBox(d.errors) + d.accounts.map(a => `
         <div class="bg-white border border-slate-200 rounded-xl p-3 overflow-x-auto">
             <h3 class="font-bold mb-2">${esc(a.account)} – letzte 30 Tage</h3>
-            <table class="w-full text-sm"><tr class="text-left text-slate-500"><th>Artikelnr.</th><th>Aufrufe</th><th>Verkäufe</th><th>Konversion</th></tr>
+            <table data-numbered="table" class="w-full text-sm"><tr class="text-left text-slate-500"><th>Artikelnr.</th><th>Aufrufe</th><th>Verkäufe</th><th>Konversion</th></tr>
             ${a.listings.map(r => `<tr class="border-t"><td>${esc(r.item_id)}</td><td>${esc(r.views)}</td><td>${esc(r.sales)}</td><td>${esc(r.conversion)}</td></tr>`).join("")}</table>
         </div>`).join("");
 }
@@ -102,8 +104,8 @@ async function showTraffic() {
 async function showPolicies() {
     const d = await api("/ebay/shipping-policies");
     panel.innerHTML = errorsBox(d.errors) + d.accounts.map(a => `
-        <div class="bg-white border border-slate-200 rounded-xl p-3 text-sm space-y-2">
-            <h3 class="font-bold">${esc(a.account)}</h3>
+        <div data-numbered="list" class="bg-white border border-slate-200 rounded-xl p-3 text-sm space-y-2">
+            <h3 class="font-bold no-number">${esc(a.account)}</h3>
             ${a.policies.map(p => `<div><b>${esc(p.name)}</b> · Bearbeitung ${esc(p.handling_days)} Tag(e)<br>
                 ${p.services.map(s => `${esc(s.service)} – ${s.free ? "kostenlos" : esc(s.cost) + " €"}`).join("<br>")}</div>`).join("")}
         </div>`).join("");
@@ -116,7 +118,7 @@ async function showOffers() {
     OFFERS = d.items;
     LIMITS = { min: d.min_discount, max: d.max_discount };
     const intro = `<p class="text-sm text-slate-500">Artikel, für die eBay Interessenten meldet. Ein Angebot geht erst nach deiner Bestätigung raus, kann hier nicht zurückgenommen werden und gilt 2 Tage. Die Gewinnschwelle ist eine Schätzung.</p>`;
-    panel.innerHTML = errorsBox(d.errors) + intro + (OFFERS.length ? OFFERS.map((o, i) => `
+    panel.innerHTML = errorsBox(d.errors) + intro + (OFFERS.length ? numbered(OFFERS.map((o, i) => `
         <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-2 text-sm">
             <div class="font-semibold">${esc(o.title || "Artikel " + o.listing_id)}</div>
             <div class="text-slate-500"><a class="underline" target="_blank" rel="noopener" href="https://www.ebay.de/itm/${encodeURIComponent(o.listing_id)}">${esc(o.listing_id)}</a> · ${esc(o.account)} · Preis ${euro(o.price)} · Gewinnschwelle ca. ${euro(o.break_even)}</div>
@@ -125,7 +127,7 @@ async function showOffers() {
                 <input id="msg-${i}" maxlength="2000" placeholder="Nachricht (optional)" class="flex-1 min-w-[12rem] p-1 border border-slate-300 rounded">
                 <button onclick="sendOffer(${i}, this)" class="bg-slate-900 text-white font-semibold px-3 py-1.5 rounded">Angebot senden…</button>
             </div>
-        </div>`).join("") : "<p class='text-slate-500'>Zurzeit meldet eBay keine Artikel mit Interessenten.</p>");
+        </div>`).join("")) : "<p class='text-slate-500'>Zurzeit meldet eBay keine Artikel mit Interessenten.</p>");
 }
 async function postOffer(body) {
     const r = await fetch(API_URL + "/ebay/offers/send", { method: "POST", headers: H, body: JSON.stringify(body) });

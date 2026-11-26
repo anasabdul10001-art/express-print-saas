@@ -10,6 +10,8 @@
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
+    <script src="../list-numbers.js"></script>
+    <script src="../file-input.js" defer></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div class="flex min-h-screen">
@@ -158,6 +160,24 @@
             </div>
             <pre id="shopify-push-result" class="mt-3 whitespace-pre-wrap text-xs text-slate-600"></pre>
         </details>
+        <!-- Goods in stock that are not offered yet -->
+        <div class="text-right"><button type="button" onclick="openStockForm()" class="inline-block text-sm font-semibold bg-white border border-slate-300 rounded px-3 py-2 hover:bg-slate-50">+ Ware ins Lager legen (noch nicht angeboten)</button></div>
+        <form id="stock-form" class="hidden bg-white border border-slate-200 rounded-xl p-4 text-sm space-y-3" onsubmit="saveStock(event)">
+            <h3 class="font-bold text-base">Ware ins Lager legen</h3>
+            <p class="text-slate-500">Es wird nichts angeboten. Dies ist keine Ausgabe für die EÜR: Dafür zählt die bezahlte Lieferantenrechnung unter <a href="purchases.html" class="underline text-sky-700">Einkäufe</a>. Hast du eine Rechnung, erfasse die Ware dort (neues Produkt in der Zeile anlegen), damit sie nicht doppelt gezählt wird.</p>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <label class="block">Name der Ware <input id="st-title" required maxlength="500" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                <label class="block">SKU (leer = automatisch). Dieselbe SKU später im Angebot verbindet beides <input id="st-sku" maxlength="100" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                <label class="block">Anzahl <input id="st-quantity" type="number" min="1" step="1" required class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                <label class="block">Einkaufspreis je Stück in € (leer = unbekannt) <input id="st-price" type="number" min="0" step="0.01" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                <label class="block">Gekauft am <input id="st-date" type="date" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
+                <label class="block">Bild (optional) <input id="st-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="mt-1 w-full"></label>
+            </div>
+            <div class="flex gap-2"><button class="bg-red-600 text-white font-bold px-4 py-2 rounded">Speichern</button><button type="button" onclick="document.getElementById('stock-form').classList.add('hidden')" class="border border-slate-300 rounded px-4 py-2">Abbrechen</button></div>
+        </form>
+        <div id="link-panel" class="hidden bg-white border-2 border-sky-300 rounded-xl p-4 text-sm space-y-3"></div>
+        <div id="stock-value" class="hidden bg-white border border-slate-200 rounded-xl p-4 text-sm"></div>
+
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
 
         <div class="flex items-center justify-between gap-4">
@@ -192,6 +212,7 @@
         <div class="flex flex-wrap items-center gap-2 text-sm">
             <button id="tab-available" onclick="setTab('available')" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Verfügbar</button>
             <button id="tab-soldout" onclick="setTab('soldout')" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Ausverkauft (Menge 0)</button>
+            <button id="tab-stock" onclick="setTab('stock')" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Im Lager, nicht angeboten</button>
             <button id="sort-sold" onclick="toggleSoldSort()" class="ml-auto px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50" title="Nach verkaufter Menge sortieren">Verkauft: Standard</button>
         </div>
 
@@ -352,7 +373,7 @@
                 <h3 class="text-lg font-bold"><span data-i18n="products.historyTitle">Lagerbestand-Verlauf:</span> <span id="history-product-title"></span></h3>
                 <button onclick="closeHistory()" class="text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-sm px-3 py-2 rounded-lg transition" data-i18n="products.close">Schließen</button>
             </div>
-            <div id="history-list" class="space-y-2 text-sm"></div>
+            <div id="history-list" data-numbered="list" class="space-y-2 text-sm"></div>
         </div>
 
         <!-- Empty state -->
@@ -366,7 +387,7 @@
 
         <!-- Product table -->
         <div id="table-wrap" class="hidden bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
-            <table class="w-full text-sm">
+            <table data-numbered="table" class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-slate-500 border-b border-slate-200">
                         <th class="p-3"><input type="checkbox" id="select-all" onclick="toggleAll(this.checked)" title="Alle auswählen"></th>
@@ -647,6 +668,7 @@
         function inlineEdit(id, field) {
             const p = (window.__products || []).find(x => x.id === id);
             if (!p) return;
+            if (p.unlisted) { openForm(p); return; }
             const isStock = field === "stock_quantity";
             const cell = document.getElementById((isStock ? "cell-stock-" : "cell-price-") + id);
             const value = isStock ? (p.stock_quantity ?? 0) : (p.selling_price ?? "");
@@ -670,7 +692,7 @@
                 const cell = document.getElementById("cell-stock-" + id);
                 cell.innerHTML = `<div class="space-y-1 text-xs">
                     <div class="font-semibold text-amber-700">Mengen pro Variante (eBay):</div>
-                    ${info.variations.map((v, i) => `<label class="block">${Object.values(v.specifics).join(" / ") || "Variante " + (i + 1)}
+                    ${info.variations.map((v, i) => `<label class="block">${i + 1}. ${Object.values(v.specifics).join(" / ") || "Variante"}
                         <input id="var-${i}" type="number" min="0" step="1" value="${Math.max(0, Number(v.quantity || 0) - Number(v.sold || 0))}" class="p-1 w-16 rounded border border-slate-300"></label>`).join("")}
                     <button onclick='saveVariationQuantities()' class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-1 px-2 rounded">Speichern + eBay</button>
                     <button onclick="loadProducts()" class="text-slate-500 ml-1">✕</button></div>`;
@@ -894,19 +916,126 @@
             applyView();
         }
 
+        const plain = s => String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+        // What the unlisted goods cost: only what is known is added up, the rest is named.
+        function showStockValue(waiting) {
+            const box = document.getElementById("stock-value");
+            box.classList.toggle("hidden", currentTab !== "stock");
+            const known = waiting.filter(p => p.purchase_price !== null);
+            const value = known.reduce((sum, p) => sum + p.stock_quantity * (Number(p.purchase_price) + Number(p.supplier_shipping_cost || 0)), 0);
+            const pieces = waiting.reduce((sum, p) => sum + (p.stock_quantity || 0), 0);
+            const unknown = waiting.filter(p => p.purchase_price === null);
+            box.innerHTML = `<p class="font-bold">Gebundenes Kapital (nicht angeboten): ${value.toFixed(2).replace(".", ",")} € · ${pieces} Stück in ${waiting.length} Produkt(en)</p>`
+                + (unknown.length ? `<p class="text-amber-700">Unvollständig: Bei ${unknown.length} Produkt(en) fehlt der Einkaufspreis; sie sind in der Summe nicht enthalten.</p>` : "")
+                + `<p class="text-slate-500">Einkaufspreis plus Lieferantenversand. Nur zur Übersicht, keine steuerliche Bewertung.</p>`;
+        }
+
+        function openStockForm() {
+            const form = document.getElementById("stock-form");
+            form.reset();
+            form.classList.remove("hidden");
+            form.scrollIntoView({ block: "nearest" });
+        }
+
+        async function saveStock(event) {
+            event.preventDefault();
+            const value = id => document.getElementById(id).value.trim();
+            try {
+                let image_url = null;
+                const file = document.getElementById("st-image").files[0];
+                if (file) {
+                    const data = new FormData();
+                    data.append("file", file);
+                    const upload = await fetch(`${API_URL}/uploads/product-image`, { method: "POST", headers: authHeaders(), body: data });
+                    const result = await upload.json().catch(() => ({}));
+                    if (!upload.ok) { showBanner("Das Bild wurde nicht hochgeladen: " + (result.detail || upload.status), true); return; }
+                    image_url = result.url || result.image_url;
+                }
+                const body = { title: value("st-title"), sku: value("st-sku") || "LAGER-" + Date.now().toString().slice(-8),
+                    stock_quantity: Number(value("st-quantity")), purchase_price: value("st-price") === "" ? null : value("st-price"),
+                    acquired_on: value("st-date") || null, image_url, unlisted: true };
+                const response = await fetch(`${API_URL}/products`, { method: "POST", headers: authHeaders(true), body: JSON.stringify(body) });
+                const result = await response.json().catch(() => ({}));
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) { showBanner(result.detail || "Speichern fehlgeschlagen.", true); return; }
+                document.getElementById("stock-form").classList.add("hidden");
+                currentTab = "stock";
+                showBanner("Ware im Lager gespeichert.", false);
+                await loadProducts();
+            } catch (err) { showBanner(t("products.serverErrorRetry"), true); }
+        }
+
+        const nameWords = s => new Set(String(s).toLowerCase().match(/[\p{L}\p{N}]+/gu) || []);
+
+        function openLinkPanel(id) {
+            const all = window.__products || [];
+            const stock = all.find(p => p.id === id);
+            if (!stock) return;
+            const own = nameWords(stock.title);
+            const shared = p => [...nameWords(p.title)].filter(w => own.has(w)).length;
+            // similar names come first, but nothing is preselected
+            const listed = all.filter(p => p.active && !p.unlisted && p.id !== id).sort((a, b) => shared(b) - shared(a));
+            const panel = document.getElementById("link-panel");
+            panel.innerHTML = `<h3 class="font-bold text-base">„${plain(stock.title)}“ mit einem Angebot verknüpfen</h3>
+                <p class="text-slate-500">Es bleibt ein Produkt: SKU, Titel und Bild des Angebots, dazu Kosten, Einkäufe und Verlauf der Lagerware. Prüfe Farbe, Länge und Variante. Das lässt sich hier nicht rückgängig machen.</p>
+                <label class="block">Angebotenes Produkt <select id="ln-target" class="mt-1 w-full p-2 border border-slate-300 rounded"><option value="">— wählen —</option>${listed.map(p => `<option value="${plain(p.id)}">${plain(p.title)} (SKU ${plain(p.sku)})</option>`).join("")}</select></label>
+                <div id="ln-details" class="space-y-2"></div>
+                <div class="flex gap-2"><button type="button" onclick="saveLink('${plain(id)}')" class="bg-sky-700 text-white font-bold px-4 py-2 rounded">Verknüpfen</button><button type="button" onclick="document.getElementById('link-panel').classList.add('hidden')" class="border border-slate-300 rounded px-4 py-2">Abbrechen</button></div>`;
+            panel.classList.remove("hidden");
+            panel.scrollIntoView({ block: "nearest" });
+            document.getElementById("ln-target").onchange = event => {
+                const target = all.find(p => p.id === event.target.value);
+                const details = document.getElementById("ln-details");
+                if (!target) { details.innerHTML = ""; return; }
+                const costs = p => p.unit_cost === null ? "unbekannt" : euro(p.unit_cost);
+                const differ = stock.unit_cost !== null && target.unit_cost !== null && ["purchase_price", "supplier_shipping_cost", "packaging_cost"].some(f => Number(stock[f] || 0) !== Number(target[f] || 0));
+                details.innerHTML = `<p>Im Lager: <b>${stock.stock_quantity}</b> Stück, Kosten je Stück ${costs(stock)} · Beim Angebot: <b>${target.stock_quantity}</b> Stück, Kosten ${costs(target)}</p>
+                    <label class="block">Wie viele Stück hast du wirklich insgesamt? <input id="ln-quantity" type="number" min="0" step="1" class="mt-1 w-32 p-2 border border-slate-300 rounded"></label>
+                    <p class="text-slate-500">Nicht einfach addieren, wenn das Angebot dieselben Stücke schon zählt. Die Zahl wird nur in ShipSync gespeichert, nicht an den Shop gesendet.</p>
+                    ${differ ? `<fieldset class="space-y-1"><legend>Welche Kosten gelten?</legend><label class="block"><input type="radio" name="ln-cost" value="stock"> die der Lagerware (${costs(stock)})</label><label class="block"><input type="radio" name="ln-cost" value="listing"> die des Angebots (${costs(target)})</label></fieldset>` : ""}`;
+            };
+        }
+
+        async function saveLink(id) {
+            const target = document.getElementById("ln-target").value;
+            const quantity = document.getElementById("ln-quantity");
+            if (!target || !quantity || quantity.value === "") { showBanner("Bitte das Produkt wählen und die richtige Stückzahl eingeben.", true); return; }
+            const chosen = document.querySelector('input[name="ln-cost"]:checked');
+            if (document.querySelector('input[name="ln-cost"]') && !chosen) { showBanner("Bitte wählen, welche Kosten gelten.", true); return; }
+            if (!confirm("Jetzt verknüpfen? Aus beiden wird ein Produkt.")) return;
+            try {
+                const response = await fetch(`${API_URL}/products/${id}/link`, { method: "POST", headers: authHeaders(true),
+                    body: JSON.stringify({ listing_product_id: target, stock_quantity: Number(quantity.value), cost_from: chosen ? chosen.value : null }) });
+                const result = await response.json().catch(() => ({}));
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) { showBanner(result.detail || "Verknüpfen fehlgeschlagen.", true); return; }
+                document.getElementById("link-panel").classList.add("hidden");
+                currentTab = "available";
+                showBanner("Verknüpft.", false);
+                await loadProducts();
+            } catch (err) { showBanner(t("products.serverErrorRetry"), true); }
+        }
+
         function applyView() {
             const all = window.__products || [];
-            let list = all.filter(p => currentTab === "soldout" ? (p.stock_quantity ?? 0) === 0 : (p.stock_quantity ?? 0) > 0);
+            const waiting = all.filter(p => p.unlisted && p.active);
+            const offered = all.filter(p => !(p.unlisted && p.active));
+            let list = currentTab === "stock" ? waiting
+                : offered.filter(p => currentTab === "soldout" ? (p.stock_quantity ?? 0) === 0 : (p.stock_quantity ?? 0) > 0);
+            showStockValue(waiting);
             if (soldSort !== "none") {
                 list = [...list].sort((a, b) => soldSort === "desc"
                     ? (b.sold_quantity ?? 0) - (a.sold_quantity ?? 0)
                     : (a.sold_quantity ?? 0) - (b.sold_quantity ?? 0));
             }
-            const soldoutCount = all.filter(p => (p.stock_quantity ?? 0) === 0).length;
+            const soldoutCount = offered.filter(p => (p.stock_quantity ?? 0) === 0).length;
             const on = "bg-red-50 border-red-400";
             document.getElementById("tab-available").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "available" ? on : "border-slate-300");
             document.getElementById("tab-soldout").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "soldout" ? on : "border-slate-300");
-            document.getElementById("tab-available").innerText = `Verfügbar (${all.length - soldoutCount})`;
+            document.getElementById("tab-stock").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "stock" ? on : "border-slate-300");
+            document.getElementById("tab-stock").innerText = `Im Lager, nicht angeboten (${waiting.length})`;
+            document.getElementById("tab-available").innerText = `Verfügbar (${offered.length - soldoutCount})`;
             document.getElementById("tab-soldout").innerText = `Ausverkauft (${soldoutCount})`;
             document.getElementById("sort-sold").innerText = soldSort === "desc" ? "Verkauft: meiste zuerst ▼" : soldSort === "asc" ? "Verkauft: wenigste zuerst ▲" : "Verkauft: Standard";
             renderProducts(list, all.length === 0);
@@ -945,11 +1074,12 @@
                     <td class="px-3 py-1 ${p.profit_per_unit >= 0 ? "text-emerald-600" : "text-red-600"}">${euro(p.profit_per_unit)}</td>
                     <td class="px-3 py-1">${p.margin_percent !== null && p.margin_percent !== undefined ? p.margin_percent + " %" : "—"}</td>
                     <td class="px-3 py-1">
-                        <span class="px-2 py-1 rounded text-xs ${p.active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}">
-                            ${p.active ? t("products.statusActive") : t("products.statusInactive")}
+                        <span class="px-2 py-1 rounded text-xs ${p.unlisted && p.active ? "bg-amber-100 text-amber-800" : p.active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}">
+                            ${p.unlisted && p.active ? "Nicht angeboten" : p.active ? t("products.statusActive") : t("products.statusInactive")}
                         </span>
                     </td>
                     <td class="px-3 py-1 whitespace-nowrap space-x-2">
+                        ${p.unlisted && p.active ? `<button onclick='openLinkPanel(${JSON.stringify(p.id)})' class="text-sky-700 font-semibold hover:underline text-xs">Mit Angebot verknüpfen</button>` : ""}
                         <button onclick='openForm(${JSON.stringify(p)})' class="text-blue-600 hover:text-blue-700 text-xs">${t("products.edit")}</button>
                         <button onclick='restockProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})' class="text-blue-600 hover:text-blue-700 text-xs">${t("products.restock")}</button>
                         <button onclick='showHistory(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})' class="text-slate-500 hover:text-slate-600 text-xs">${t("products.history")}</button>

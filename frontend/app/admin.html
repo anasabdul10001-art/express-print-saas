@@ -10,6 +10,7 @@
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
+    <script src="../list-numbers.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div class="flex min-h-screen">
@@ -288,7 +289,7 @@
             </div>
 
             <div id="plans-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.plansEmpty">Noch keine Pläne angelegt.</div>
-            <div id="plans-list" class="space-y-3"></div>
+            <div id="plans-list" data-numbered="list" class="space-y-3"></div>
         </div>
 
         <!-- Payment methods -->
@@ -327,7 +328,7 @@
             </div>
 
             <div id="payment-methods-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.paymentMethodsEmpty">Noch keine Zahlungsarten angelegt.</div>
-            <div id="payment-methods-list" class="space-y-3"></div>
+            <div id="payment-methods-list" data-numbered="list" class="space-y-3"></div>
         </div>
 
         <!-- Confirm payment / send invoice -->
@@ -363,7 +364,7 @@
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 class="text-lg font-bold" data-i18n="admin.invoicesTitle">Rechnungen</h3>
             <div id="invoices-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.invoicesEmpty">Noch keine Rechnungen erstellt.</div>
-            <div id="invoices-list" class="space-y-2"></div>
+            <div id="invoices-list" data-numbered="list" class="space-y-2"></div>
         </div>
 
         <!-- Affiliates -->
@@ -397,7 +398,7 @@
             <button onclick="createAffiliate()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.affiliateCreate">Affiliate anlegen</span></button>
 
             <div id="affiliates-empty" class="hidden text-slate-500 text-sm" data-i18n="admin.affiliatesEmpty">Noch keine Affiliates angelegt.</div>
-            <div id="affiliates-list" class="space-y-3 pt-2"></div>
+            <div id="affiliates-list" data-numbered="list" class="space-y-3 pt-2"></div>
         </div>
 
         <!-- Site pages (About / Policies / Contact) -->
@@ -779,7 +780,7 @@
                         </div>
                         <p class="text-sm text-slate-500 mt-1">${p.description || ""}</p>
                         <p class="text-lg font-bold text-red-600 mt-1">${euro(p.price_monthly)} <span class="text-xs font-normal text-slate-400">${t("admin.perMonth")}</span></p>
-                        ${p.features.length > 0 ? `<ul class="text-xs text-slate-500 mt-2 list-disc list-inside">${p.features.map(f => `<li>${f}</li>`).join("")}</ul>` : ""}
+                        ${p.features.length > 0 ? `<ul class="text-xs text-slate-500 mt-2 list-decimal list-inside">${p.features.map(f => `<li>${f}</li>`).join("")}</ul>` : ""}
                     </div>
                     <div class="flex flex-col gap-2 flex-shrink-0">
                         <button onclick='openPlanForm(${JSON.stringify(p)})' class="text-blue-600 hover:text-blue-700 text-xs font-semibold">${t("admin.edit")}</button>
@@ -1199,7 +1200,7 @@
                         <button onclick='showAffiliateCommissions(${JSON.stringify(a.id)}, ${JSON.stringify(a.name)})' class="text-slate-600 hover:text-slate-900 font-semibold">${t("admin.affiliateViewLedger")}</button>
                         ${a.email ? `<button onclick='resendAffiliatePasswordSetup(${JSON.stringify(a.id)})' class="text-blue-600 hover:text-blue-700 font-semibold">${t("admin.affiliateResendPasswordLink")}</button>` : ""}
                     </div>
-                    <div id="affiliate-ledger-${a.id}" class="hidden border-t border-slate-100 pt-2 text-xs space-y-1"></div>
+                    <div id="affiliate-ledger-${a.id}" data-numbered="list" class="hidden border-t border-slate-100 pt-2 text-xs space-y-1"></div>
                 </div>
             `).join("");
         }

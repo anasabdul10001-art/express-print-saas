@@ -1,4 +1,5 @@
 import math
+import uuid
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal
 
@@ -10,7 +11,9 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user, get_db
 from app.models.order import Order, OrderItem
 from app.models.product import Product
+from app.models.purchase import PurchaseLine
 from app.models.stock_movement import StockMovement
+from app.models.supplier_item import SupplierItem
 from app.models.user import User
 from app.services.ebay_csv_import import CsvImportError, parse_active_listings_csv
 from app.schemas.product import ProductCreate, ProductOut, ProductUpdate, RestockCreate, StockMovementOut
@@ -142,6 +145,9 @@ async def import_ebay_csv(
         if not product.active:
             changes["active"] = True
         new_stock = item["stock_quantity"]
+        if product.unlisted:
+            changes["unlisted"] = False
+            new_stock = None
         if new_stock is not None and product.stock_quantity != new_stock:
             changes["stock_quantity"] = new_stock
         if not changes:
@@ -177,7 +183,7 @@ def list_products(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Product).filter(Product.tenant_id == current_user.tenant_id)
+    query = db.query(Product).filter(Product.tenant_id == current_user.tenant_id, Product.merged_into.is_(None))
     if active is not None:
         query = query.filter(Product.active == active)
     if search:
@@ -220,6 +226,68 @@ def create_product(
     return _with_profit(product)
 
 
+COST_FIELDS = ("purchase_price", "supplier_shipping_cost", "packaging_cost")
+
+
+class LinkIn(BaseModel):
+    """Joins stock goods with the product that came from the listing."""
+    listing_product_id: uuid.UUID
+    # How many pieces there really are. Asked, never added up: the listing may already count them.
+    stock_quantity: int = Field(..., ge=0, le=1000000)
+    cost_from: Literal["stock", "listing"] | None = None
+
+
+@router.post("/{product_id}/link", response_model=ProductOut)
+def link_stock_to_listing(
+    product_id: uuid.UUID,
+    payload: LinkIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """One product remains: the listing's (SKU, title, picture, orders). It takes over the
+    cost, the purchases, the supplier links and the history of the stock goods."""
+    def own(pid):
+        return (db.query(Product).filter(Product.id == pid, Product.tenant_id == current_user.tenant_id,
+                                         Product.merged_into.is_(None)).with_for_update().first())
+
+    stock, listing = own(product_id), own(payload.listing_product_id)
+    if not stock or not listing:
+        raise HTTPException(status_code=404, detail="Produkt nicht gefunden")
+    if stock.id == listing.id or not stock.unlisted or not stock.active:
+        raise HTTPException(status_code=400, detail="Verknüpfen geht nur von Lagerware, die noch nicht angeboten wird.")
+    if listing.unlisted or not listing.active:
+        raise HTTPException(status_code=400, detail="Bitte ein aktives, angebotenes Produkt wählen.")
+
+    both_known = stock.unit_cost is not None and listing.unit_cost is not None
+    differ = both_known and any((getattr(stock, f) or 0) != (getattr(listing, f) or 0) for f in COST_FIELDS)
+    if differ and payload.cost_from is None:
+        raise HTTPException(status_code=422, detail="Beide Produkte haben unterschiedliche Kosten. "
+                            "Bitte wählen, welche gelten.")
+    if stock.unit_cost is not None and (listing.unit_cost is None or payload.cost_from == "stock"):
+        for field in COST_FIELDS:
+            setattr(listing, field, getattr(stock, field))
+
+    for model in (PurchaseLine, SupplierItem, StockMovement, OrderItem):
+        db.query(model).filter(model.product_id == stock.id).update(
+            {model.product_id: listing.id}, synchronize_session=False)
+    change = payload.stock_quantity - listing.stock_quantity
+    if change:
+        db.add(StockMovement(tenant_id=current_user.tenant_id, product_id=listing.id, quantity_change=change,
+                             reason="manual_correction", reference=f"Verknüpft mit Lagerware {stock.sku}"[:255]))
+    listing.stock_quantity = payload.stock_quantity
+    for field in ("shelf_location", "image_url", "acquired_on"):
+        if not getattr(listing, field):
+            setattr(listing, field, getattr(stock, field))
+    # as when a cost is typed in by hand: fill only sales that have no cost yet
+    if listing.unit_cost is not None:
+        db.query(OrderItem).filter(OrderItem.product_id == listing.id, OrderItem.purchase_price.is_(None)
+                                   ).update({OrderItem.purchase_price: listing.unit_cost}, synchronize_session=False)
+    stock.merged_into, stock.active, stock.unlisted, stock.stock_quantity = listing.id, False, False, 0
+    db.commit()
+    db.refresh(listing)
+    return _with_profit(listing)
+
+
 @router.get("/{product_id}", response_model=ProductOut)
 def get_product(
     product_id: str,
@@ -252,6 +320,8 @@ def update_product(
         raise HTTPException(status_code=404, detail="Produkt nicht gefunden")
 
     update_data = payload.model_dump(exclude_unset=True)
+    if update_data.get("unlisted") is None:
+        update_data.pop("unlisted", None)
 
     new_sku = update_data.get("sku")
     if new_sku and new_sku != product.sku:

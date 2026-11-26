@@ -10,6 +10,8 @@
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
+    <script src="../list-numbers.js"></script>
+    <script src="../file-input.js" defer></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div class="flex min-h-screen">
@@ -231,7 +233,7 @@
 
         <!-- Expenses table -->
         <div id="table-wrap" class="hidden bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
-            <table class="w-full text-sm">
+            <table data-numbered="table" class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-slate-500 border-b border-slate-200">
                         <th class="p-3" data-i18n="expenses.colDate">Datum</th>

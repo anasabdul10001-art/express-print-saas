@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user, get_db
 from app.models.ebay_account import EbayAccount
 from app.models.product import Product
+from app.services import stock_listing_service
 from app.models.user import User
 from app.services import ebay_create_listing_service as service
 
@@ -106,6 +107,9 @@ def publish(payload: DraftIn, current_user: User = Depends(get_current_user), db
         raise HTTPException(status_code=502, detail=str(exc))
     if result["ok"] and result["item_id"]:
         sku = draft["sku"] or result["item_id"]
+        stock_listing_service.seen_in_shop(db, current_user.tenant_id,
+                                           [(sku, draft["picture_urls"][0], payload.price)])
+        db.commit()
         if not db.query(Product).filter(Product.tenant_id == current_user.tenant_id, Product.sku == sku).first():
             db.add(Product(tenant_id=current_user.tenant_id, sku=sku, title=draft["title"],
                            selling_price=payload.price, stock_quantity=payload.quantity,

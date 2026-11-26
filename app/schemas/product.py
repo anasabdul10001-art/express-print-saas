@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field
 class ProductCreate(BaseModel):
@@ -13,6 +13,8 @@ class ProductCreate(BaseModel):
     ebay_fee_percent: Decimal | None = Field(None, ge=0, lt=100)
     selling_price: Decimal | None = None
     stock_quantity: int = 0
+    unlisted: bool = False
+    acquired_on: date | None = None
     weight_kg: Decimal | None = Field(None, gt=0)
     length_cm: int | None = Field(None, gt=0)
     width_cm: int | None = Field(None, gt=0)
@@ -30,6 +32,8 @@ class ProductUpdate(BaseModel):
     selling_price: Decimal | None = None
     active: bool | None = None
     stock_quantity: int | None = None
+    unlisted: bool | None = None
+    acquired_on: date | None = None
     weight_kg: Decimal | None = Field(None, gt=0)
     length_cm: int | None = Field(None, gt=0)
     width_cm: int | None = Field(None, gt=0)
@@ -48,6 +52,8 @@ class ProductOut(BaseModel):
     selling_price: Decimal | None
     active: bool
     stock_quantity: int
+    unlisted: bool = False
+    acquired_on: date | None = None
     weight_kg: Decimal | None
     length_cm: int | None
     width_cm: int | None

@@ -30,6 +30,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models.order import Order, OrderItem
 from app.models.product import Product
+from app.services import stock_listing_service
 from app.models.shopify_account import ShopifyAccount
 from app.models.stock_movement import StockMovement
 from app.services import shopify_oauth_service
@@ -143,6 +144,8 @@ def import_products(account: ShopifyAccount, tenant_id: UUID, db: Session) -> di
     if shop_name and not account.shop_name:
         account.shop_name = shop_name
     known = {sku for (sku,) in db.query(Product.sku).filter(Product.tenant_id == tenant_id).all()}
+    stock_listing_service.seen_in_shop(db, tenant_id, [
+        (v["sku"], v["image_url"], v["price"]) for v in variants if v["sku"]])
     created = 0
     for v in variants:
         if not v["sku"] or v["sku"] in known:

@@ -87,7 +87,8 @@ def build_alerts(db: Session, tenant_id, now: datetime | None = None) -> list[di
         for item in order.items:
             if item.product_id:
                 sold[item.product_id] = sold.get(item.product_id, 0) + item.quantity
-    products = db.query(Product).filter(Product.tenant_id == tenant_id, Product.active.is_(True)).all()
+    products = db.query(Product).filter(Product.tenant_id == tenant_id, Product.active.is_(True),
+                                        Product.unlisted.is_(False)).all()
     empty, low = [], []
     for product in products:
         units = sold.get(product.id, 0)

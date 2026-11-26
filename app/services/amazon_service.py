@@ -38,6 +38,7 @@ from app.config import settings
 from app.models.amazon_account import AmazonAccount
 from app.models.order import Order, OrderItem
 from app.models.product import Product
+from app.services import stock_listing_service
 from app.models.stock_movement import StockMovement
 from app.services import amazon_oauth_service
 
@@ -116,6 +117,8 @@ def import_products(account: AmazonAccount, tenant_id: UUID, db: Session) -> dic
     """Creates the missing products (SKU = Amazon seller SKU). Existing ones stay untouched."""
     listings = fetch_listings(account, db)
     known = {sku for (sku,) in db.query(Product.sku).filter(Product.tenant_id == tenant_id).all()}
+    stock_listing_service.seen_in_shop(db, tenant_id, [
+        (row["sku"], row["image_url"], row["price"]) for row in listings if row["sku"]])
     created = 0
     for row in listings:
         if not row["sku"] or row["sku"] in known:

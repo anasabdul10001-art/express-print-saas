@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.models.ebay_account import EbayAccount
 from app.models.product import Product
+from app.services import stock_listing_service
 from app.services import ebay_oauth_service
 
 TRADING_URL = {
@@ -287,6 +288,9 @@ def revise_prices(account: EbayAccount, db: Session, items: list[tuple[str, Deci
 def import_listings(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
     listings = fetch_active_listings(account, db)
 
+    stock_linked = stock_listing_service.seen_in_shop(db, tenant_id, [
+        (key, listing["image_url"], listing["price"])
+        for listing in listings for key in (listing["sku"], listing["item_id"]) if key])
     existing = {p.sku for p in db.query(Product).filter(Product.tenant_id == tenant_id).all()}
     created = skipped = 0
     for listing in listings:
@@ -309,4 +313,5 @@ def import_listings(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
         existing.add(sku)
         created += 1
     db.commit()
-    return {"listings_found": len(listings), "products_created": created, "already_known": skipped}
+    return {"listings_found": len(listings), "products_created": created, "already_known": skipped,
+            "stock_linked": stock_linked}
