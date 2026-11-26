@@ -1,6 +1,8 @@
 """eBay extras (policies, traffic, cases, messages) and AI reply suggestions."""
 
+import re
 import uuid
+import xml.etree.ElementTree as ET
 
 from app.database import SessionLocal
 from app.models.ebay_account import EbayAccount
@@ -91,7 +93,7 @@ def test_suggest_reply_falls_through_providers(register, client, monkeypatch):
     monkeypatch.setattr(ai_reply_service.httpx, "post", fake_post)
     out = client.post("/ebay/suggest-reply", headers=headers,
                       json={"message": "Schreib an max@x.de", "buyer_name": "Max Muster"}).json()
-    assert out == {"reply": "Guten Tag, ich sehe nach.", "provider": "openrouter"}
+    assert out == {"reply": "Guten Tag, ich sehe nach.", "provider": "openrouter", "sent_text": "Schreib an [E-MAIL]"}
     assert "'data_collection': 'deny'" in seen[-1][1]
     assert all("max@x.de" not in body for _, body in seen)
 
@@ -106,3 +108,53 @@ def test_subscription_raw_shows_ebays_answer_for_each_case(register, client, mon
     monkeypatch.setattr(ebay_extras_service.httpx, "get", lambda url, **k: _Resp(status=404, text="no subscription"))
     r = client.get("/ebay/subscription-raw", headers=headers).json()
     assert r[0]["ok"] is False and r[0]["http_status"] == 404 and "no subscription" in r[0]["error"]
+
+
+def test_mask_cuts_signature_and_numbers():
+    masked = ai_reply_service.mask_personal_data(
+        "Hallo Frau Schulz, ich heiße Erika Beispiel. Wo bleibt Bestellung 05-15486-11749 "
+        "(A0064CF4DB0000000161)?\n\nViele Grüße\nErika Beispiel\nBeispieldorf")
+    for secret in ("Schulz", "Erika", "Beispiel", "15486", "A0064CF4"):
+        assert secret not in masked
+    assert "Wo bleibt Bestellung" in masked
+
+
+def test_mask_keeps_a_question_that_follows_a_greeting_word():
+    text = "Viele Grüße aus dem Urlaub, passt das Kabel an mein Handy?"
+    assert ai_reply_service.mask_personal_data(text) == text
+
+
+def test_suggest_reply_sends_only_the_message_and_rejects_html(register, client, monkeypatch):
+    headers = _connect(register, client, monkeypatch)
+    monkeypatch.setattr(ai_reply_service.settings, "groq_api_key", "g")
+    monkeypatch.setattr(ai_reply_service.settings, "ai_reply_enabled", True)
+    bodies = []
+
+    def fake_post(url, **k):
+        bodies.append(k["json"]["messages"][1]["content"])
+        return _Resp({"choices": [{"message": {"content": "Guten Tag, [BITTE ERGÄNZEN: Status]"}}]})
+
+    monkeypatch.setattr(ai_reply_service.httpx, "post", fake_post)
+    client.post("/ebay/suggest-reply", headers=headers, json={"message": "Wo ist mein Paket?"})
+    assert bodies == ["Nachricht des Käufers:\nWo ist mein Paket?\n\nSchreibe die Antwort."]
+    html = client.post("/ebay/suggest-reply", headers=headers, json={"message": "<html><body>x</body></html>"})
+    assert html.status_code == 422 and len(bodies) == 1
+
+
+def test_messages_are_fetched_in_batches_of_ten_without_html(register, client, monkeypatch):
+    headers = _connect(register, client, monkeypatch)
+    batches = []
+
+    def fake_trading(account, token, call, body):
+        if "ReturnHeaders" in body:
+            inner = "".join(f"<Message><MessageID>{i}</MessageID></Message>" for i in range(25))
+        else:
+            ids = re.findall(r"<MessageID>(\d+)</MessageID>", body)
+            batches.append(len(ids))
+            inner = "".join(f"<Message><MessageID>{i}</MessageID><Content>&lt;html&gt;</Content></Message>" for i in ids)
+        return ET.fromstring(f'<R xmlns="urn:ebay:apis:eBLBaseComponents"><Messages>{inner}</Messages></R>')
+
+    monkeypatch.setattr(ebay_extras_service, "_trading", fake_trading)
+    items = client.get("/ebay/messages", headers=headers).json()["items"]
+    assert batches == [10, 10]
+    assert len(items) == 20 and all(m["text"] is None for m in items)

@@ -59,16 +59,22 @@ async function showMessages() {
             <div class="flex justify-between text-sm"><span class="font-semibold">${esc(m.sender)} <span class="text-slate-400 font-normal">· ${esc(m.account)}</span></span><span class="text-slate-400">${esc((m.date || "").slice(0, 10))}</span></div>
             <div class="text-sm font-semibold">${esc(m.subject)}</div>
             <div class="text-sm text-slate-700 whitespace-pre-wrap">${esc(m.text)}</div>
-            ${data.ai_configured ? `<button onclick="suggest(${i})" class="text-sm bg-slate-900 text-white font-semibold px-3 py-1.5 rounded">KI-Antwort vorschlagen</button>` : `<p class="text-xs text-slate-400">KI-Schlüssel fehlt (GROQ_API_KEY / GEMINI_API_KEY in Render).</p>`}
+            ${data.ai_configured ? `<label class="block text-xs text-slate-500">Text für die KI – nur die Frage stehen lassen, Namen und persönliche Angaben löschen:
+                <textarea id="ask-${i}" maxlength="2000" rows="3" class="mt-1 w-full border border-slate-300 rounded p-2 text-sm text-slate-800">${esc(m.text || "")}</textarea></label>
+            <button onclick="suggest(${i})" class="text-sm bg-slate-900 text-white font-semibold px-3 py-1.5 rounded">KI-Antwort vorschlagen</button>` : `<p class="text-xs text-slate-400">KI-Antwortvorschläge sind nicht eingeschaltet (AI_REPLY_ENABLED und GROQ_API_KEY oder OPENROUTER_API_KEY in Render).</p>`}
             <div id="reply-${i}"></div>
         </div>`).join("") : "<p class='text-slate-500'>Keine Nachrichten.</p>");
 }
 async function suggest(i) {
     const m = MESSAGES[i], box = document.getElementById("reply-" + i);
+    const message = document.getElementById("ask-" + i).value.trim();
+    if (!message) { box.innerHTML = "<p class='text-xs text-red-600'>Bitte zuerst den Text der Frage einfügen.</p>"; return; }
     box.innerHTML = "<p class='text-xs text-slate-400'>Erstelle Vorschlag…</p>";
     try {
-        const d = await api("/ebay/suggest-reply", { method: "POST", body: JSON.stringify({ message: m.text || m.subject || "", buyer_name: m.sender }) });
-        box.innerHTML = `<textarea class="w-full border border-slate-300 rounded p-2 text-sm" rows="6">${esc(d.reply)}</textarea>
+        const d = await api("/ebay/suggest-reply", { method: "POST", body: JSON.stringify({ message, buyer_name: m.sender }) });
+        box.innerHTML = `<p class="text-xs text-slate-500 whitespace-pre-wrap">An die KI gesendet: ${esc(d.sent_text)}</p>
+            ${d.reply.includes("[BITTE") ? `<p class="text-xs font-semibold text-amber-700">Bitte die markierten Stellen [BITTE ERGÄNZEN …] vor dem Senden ausfüllen.</p>` : ""}
+            <textarea class="w-full border border-slate-300 rounded p-2 text-sm" rows="6">${esc(d.reply)}</textarea>
             <p class="text-xs text-slate-400">Vorschlag von ${esc(d.provider)} – prüfen, kopieren und in eBay senden. Es wird nichts automatisch gesendet.</p>`;
     } catch (e) { box.innerHTML = `<p class="text-xs text-red-600">${esc(e.message)}</p>`; }
 }

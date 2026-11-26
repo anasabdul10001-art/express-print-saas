@@ -163,6 +163,9 @@ def _t(node, path):
     return found.text.strip() if found is not None and found.text else None
 
 
+MESSAGE_BATCH = 10  # GetMyMessages rejects more MessageIDs than this per call
+
+
 def messages(account: EbayAccount, db: Session, limit: int = 20) -> list[dict]:
     token = ebay_oauth_service.get_valid_access_token(account, db)
     headers_root = _trading(account, token, "GetMyMessages",
@@ -171,12 +174,15 @@ def messages(account: EbayAccount, db: Session, limit: int = 20) -> list[dict]:
     ids = [_t(h, "e:MessageID") for h in heads if _t(h, "e:MessageID")]
     if not ids:
         return []
-    id_xml = "".join(f"<MessageID>{i}</MessageID>" for i in ids)
-    full = _trading(account, token, "GetMyMessages",
-                    f"<DetailLevel>ReturnMessages</DetailLevel><MessageIDs>{id_xml}</MessageIDs>")
     out = []
-    for m in full.findall("e:Messages/e:Message", NS):
-        out.append({"id": _t(m, "e:MessageID"), "sender": _t(m, "e:Sender"), "subject": _t(m, "e:Subject"),
-                    "text": _t(m, "e:Text") or _t(m, "e:Content"), "date": _t(m, "e:ReceiveDate"),
-                    "item_id": _t(m, "e:ItemID"), "read": _t(m, "e:Read") == "true"})
+    for start in range(0, len(ids), MESSAGE_BATCH):
+        id_xml = "".join(f"<MessageID>{i}</MessageID>" for i in ids[start:start + MESSAGE_BATCH])
+        full = _trading(account, token, "GetMyMessages",
+                        f"<DetailLevel>ReturnMessages</DetailLevel><MessageIDs>{id_xml}</MessageIDs>")
+        for m in full.findall("e:Messages/e:Message", NS):
+            # only the plain text: "Content" is eBay's whole HTML mail, which also
+            # carries names and order data and must never end up in the AI box
+            out.append({"id": _t(m, "e:MessageID"), "sender": _t(m, "e:Sender"), "subject": _t(m, "e:Subject"),
+                        "text": _t(m, "e:Text"), "date": _t(m, "e:ReceiveDate"),
+                        "item_id": _t(m, "e:ItemID"), "read": _t(m, "e:Read") == "true"})
     return out
