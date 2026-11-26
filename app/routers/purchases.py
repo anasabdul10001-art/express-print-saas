@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from pydantic import BaseModel, Field, ValidationError, model_validator
 from sqlalchemy.orm import Session
 
+from app.core.errors import readable
 from app.core.deps import get_current_user, get_db
 from app.core.rate_limit import limiter
 from app.models.product import Product
@@ -163,7 +164,7 @@ async def book(
     try:
         payload = PurchaseIn.model_validate(json.loads(data))
     except ValidationError as exc:
-        raise HTTPException(status_code=422, detail="; ".join(e["msg"] for e in exc.errors()))
+        raise HTTPException(status_code=422, detail=readable([{**e, "loc": ("body", *e["loc"])} for e in exc.errors()]))
     except ValueError:
         raise HTTPException(status_code=422, detail="Ungültige Eingabe.")
     content = await file.read(MAX_FILE_BYTES + 1)
