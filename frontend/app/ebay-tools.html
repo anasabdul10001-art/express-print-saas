@@ -58,7 +58,7 @@ async function showMessages() {
         <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
             <div class="flex justify-between text-sm"><span class="font-semibold">${esc(m.sender)} <span class="text-slate-400 font-normal">· ${esc(m.account)}</span></span><span class="text-slate-400">${esc((m.date || "").slice(0, 10))}</span></div>
             <div class="text-sm font-semibold">${esc(m.subject)}</div>
-            <div class="text-sm text-slate-700 whitespace-pre-wrap">${esc(m.text)}</div>
+            ${m.text ? `<div class="text-sm text-slate-700 whitespace-pre-wrap">${esc(m.text)}</div>` : `<p class="text-xs text-slate-400">Kein Nachrichtentext erkannt (z. B. eine Mitteilung von eBay). Bitte bei eBay ansehen.</p>`}
             ${data.ai_configured ? `<label class="block text-xs text-slate-500">Text für die KI – nur die Frage stehen lassen, Namen und persönliche Angaben löschen:
                 <textarea id="ask-${i}" maxlength="2000" rows="3" class="mt-1 w-full border border-slate-300 rounded p-2 text-sm text-slate-800">${esc(m.text || "")}</textarea></label>
             <button onclick="suggest(${i})" class="text-sm bg-slate-900 text-white font-semibold px-3 py-1.5 rounded">KI-Antwort vorschlagen</button>` : `<p class="text-xs text-slate-400">KI-Antwortvorschläge sind nicht eingeschaltet (AI_REPLY_ENABLED und GROQ_API_KEY oder OPENROUTER_API_KEY in Render).</p>`}

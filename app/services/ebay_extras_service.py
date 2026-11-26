@@ -6,8 +6,10 @@ endpoint (missing scope, API not enabled for the keyset, ...) never breaks
 the others - the error text is returned next to the data instead.
 """
 
+import re
 import xml.etree.ElementTree as ET
 from datetime import date, timedelta
+from html.parser import HTMLParser
 
 import httpx
 from sqlalchemy.orm import Session
@@ -166,6 +168,52 @@ def _t(node, path):
 MESSAGE_BATCH = 10  # GetMyMessages rejects more MessageIDs than this per call
 
 
+class _TypedText(HTMLParser):
+    """Collects what the member typed: the element with id="UserInputtedText" in
+    eBay's HTML message mail."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.tag, self.depth, self.done, self.parts = None, 0, False, []
+
+    def handle_starttag(self, tag, attrs):
+        if self.done:
+            return
+        if self.tag is None:
+            if dict(attrs).get("id") == "UserInputtedText":
+                self.tag, self.depth = tag, 1
+        elif tag == "br":
+            self.parts.append("\n")
+        elif tag == self.tag:
+            self.depth += 1
+
+    def handle_endtag(self, tag):
+        if self.tag and not self.done and tag == self.tag:
+            self.depth -= 1
+            self.done = self.depth == 0
+
+    def handle_data(self, data):
+        if self.tag and not self.done:
+            self.parts.append(data)
+
+
+def typed_text(raw: str | None) -> str | None:
+    """The member's own words. eBay's "Text" field is usually a whole HTML mail;
+    from that only the typed part is returned, and nothing when there is none
+    (system mails), so names and order data around it never leave this function."""
+    if not raw:
+        return None
+    if not re.search(r"<\s*(?:!doctype|html|head|body|table|div|style)\b", raw, re.I):
+        return raw.strip() or None
+    parser = _TypedText()
+    parser.feed(raw)
+    parser.close()
+    # an element that never closed would swallow the rest of the mail
+    if not parser.done:
+        return None
+    return "".join(parser.parts).replace("\xa0", " ").strip() or None
+
+
 def messages(account: EbayAccount, db: Session, limit: int = 20) -> list[dict]:
     token = ebay_oauth_service.get_valid_access_token(account, db)
     headers_root = _trading(account, token, "GetMyMessages",
@@ -183,6 +231,6 @@ def messages(account: EbayAccount, db: Session, limit: int = 20) -> list[dict]:
             # only the plain text: "Content" is eBay's whole HTML mail, which also
             # carries names and order data and must never end up in the AI box
             out.append({"id": _t(m, "e:MessageID"), "sender": _t(m, "e:Sender"), "subject": _t(m, "e:Subject"),
-                        "text": _t(m, "e:Text"), "date": _t(m, "e:ReceiveDate"),
+                        "text": typed_text(_t(m, "e:Text")), "date": _t(m, "e:ReceiveDate"),
                         "item_id": _t(m, "e:ItemID"), "read": _t(m, "e:Read") == "true"})
     return out
