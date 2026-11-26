@@ -4,6 +4,8 @@ import uuid
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
+import pytest
+
 from app.database import SessionLocal
 from app.models.cash_event import CashEvent
 from app.models.expense import Expense
@@ -155,6 +157,22 @@ def test_foreign_or_unknown_destination_is_an_open_point(register, client):
     data = client.get("/accounting/ustva?period=Q3", headers=headers).json()
     assert data["complete"] is False
     assert any("Ausland" in w for w in data["open_points"]) and any("Lieferland" in w for w in data["open_points"])
+
+
+@pytest.mark.parametrize("mode", ["regular", "kleinunternehmer"])
+def test_a_period_without_any_data_is_not_complete(register, client, mode):
+    headers, tenant_id = _setup(register, client, mode)
+    empty = client.get("/accounting/ustva?period=Q2", headers=headers).json()
+    assert empty["complete"] is False and any("keine Daten" in w for w in empty["open_points"])
+    # entering a zero or a prepayment does not turn nothing into data
+    client.put("/accounting/ustva/period-inputs", headers=headers, json={"period": "Q2", "labels_vat": "0"})
+    still = client.get("/accounting/ustva?period=Q2&advance_payment=10", headers=headers).json()
+    assert still["complete"] is False
+    with SessionLocal() as db:
+        _order(db, tenant_id, date(2026, 5, 1), "11.90")
+        db.commit()
+    filled = client.get("/accounting/ustva?period=Q2", headers=headers).json()
+    assert filled["complete"] is True, filled["open_points"]
 
 
 def test_endpoint_rejects_foreign_entries_and_wrong_input(register, client):
