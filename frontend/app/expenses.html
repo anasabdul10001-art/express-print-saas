@@ -153,7 +153,7 @@
         <!-- Net profit summary -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
-                <p class="text-slate-500 text-sm" data-i18n="expenses.grossProfitMonth">Bruttogewinn (Monat)</p>
+                <p class="text-slate-500 text-sm" data-i18n="expenses.grossProfitMonth">Verkaufsmarge (Monat, nur Kontrolle)</p>
                 <p id="gross-profit" class="text-xl font-bold text-emerald-600">—</p>
             </div>
             <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
@@ -161,7 +161,7 @@
                 <p id="total-expenses" class="text-xl font-bold text-red-600">—</p>
             </div>
             <div class="bg-white border-2 border-red-500 p-4 rounded-xl shadow-sm">
-                <p class="text-slate-500 text-sm" data-i18n="expenses.netProfitMonth">Nettogewinn (Monat)</p>
+                <p class="text-slate-500 text-sm" data-i18n="expenses.netProfitMonth">Gewinn (Monat, EÜR)</p>
                 <p id="net-profit" class="text-xl font-bold text-slate-900">—</p>
             </div>
         </div>
@@ -367,9 +367,12 @@
 
         async function loadSummary() {
             try {
-                const [ordersResp, expensesResp] = await Promise.all([
+                const now = new Date();
+                const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                const [ordersResp, expensesResp, euerResp] = await Promise.all([
                     fetch(`${API_URL}/orders/summary`, { headers: authHeaders() }),
                     fetch(`${API_URL}/expenses/summary`, { headers: authHeaders() }),
+                    fetch(`${API_URL}/accounting/euer?start=${iso(new Date(now.getFullYear(), now.getMonth(), 1))}&end=${iso(now)}&group_by=month`, { headers: authHeaders() }),
                 ]);
 
                 if (ordersResp.status === 401 || expensesResp.status === 401) { logout(); return; }
@@ -379,7 +382,8 @@
 
                 const gross = Number(orderData.profit_month || 0);
                 const expenses = Number(expenseData.expenses_month || 0);
-                const net = gross - expenses;
+                if (!euerResp.ok) throw new Error();
+                const net = Number((await euerResp.json()).total.surplus);
 
                 document.getElementById("gross-profit").innerText = euro(gross);
                 document.getElementById("total-expenses").innerText = euro(expenses);
