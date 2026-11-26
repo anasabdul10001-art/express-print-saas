@@ -49,7 +49,7 @@ def _order(client, headers, sku="P1", **fields):
 
 def _with_dhl_and_agent(tenant_id):
     with SessionLocal() as db:
-        db.add(DhlAccount(tenant_id=tenant_id, status="CONNECTED", billing_number="1", environment="SANDBOX",
+        db.add(DhlAccount(tenant_id=tenant_id, status="CONNECTED", billing_number="1", environment="PRODUCTION",
                           sender_name="S", sender_street="Str 1", sender_zip="04720", sender_city="D",
                           sender_country="DE"))
         db.add(PrintAgent(tenant_id=tenant_id, name="a", api_key_hash=f"h{tenant_id}", status="online"))

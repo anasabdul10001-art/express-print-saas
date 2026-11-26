@@ -590,7 +590,7 @@ window.TRANSLATIONS = {
         "settings.dhlConnectSuccess": "DHL-Konto verbunden.",
         "settings.dhlDisconnectFailed": "Trennen fehlgeschlagen.",
         "settings.dhlDisconnectSuccess": "DHL-Verbindung getrennt.",
-        "settings.dhlPhase1Notice": "Hinweis: Aktuell werden nur die Zugangsdaten gespeichert. Der automatische Etikettenkauf über DHL wird in einem nächsten Schritt freigeschaltet.",
+        "settings.dhlPhase1Notice": "Eine Test-Verbindung (Sandbox) wird nie für Bestellungen verwendet. Erst eine freigeschaltete Produktiv-Verbindung kauft echte Etiketten.",
 
         "admin.title": "Plattform-Administration",
         "admin.subtitle": "Nur für dich als Plattform-Betreiber sichtbar - nicht für deine Händler.",
@@ -1332,7 +1332,7 @@ window.TRANSLATIONS = {
         "settings.dhlConnectSuccess": "DHL account connected.",
         "settings.dhlDisconnectFailed": "Disconnect failed.",
         "settings.dhlDisconnectSuccess": "DHL connection removed.",
-        "settings.dhlPhase1Notice": "Note: only your credentials are saved for now. Automatic label purchase via DHL will be enabled in a later step.",
+        "settings.dhlPhase1Notice": "A test (sandbox) connection is never used for orders. Only an approved production connection buys real labels.",
 
         "admin.title": "Platform administration",
         "admin.subtitle": "Visible only to you as the platform operator - not to your merchants.",

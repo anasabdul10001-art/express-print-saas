@@ -124,11 +124,14 @@ def trigger_print_for_order(
     # real label from DHL now; otherwise fall back to the placeholder URL,
     # same as before this integration existed - connecting DHL is optional,
     # and everyone who hasn't shouldn't lose the ability to print at all.
-    dhl_account = (
+    connected = (
         db.query(DhlAccount)
         .filter(DhlAccount.tenant_id == current_user.tenant_id, DhlAccount.status == "CONNECTED")
         .first()
     )
+    # A test (sandbox) connection never touches an order: it would send the buyer's
+    # data to DHL's test system and print a label that cannot be shipped.
+    dhl_account = connected if connected and connected.environment == "PRODUCTION" else None
 
     job_id = uuid.uuid4()
     label_pdf_url = None
@@ -148,7 +151,9 @@ def trigger_print_for_order(
             raise HTTPException(
                 status_code=400,
                 detail="Kein Versandetikett vorhanden: Lade das Etikett-PDF (eBay/Packlink/DHL) "
-                       "für diese Bestellung hoch oder verbinde ein DHL-Konto.",
+                       "für diese Bestellung hoch " + (
+                           "- DHL ist nur im Testmodus verbunden und wird nicht für Bestellungen verwendet."
+                           if connected else "oder verbinde ein DHL-Konto."),
             )
         label_pdf_data = previous.label_pdf_data
         label_pdf_url = f"{str(request.base_url).rstrip('/')}/print-jobs/{job_id}/label"

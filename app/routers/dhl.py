@@ -1,14 +1,21 @@
+import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.crypto import encrypt_token
 from app.core.deps import get_current_user, get_db
+from app.core.rate_limit import limiter
 from app.models.dhl_account import DhlAccount
+from app.models.print_agent import PrintAgent
+from app.models.print_job import PrintJob
+from app.models.tenant import Tenant
 from app.models.user import User
 from app.schemas.dhl import DhlAccountConnect, DhlAccountOut
+from app.services import dhl_service, dhl_test_service
 
 router = APIRouter(prefix="/dhl", tags=["dhl"])
 
@@ -72,6 +79,65 @@ def connect_dhl(
     db.commit()
     db.refresh(account)
     return account
+
+
+MAX_LABEL_BYTES = 2 * 1024 * 1024
+
+
+def _test_account(db: Session, tenant_id) -> DhlAccount:
+    account = db.query(DhlAccount).filter(DhlAccount.tenant_id == tenant_id, DhlAccount.status == "CONNECTED").first()
+    if not account:
+        raise HTTPException(status_code=400, detail="Bitte zuerst das DHL-Testkonto verbinden.")
+    if account.environment != "SANDBOX":
+        raise HTTPException(status_code=400, detail="Das Testetikett gibt es nur in der DHL-Testumgebung. "
+                            "Dieses Konto ist für echte, kostenpflichtige Etiketten verbunden.")
+    return account
+
+
+@router.post("/test-label")
+@limiter.limit("6/minute")
+def test_label(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Asks DHL's test environment for a label to a made-up address. No order is read or changed."""
+    account = _test_account(db, current_user.tenant_id)
+    tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).one()
+    try:
+        result = dhl_service.create_shipment_label(
+            account, dhl_test_service.sample_order(), tenant.default_package_weight_kg,
+            tenant.default_package_length_cm, tenant.default_package_width_cm, tenant.default_package_height_cm)
+    except dhl_service.DhlShipmentError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+    try:
+        pdf = dhl_test_service.stamp(result.label_pdf)
+    except Exception:  # never hand out a label that could not be marked as a test
+        raise HTTPException(status_code=502, detail="DHL hat geantwortet, aber das Etikett ist keine lesbare PDF-Datei.")
+    return Response(content=pdf, media_type="application/pdf", headers={
+        "Content-Disposition": 'attachment; filename="dhl-testetikett.pdf"', "Cache-Control": "no-store"})
+
+
+@router.post("/test-label/print", status_code=201)
+async def print_test_label(request: Request, file: UploadFile = File(...),
+                           current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Sends the test label the seller just looked at to their printer (stamped again, tied to no order)."""
+    _test_account(db, current_user.tenant_id)
+    content = await file.read(MAX_LABEL_BYTES + 1)
+    if len(content) > MAX_LABEL_BYTES or not content.startswith(b"%PDF"):
+        raise HTTPException(status_code=400, detail="Bitte das erstellte Testetikett (PDF) senden.")
+    try:
+        content = dhl_test_service.stamp(content)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Die PDF-Datei ist nicht lesbar.")
+    agent = (db.query(PrintAgent)
+             .filter(PrintAgent.tenant_id == current_user.tenant_id, PrintAgent.status != "disabled")
+             .order_by(PrintAgent.last_seen_at.desc().nullslast()).first())
+    if not agent:
+        raise HTTPException(status_code=400, detail="Kein aktiver Print-Agent gefunden.")
+    job_id = uuid.uuid4()
+    job = PrintJob(id=job_id, tenant_id=current_user.tenant_id, print_agent_id=agent.id, order_id=None,
+                   label_pdf_url=f"{str(request.base_url).rstrip('/')}/print-jobs/{job_id}/label",
+                   label_pdf_data=content, rotation_degrees=90, label_format="4x6", status="pending")
+    db.add(job)
+    db.commit()
+    return {"id": str(job_id), "status": job.status}
 
 
 @router.post("/disconnect")

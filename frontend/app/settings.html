@@ -343,7 +343,19 @@
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
             <h3 class="text-lg font-bold" data-i18n="settings.dhlTitle">DHL-Versand</h3>
             <p class="text-slate-500 text-sm" id="dhl-desc" data-i18n="settings.dhlLoading">Status wird geladen...</p>
-            <p class="text-amber-600 text-xs" data-i18n="settings.dhlPhase1Notice">Hinweis: Aktuell werden nur die Zugangsdaten gespeichert. Der automatische Etikettenkauf über DHL wird in einem nächsten Schritt freigeschaltet.</p>
+            <p class="text-amber-600 text-xs" data-i18n="settings.dhlPhase1Notice">Eine Test-Verbindung (Sandbox) wird nie für Bestellungen verwendet. Erst eine freigeschaltete Produktiv-Verbindung kauft echte Etiketten.</p>
+
+            <!-- DHL test environment: clearly separate from real orders -->
+            <div id="dhl-test" class="hidden border-2 border-amber-400 bg-amber-50 rounded-lg p-4 space-y-3 text-sm">
+                <p class="font-bold text-amber-900">TESTUMGEBUNG – wird nicht für deine Bestellungen verwendet.</p>
+                <p class="text-amber-900">Das Testetikett geht an eine erfundene Adresse, liest und ändert keine Bestellung und ist nicht versandfähig. Echte DHL-Etiketten gibt es erst mit dem freigeschalteten Produktivzugang.</p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" id="dhl-test-create" onclick="createDhlTestLabel()" class="bg-slate-900 text-white font-semibold py-2 px-4 rounded disabled:opacity-50">Testetikett erstellen</button>
+                    <a id="dhl-test-open" class="hidden bg-white border border-slate-300 rounded py-2 px-4 font-semibold" download="dhl-testetikett.pdf">PDF ansehen / speichern</a>
+                    <button type="button" id="dhl-test-print" onclick="printDhlTestLabel()" class="hidden bg-white border border-slate-300 rounded py-2 px-4 font-semibold disabled:opacity-50">Auf meinem Drucker ausdrucken</button>
+                </div>
+                <p id="dhl-test-result" class="whitespace-pre-wrap break-words" aria-live="polite"></p>
+            </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -877,7 +889,63 @@
 
         let dhlStatus = undefined;
 
+        let dhlTestPdf = null;
+        function showDhlTest() {
+            const sandbox = !!dhlStatus && dhlStatus.environment === "SANDBOX";
+            document.getElementById("dhl-test").classList.toggle("hidden", !sandbox);
+            if (!sandbox) clearDhlTest();
+        }
+        function clearDhlTest() {
+            dhlTestPdf = null;
+            const link = document.getElementById("dhl-test-open");
+            if (link.href) URL.revokeObjectURL(link.href);
+            link.removeAttribute("href");
+            link.classList.add("hidden");
+            document.getElementById("dhl-test-print").classList.add("hidden");
+            document.getElementById("dhl-test-result").textContent = "";
+        }
+        async function createDhlTestLabel() {
+            const button = document.getElementById("dhl-test-create"), result = document.getElementById("dhl-test-result");
+            clearDhlTest();
+            button.disabled = true;
+            result.textContent = "DHL wird angefragt …";
+            try {
+                const response = await fetch(`${API_URL}/dhl/test-label`, { method: "POST", headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    result.textContent = typeof data.detail === "string" ? data.detail : `Fehler ${response.status}`;
+                    return;
+                }
+                dhlTestPdf = await response.blob();
+                const link = document.getElementById("dhl-test-open");
+                link.href = URL.createObjectURL(dhlTestPdf);
+                link.classList.remove("hidden");
+                document.getElementById("dhl-test-print").classList.remove("hidden");
+                result.textContent = "Testetikett erhalten. Bitte zuerst die PDF ansehen.";
+            } catch (err) {
+                result.textContent = t("settings.serverErrorRetry");
+            } finally { button.disabled = false; }
+        }
+        async function printDhlTestLabel() {
+            if (!dhlTestPdf || !confirm("Testetikett jetzt auf deinem Drucker ausdrucken?")) return;
+            const button = document.getElementById("dhl-test-print"), result = document.getElementById("dhl-test-result");
+            button.disabled = true;
+            try {
+                const form = new FormData();
+                form.append("file", dhlTestPdf, "dhl-testetikett.pdf");
+                const response = await fetch(`${API_URL}/dhl/test-label/print`, { method: "POST", headers: authHeaders(), body: form });
+                const data = await response.json().catch(() => ({}));
+                result.textContent = response.ok
+                    ? "An den Print-Agent gesendet. Bitte am Drucker prüfen, ob die Seite herauskommt."
+                    : (typeof data.detail === "string" ? data.detail : `Fehler ${response.status}`);
+            } catch (err) {
+                result.textContent = t("settings.serverErrorRetry");
+            } finally { button.disabled = false; }
+        }
+
         function renderDhlStatus() {
+            showDhlTest();
             if (dhlStatus === undefined) return;
             const descEl = document.getElementById("dhl-desc");
             const disconnectBtn = document.getElementById("dhl-disconnect-btn");
