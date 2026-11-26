@@ -66,48 +66,6 @@ def set_vat_settings(payload: VatSettingsIn, current_user: User = Depends(get_cu
     return {"vat_mode": tenant.vat_mode, "rate": str(VAT_RATE)}
 
 
-def _vat_numbers(totals: dict, fees_include_vat: bool = True) -> dict:
-    """19% VAT figures for one period. All amounts are assumed GROSS (eBay prices, purchase prices,
-    labels and fees include VAT), so VAT = gross * 19/119.
-
-    Input VAT (Vorsteuer) = VAT inside goods, labels, return shipping, manual expenses and - when
-    `fees_include_vat` - eBay fees (eBay bills German VAT on its fees to VAT-liable business sellers).
-    It is an ESTIMATE from these amounts, not from the real invoices."""
-    factor = VAT_RATE / (VAT_RATE + Decimal("100"))
-    gross_sales = totals["revenue"] - totals["refunds"]
-    sales_vat = (gross_sales * factor).quantize(Decimal("0.01"))
-    parts = {
-        "goods": totals["goods_cost"],
-        "labels": totals["shipping_labels"],
-        "return_shipping": totals["return_shipping"],
-        "expenses": totals["expenses"],
-        "ebay_fees": totals["ebay_fees"] if fees_include_vat else ZERO,
-    }
-    input_vat_parts = {k: (v * factor).quantize(Decimal("0.01")) for k, v in parts.items()}
-    input_vat = sum(input_vat_parts.values(), ZERO)
-    return {
-        "rate": str(VAT_RATE),
-        "gross_sales_after_refunds": gross_sales,
-        "net_sales": gross_sales - sales_vat,
-        "sales_vat": sales_vat,
-        "input_vat_parts": input_vat_parts,
-        "input_vat": input_vat,
-        "payable": sales_vat - input_vat,
-    }
-
-
-def _vat_block(totals: dict, fees_include_vat: bool = True) -> dict:
-    v = _vat_numbers(totals, fees_include_vat)
-    return {
-        "rate": v["rate"],
-        "gross_sales_after_refunds": str(v["gross_sales_after_refunds"]),
-        "net_sales": str(v["net_sales"]),
-        "sales_vat": str(v["sales_vat"]),
-        "input_vat_estimate": str(v["input_vat"]),
-        "payable_estimate": str(v["payable"]),
-    }
-
-
 def _sale_date(order: Order) -> date:
     moment = order.ordered_at or order.created_at
     return moment.astimezone(BERLIN).date()
@@ -227,95 +185,8 @@ def summary(
             "orders_refunded": refunded_orders,
         },
         "vat_mode": tenant_mode,
-        "vat": _vat_block(totals) if tenant_mode == "regular" else None,
         "expenses_by_category": [
             {"category": c, "amount": str(a)} for c, a in sorted(by_category.items(), key=lambda x: -x[1])
         ],
         "series": series,
-    }
-
-
-def _de(value: Decimal) -> str:
-    return f"{value:.2f}".replace(".", ",")
-
-
-@router.get("/vat-report")
-def vat_report(
-    start: date,
-    end: date,
-    group_by: Literal["month", "quarter", "year"] = Query("month"),
-    fees_include_vat: bool = Query(True),
-    output: Literal["json", "csv"] = Query("json"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Preparation for the VAT advance return (USt-Voranmeldung) per month / quarter / year.
-
-    Only for regular (19%) taxpayers. Not a tax return: Vorsteuer is estimated from the gross
-    amounts we know; the Steuerberater / ELSTER uses the real invoices. Assumes every sale is
-    domestic at 19% (no reduced rate, no EU one-stop-shop, no reverse charge)."""
-    if _tenant(db, current_user).vat_mode != "regular":
-        raise HTTPException(status_code=400, detail="Die USt-Auswertung gibt es nur bei Regelbesteuerung (19 %).")
-    # Quarters are built from months so every bucket uses exactly the same figures as the overview.
-    data = summary(start=start, end=end, group_by="year" if group_by == "year" else "month",
-                   current_user=current_user, db=db)
-    fields = ("revenue", "refunds", "return_shipping", "shipping_labels", "ebay_fees", "goods_cost", "expenses")
-    buckets: dict[str, dict] = {}
-    labels: dict[str, str] = {}
-    for row in data["series"]:
-        key, label = row["period"], row["label"]
-        if group_by == "quarter":
-            year, month = key.split("-")
-            q = (int(month) - 1) // 3 + 1
-            key, label = f"{year}-Q{q}", f"Q{q}/{year}"
-        bucket = buckets.setdefault(key, {f: ZERO for f in fields})
-        labels[key] = label
-        for f in fields:
-            bucket[f] += Decimal(row[f])
-
-    rows, total = [], {f: ZERO for f in fields}
-    for key in sorted(buckets):
-        v = _vat_numbers(buckets[key], fees_include_vat)
-        rows.append((labels[key], v))
-        for f in fields:
-            total[f] += buckets[key][f]
-    total_v = _vat_numbers(total, fees_include_vat)
-
-    def as_json(label, v):
-        return {
-            "period": label,
-            "gross_sales_after_refunds": str(v["gross_sales_after_refunds"]),
-            "net_sales": str(v["net_sales"]),
-            "sales_vat": str(v["sales_vat"]),
-            "input_vat_parts": {k: str(x) for k, x in v["input_vat_parts"].items()},
-            "input_vat": str(v["input_vat"]),
-            "payable": str(v["payable"]),
-        }
-
-    if output == "csv":
-        import csv, io
-        from fastapi.responses import Response
-        buf = io.StringIO()
-        w = csv.writer(buf, delimiter=";")
-        w.writerow(["Zeitraum", "Brutto-Umsatz nach Erstattungen", "Netto-Umsatz (Kz 81)", "USt 19 % (Kz 81)",
-                    "Vorsteuer Ware", "Vorsteuer Versandetiketten", "Vorsteuer Rückversand", "Vorsteuer Ausgaben",
-                    "Vorsteuer eBay-Gebühren", "Vorsteuer gesamt (Kz 66)", "Zahllast (Kz 83)"])
-        for label, v in rows + [("Summe", total_v)]:
-            p = v["input_vat_parts"]
-            w.writerow([label, _de(v["gross_sales_after_refunds"]), _de(v["net_sales"]), _de(v["sales_vat"]),
-                        _de(p["goods"]), _de(p["labels"]), _de(p["return_shipping"]), _de(p["expenses"]),
-                        _de(p["ebay_fees"]), _de(v["input_vat"]), _de(v["payable"])])
-        w.writerow([])
-        w.writerow(["Hinweis: Vorbereitung, keine Steuererklärung. Vorsteuer geschätzt aus Brutto-Beträgen; "
-                    "Annahme: alle Umsätze in Deutschland zu 19 %. Bitte mit Steuerberater/ELSTER abgleichen."])
-        return Response(
-            content="﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8",
-            headers={"Content-Disposition": f'attachment; filename="ust-vorbereitung-{start}-{end}.csv"'},
-        )
-
-    return {
-        "start": start.isoformat(), "end": end.isoformat(), "group_by": group_by,
-        "fees_include_vat": fees_include_vat,
-        "rows": [as_json(label, v) for label, v in rows],
-        "total": as_json("Summe", total_v),
     }
