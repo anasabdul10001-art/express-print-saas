@@ -11,7 +11,7 @@ from app.core.sentry import init_sentry
 from app.database import Base, SessionLocal, engine
 from app.services import site_page_fixes
 from app import models  # noqa: F401 - import registers all models with Base, needed for create_all() below
-from app.routers import account_data, accounting, admin, affiliate_portal, alerts, amazon, auth, billing, dhl, ebay, ebay_create_listing, ebay_offers, eks, euer, expenses, market_research, orders, plans, pricing, print_agents, print_jobs, products, purchases, sales_invoices, shopify, tenants, uploads
+from app.routers import account_data, accounting, admin, affiliate_portal, alerts, amazon, auth, billing, dhl, ebay, ebay_create_listing, ebay_offers, eks, euer, expenses, market_research, orders, plans, pricing, print_agents, print_jobs, products, purchases, sales_invoices, shopify, tenants, uploads, ustva
 
 # Before the app is created: a no-op until settings.sentry_dsn is set (see
 # app/core/sentry.py) - safe to always call.
@@ -51,6 +51,11 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS category VARCHAR(50)"))
     connection.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS supplier VARCHAR(255)"))
     connection.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(100)"))
+    connection.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS tax_treatment VARCHAR(20)"))
+    connection.execute(text("ALTER TABLE IF EXISTS purchases ADD COLUMN IF NOT EXISTS tax_treatment VARCHAR(20)"))
+    connection.execute(text("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS vat_amount DECIMAL(10,2)"))
+    connection.execute(text("ALTER TABLE IF EXISTS purchases ADD COLUMN IF NOT EXISTS vat_amount DECIMAL(10,2)"))
+    connection.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_date DATE"))
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS signing_key_id VARCHAR(255)"))
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS signing_jwe TEXT"))
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS signing_private_key_encrypted TEXT"))
@@ -130,6 +135,7 @@ app.include_router(products.router)
 app.include_router(accounting.router)
 app.include_router(euer.router)
 app.include_router(eks.router)
+app.include_router(ustva.router)
 app.include_router(account_data.router)
 app.include_router(pricing.router)
 app.include_router(orders.router)

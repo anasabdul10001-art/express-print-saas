@@ -10,6 +10,7 @@ from app.models.shopify_account import ShopifyAccount, ShopifyOAuthState
 from app.models.stock_movement import StockMovement
 from app.models.expense import Expense, ExpenseReceipt
 from app.models.purchase import Purchase, PurchaseLine
+from app.models.vat_period_input import VatPeriodInput
 from app.models.cash_event import CashEvent
 from app.models.eks_profile import EksProfile
 from app.models.password_reset_token import PasswordResetToken

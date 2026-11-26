@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, DateTime, Integer, DECIMAL, ForeignKey, CheckConstraint, Boolean, text
+from sqlalchemy import Column, Date, String, DateTime, Integer, DECIMAL, ForeignKey, CheckConstraint, Boolean, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -51,6 +51,8 @@ class Order(Base):
     # and is resellable, so its cost is not a loss. return_shipping_cost is
     # what the seller paid to get it back.
     refund_amount = Column(DECIMAL(10, 2), nullable=True)
+    # Day of a refund eBay reported no transaction for; typed in for the VAT return.
+    refund_date = Column(Date, nullable=True)
     item_returned_to_stock = Column(Boolean, nullable=False, default=False, server_default=text("false"))
     return_shipping_cost = Column(DECIMAL(10, 2), nullable=True)
 

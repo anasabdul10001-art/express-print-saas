@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>USt-Voranmeldung – Ausfüllhilfe — ShipSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="trial-guard.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-5">
+    <div class="flex items-center justify-between gap-3">
+        <h1 class="text-2xl font-bold">USt-Voranmeldung – Ausfüllhilfe</h1>
+        <a href="accounting.html" class="text-sm text-slate-500 hover:text-red-600">← Buchhaltung</a>
+    </div>
+    <p class="text-sm bg-amber-50 text-amber-900 rounded p-3">Testversion zur Vorbereitung, keine Steuererklärung und keine Steuerberatung. Es wird nichts an das Finanzamt gesendet. Prüfe jede Zahl, bevor du sie selbst in ELSTER einträgst.</p>
+
+    <section class="bg-white border border-slate-200 rounded-xl p-4 grid sm:grid-cols-2 gap-3 text-sm">
+        <label>Zeitraum 2026
+            <select id="period" class="mt-1 w-full border border-slate-300 rounded p-2"></select></label>
+        <label id="advance-box">Sondervorauszahlung abziehen (€, meist nur letzter Zeitraum)
+            <input id="advance" type="number" min="0" step="0.01" value="0" class="mt-1 w-full border border-slate-300 rounded p-2" /></label>
+        <label>eBay-Gebühren laut eBay-Rechnung
+            <select id="fees" class="mt-1 w-full border border-slate-300 rounded p-2">
+                <option value="">Noch nicht geprüft</option>
+                <option value="de_vat">Mit deutscher USt (19 %)</option>
+                <option value="eu_service">Ohne USt, Aussteller in anderem EU-Land (§ 13b)</option>
+                <option value="no_vat">Ohne ansetzbare USt</option>
+            </select></label>
+        <label id="fee-amount-box"><span id="fee-amount-label"></span>
+            <input id="fee-amount" type="number" min="0" step="0.01" class="mt-1 w-full border border-slate-300 rounded p-2" /></label>
+        <label id="labels-box">USt auf Versandetiketten laut Rechnung (€, 0 wenn keine ausgewiesen ist)
+            <input id="labels" type="number" min="0" step="0.01" class="mt-1 w-full border border-slate-300 rounded p-2" /></label>
+    </section>
+
+    <p id="mode" class="text-sm text-slate-600"></p>
+    <div id="error" class="hidden text-sm bg-red-100 text-red-800 rounded p-3"></div>
+    <div id="status" class="text-sm rounded p-3 hidden"></div>
+    <ul id="notes" class="text-sm text-amber-800 list-disc pl-5 space-y-1"></ul>
+
+    <section id="refund-box" class="hidden bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+        <h2 class="font-bold">Erstattungen ohne eBay-Buchungsdatum</h2>
+        <p class="text-xs text-slate-500">Trage den Tag ein, an dem das Geld zurückgezahlt wurde. Die Erstattung zählt in diesem Zeitraum.</p>
+        <div id="refunds" class="space-y-2"></div>
+    </section>
+
+    <section class="bg-white border border-slate-200 rounded-xl p-4 overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead><tr class="text-left text-slate-500"><th class="pr-3">Zeile</th><th class="pr-3">Kz</th><th class="pr-3">Bedeutung</th><th class="pr-3 text-right">Wert (€)</th><th>Herkunft</th></tr></thead>
+            <tbody id="rows"></tbody>
+        </table>
+        <p class="text-xs text-slate-400 mt-2">Bemessungsgrundlagen in vollen Euro (Cent abgeschnitten), Steuerbeträge mit Cent. Nicht aufgeführte Kennzahlen werden nicht berechnet.</p>
+    </section>
+
+    <section class="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
+        <h2 class="font-bold">Ausgaben und Einkaufsrechnungen einordnen</h2>
+        <p class="text-xs text-slate-500">Nach der Rechnung einordnen. Beträge so, wie bezahlt. Datum = Ausgabedatum bzw. Rechnungsdatum. Bei deutschen Rechnungen den Umsatzsteuerbetrag genau so abschreiben, wie er auf der Rechnung steht.</p>
+        <div id="items" class="space-y-2"></div>
+    </section>
+</main>
+
+<script>
+const API_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com";
+const token = localStorage.getItem("access_token");
+if (!token) window.location.href = "../login.html";
+const H = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const de = v => v.includes(".") ? Number(v).toLocaleString("de-DE", { minimumFractionDigits: 2 }) : Number(v).toLocaleString("de-DE");
+const SOURCE = { sales: "aus Verkäufen und Erstattungen", invoices: "aus deinen Rechnungen", manual: "von dir eingegeben", result: "Ergebnis der Zeilen oben" };
+const LABELS = {
+    de_vat: "Deutsche Rechnung mit 19 % USt", no_vat: "Ohne ansetzbare USt",
+    eu_service: "Leistung aus der EU ohne USt (§ 13b)", other_13b: "Andere Leistung nach § 13b (z. B. Anbieter außerhalb der EU)",
+    eu_goods: "Warenkauf aus der EU ohne USt", import_vat: "Einfuhrumsatzsteuer (der Betrag selbst)",
+    third_country: "Warenkauf aus einem Drittland"
+};
+const CHOICES = {
+    expense: ["de_vat", "no_vat", "eu_service", "other_13b", "eu_goods", "import_vat"],
+    purchase: ["de_vat", "no_vat", "eu_goods", "third_country"]
+};
+
+async function api(path, options) {
+    const r = await fetch(API_URL + path, { headers: H, ...options });
+    if (r.status === 401) { window.location.href = "../login.html"; throw new Error("login"); }
+    const data = await r.json();
+    if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Eingabe bitte prüfen.");
+    return data;
+}
+function fail(e) { $("error").textContent = e.message; $("error").classList.remove("hidden"); }
+
+let latest = 0;
+let regularMode = false;
+async function load() {
+    const mine = ++latest;
+    $("error").classList.add("hidden");
+    const q = new URLSearchParams({ period: $("period").value, advance_payment: $("advance").value || "0" });
+    try {
+        const d = await api("/accounting/ustva?" + q);
+        if (mine !== latest) return;  // an older answer must not overwrite a newer one
+        regularMode = d.vat_mode === "regular";
+        $("mode").textContent = `Steuereinstellung: ${regularMode ? "Regelbesteuerung (19 %)" : "Kleinunternehmer (§ 19 UStG)"} · ${d.start} bis ${d.end}` +
+            (regularMode ? ` · Verkäufe brutto ${de(d.sales.sold)} € − Erstattungen im Zeitraum ${de(d.sales.refunded)} € = ${de(d.sales.net)} €` : "");
+        $("advance-box").classList.toggle("hidden", !regularMode);
+        $("labels-box").classList.toggle("hidden", !regularMode);
+        $("fees").value = d.ebay.ebay_fees_tax || "";
+        $("fee-amount").value = d.ebay.ebay_amount ?? "";
+        $("labels").value = d.ebay.labels_vat ?? "";
+        showFeeAmount();
+        $("status").className = "text-sm rounded p-3 " + (d.complete ? "bg-emerald-100 text-emerald-900" : "bg-red-100 text-red-800");
+        $("status").innerHTML = d.complete
+            ? "Alle abgefragten Angaben sind vorhanden. Bitte trotzdem gegen die Rechnungen prüfen."
+            : `<b>Unvollständig – diese Zahlen noch nicht übertragen:</b><ul class="list-disc pl-5">${d.open_points.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
+        $("notes").innerHTML = d.notes.map(w => `<li>${esc(w)}</li>`).join("");
+        $("rows").innerHTML = d.rows.map(r => `<tr class="border-t ${r.kz === "83" ? "font-bold" : ""}"><td class="py-1 pr-3">${esc(r.line)}</td><td class="pr-3 font-mono">${esc(r.kz || "")}</td><td class="pr-3">${esc(r.label)}${r.kz === "83" && !d.complete ? " (vorläufig)" : ""}</td><td class="pr-3 text-right whitespace-nowrap">${esc(de(r.value))}</td><td class="text-xs text-slate-500">${esc(SOURCE[r.source])}</td></tr>`).join("");
+        $("refund-box").classList.toggle("hidden", !d.manual_refunds.length);
+        $("refunds").innerHTML = d.manual_refunds.map(r => `
+            <label class="flex flex-wrap items-center gap-2 border-t pt-2 text-sm">${esc(r.reference)} · Verkauf ${esc(r.sale_date)} · <b>${esc(de(r.amount))} €</b> · bezahlt am
+                <input type="date" data-order="${r.id}" value="${esc(r.refund_date || "")}" min="${esc(r.sale_date)}" class="border rounded p-1 ${r.refund_date ? "border-slate-300" : "border-amber-500"}" /></label>`).join("");
+        $("items").innerHTML = d.items.length ? d.items.map(i => `
+            <div class="item grid sm:grid-cols-3 gap-2 items-center border-t pt-2 text-sm" data-kind="${i.kind}" data-id="${i.id}">
+                <div>${esc(i.date)} · ${i.kind === "purchase" ? "Einkauf" : "Ausgabe"} · ${esc(i.title)} · <b>${esc(de(i.amount))} €</b></div>
+                <select class="border rounded p-2 ${i.tax_treatment ? "border-slate-300" : "border-amber-500"}">
+                    <option value="">Bitte einordnen…</option>
+                    ${CHOICES[i.kind].map(c => `<option value="${c}" ${i.tax_treatment === c ? "selected" : ""}>${esc(LABELS[c])}</option>`).join("")}
+                </select>
+                ${regularMode && i.tax_treatment === "de_vat" ? `<input type="number" min="0" step="0.01" value="${esc(i.vat_amount ?? "")}" placeholder="USt laut Rechnung (€)" class="border rounded p-2 ${i.vat_amount === null ? "border-amber-500" : "border-slate-300"}" />` : "<span></span>"}
+            </div>`).join("") : "<p class='text-sm text-slate-500'>Keine Einträge in diesem Zeitraum.</p>";
+    } catch (e) {
+        if (mine !== latest) return;
+        $("rows").innerHTML = $("items").innerHTML = $("notes").innerHTML = $("refunds").innerHTML = "";
+        $("status").className = "hidden";
+        fail(e);
+    }
+}
+
+function showFeeAmount() {
+    const v = $("fees").value;
+    $("fee-amount-box").classList.toggle("hidden", v !== "de_vat" && v !== "eu_service");
+    $("fee-amount-label").textContent = v === "eu_service" ? "Nettobetrag laut eBay-Rechnung(en) (€)" : "Umsatzsteuer laut eBay-Rechnung(en) (€)";
+}
+
+async function save(path, body) {
+    try {
+        await api(path, { method: "PUT", body: JSON.stringify(body) });
+        await load();
+    } catch (e) { fail(e); }
+}
+
+function savePeriodInputs() {
+    return save("/accounting/ustva/period-inputs", { period: $("period").value, ebay_fees_tax: $("fees").value || null,
+        ebay_amount: $("fee-amount").value || null, labels_vat: $("labels").value || null });
+}
+
+$("items").addEventListener("change", ev => {
+    const row = ev.target.closest(".item");
+    if (!row) return;
+    const select = row.querySelector("select"), vat = row.querySelector("input");
+    save("/accounting/ustva/classification", { kind: row.dataset.kind, id: row.dataset.id,
+        tax_treatment: select.value || null, vat_amount: vat && vat.value !== "" ? vat.value : null });
+});
+$("refunds").addEventListener("change", ev => {
+    const input = ev.target.closest("input[data-order]");
+    if (input) save("/accounting/ustva/refund-date", { order_id: input.dataset.order, refund_date: input.value || null });
+});
+
+(function init() {
+    const options = [["Q1", "I. Quartal"], ["Q2", "II. Quartal"], ["Q3", "III. Quartal"], ["Q4", "IV. Quartal"]]
+        .concat(["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
+            .map((name, i) => [String(i + 1).padStart(2, "0"), name]));
+    $("period").innerHTML = options.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+    const now = new Date();
+    $("period").value = now.getFullYear() === 2026 ? "Q" + Math.max(1, Math.floor(now.getMonth() / 3)) : "Q4";
+    ["period", "advance"].forEach(id => $(id).addEventListener("change", load));
+    ["fees", "fee-amount", "labels"].forEach(id => $(id).addEventListener("change", () => { showFeeAmount(); savePeriodInputs(); }));
+    load();
+})();
+</script>
+</body>
+</html>
