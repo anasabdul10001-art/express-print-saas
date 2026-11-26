@@ -183,6 +183,26 @@
             <p id="sync-status" class="text-xs text-slate-500" aria-live="polite"></p>
         </div>
 
+        <!-- The one profit figure: same calculation as the EÜR page -->
+        <div class="bg-white border-2 border-red-500 p-4 rounded-xl shadow-sm space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <h3 class="font-bold">Gewinn nach Zahlungsdatum (EÜR)</h3>
+                <a href="euer.html" class="text-sm text-red-600 underline">Einzelheiten und Annahmen</a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div><p class="text-slate-500 text-sm">Betriebseinnahmen</p><p id="o-income" class="text-xl font-bold text-slate-900">—</p></div>
+                <div><p class="text-slate-500 text-sm">Betriebsausgaben</p><p id="o-costs" class="text-xl font-bold text-red-600">—</p></div>
+                <div><p class="text-slate-500 text-sm">Gewinn (Überschuss)</p><p id="o-surplus" class="text-2xl font-bold text-slate-900">—</p></div>
+            </div>
+            <div id="o-warnings" class="space-y-1 text-sm text-amber-800"></div>
+            <p class="text-xs text-slate-400">Gerechnet wie auf der EÜR-Seite. Vorbereitung, keine Steuererklärung. Für Jobcenter und Umsatzsteuer gelten eigene Seiten.</p>
+        </div>
+
+        <div>
+            <h3 class="font-bold">Verkaufsanalyse nach Verkaufsdatum</h3>
+            <p class="text-xs text-slate-500">Nur zur Kontrolle deiner Verkäufe, nicht für die Steuer: Erstattungen und Gebühren stehen beim Verkauf, Ware zählt erst beim Verkauf.</p>
+        </div>
+
         <!-- Totals -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
@@ -219,7 +239,7 @@
                 <p id="t-expenses" class="text-xl font-bold text-red-600">—</p>
             </div>
             <div class="bg-white border-2 border-red-500 p-4 rounded-xl shadow-sm col-span-2 lg:col-span-1">
-                <p class="text-slate-500 text-sm">Nettogewinn</p>
+                <p class="text-slate-500 text-sm">Verkaufsergebnis (Kontrolle)</p>
                 <p id="t-net" class="text-2xl font-bold text-slate-900">—</p>
             </div>
         </div>
@@ -253,7 +273,7 @@
                         <th class="p-3 text-right">Etiketten</th>
                         <th class="p-3 text-right">Warenkosten</th>
                         <th class="p-3 text-right">Ausgaben</th>
-                        <th class="p-3 text-right">Nettogewinn</th>
+                        <th class="p-3 text-right">Verkaufsergebnis</th>
                     </tr>
                 </thead>
                 <tbody id="series-body"></tbody>
@@ -416,11 +436,33 @@
             } catch (err) { showBanner("Serverfehler, bitte erneut versuchen.", true); }
         }
 
+        let officialRequest = 0;
+        async function loadOfficial(start, end) {
+            const mine = ++officialRequest;
+            const fields = ["o-income", "o-costs", "o-surplus"].map(id => document.getElementById(id));
+            const warnings = document.getElementById("o-warnings");
+            fields.forEach(el => { el.innerText = "—"; el.classList.remove("text-emerald-600"); });
+            warnings.innerHTML = "";
+            try {
+                const response = await fetch(`${API_URL}/accounting/euer?start=${start}&end=${end}&group_by=year`, { headers: authHeaders() });
+                const data = await response.json();
+                if (mine !== officialRequest) return;
+                if (!response.ok) throw new Error();
+                fields[0].innerText = money(data.total.income);
+                fields[1].innerText = money(data.total.costs);
+                colored(fields[2], data.total.surplus);
+                warnings.innerHTML = data.warnings.map(w => `<p>${esc(w)}</p>`).join("");
+            } catch (err) {
+                if (mine === officialRequest) warnings.innerHTML = "<p>Der EÜR-Gewinn konnte nicht geladen werden.</p>";
+            }
+        }
+
         async function loadAccounting() {
             const start = document.getElementById("f-start").value;
             const end = document.getElementById("f-end").value;
             const group = document.getElementById("f-group").value;
             if (!start || !end) { showBanner("Bitte Start- und Enddatum wählen.", true); return; }
+            loadOfficial(start, end);
             try {
                 const response = await fetch(`${API_URL}/accounting/summary?start=${start}&end=${end}&group_by=${group}`, { headers: authHeaders() });
                 if (response.status === 401) { logout(); return; }
@@ -440,7 +482,7 @@
                 colored(document.getElementById("t-net"), t.net_profit);
 
                 const warn = [];
-                if (t.orders_missing_cost > 0) warn.push(`${t.orders_missing_cost} Bestellung(en) ohne Produktkosten – der Nettogewinn ist zu hoch. Kosten unter „Produkte“ eintragen.`);
+                if (t.orders_missing_cost > 0) warn.push(`${t.orders_missing_cost} Bestellung(en) ohne Produktkosten – das Verkaufsergebnis ist zu hoch. Kosten unter „Produkte“ eintragen.`);
                 if (t.orders_missing_fees > 0) warn.push(`${t.orders_missing_fees} Bestellung(en) ohne eBay-Gebühren – unter „Bestellungen“ mit eBay synchronisieren.`);
                 document.getElementById("warnings").innerHTML = warn.map(w => `<div class="bg-amber-50 text-amber-800 border border-amber-200 p-2 rounded-lg text-sm">${esc(w)}</div>`).join("");
 
