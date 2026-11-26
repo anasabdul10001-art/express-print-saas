@@ -1,5 +1,5 @@
-// Dashboard chart: sales (bars, like eBay) or sales margin (line), selectable period,
-// euro axis with grid lines.
+// Dashboard chart: sales or sales margin as a curve, selectable period, euro axis with
+// grid lines.
 // Needs API_URL, authHeaders(), logout() (dashboard.html) and t()/getLang() (i18n.js).
 (function () {
     const STORAGE_KEY = "dashboard_chart_period";
@@ -111,7 +111,10 @@
     function render() {
         if (!history || !history.length) return;
         const metric = metricSelect.value; // "revenue" or "profit"
-        const bars = metric === "revenue";
+        // Blue for sales, red for the margin, so the two are told apart at a glance.
+        const color = metric === "revenue"
+            ? { line: "#2563eb", fill: "#dbeafe" }
+            : { line: "#dc2626", fill: "#fee2e2" };
         const values = history.map(p => Number(p[metric]));
         const sum = key => history.reduce((s, p) => s + Number(p[key]), 0);
         totals.textContent = `${t("dashboard.chartRevenue")}: ${money(sum("revenue"))}  ·  `
@@ -148,12 +151,9 @@
         }).join("");
 
         const stepX = history.length > 1 ? plotW / (history.length - 1) : 0;
-        const slot = plotW / history.length;
         const points = history.map((p, i) => ({
             ...p,
-            // A bar sits in the middle of its slot; the line runs from edge to edge.
-            x: bars ? margin.left + (i + 0.5) * slot
-                : history.length > 1 ? margin.left + i * stepX : margin.left + plotW / 2,
+            x: history.length > 1 ? margin.left + i * stepX : margin.left + plotW / 2,
             y: yOf(values[i]),
         }));
         const line = points.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ");
@@ -171,20 +171,15 @@
         ).join("");
 
         const radius = history.length > 45 ? 2 : 3.5;
-        const dots = points.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${radius}" fill="#dc2626"/>`).join("");
-
-        const barWidth = Math.min(36, Math.max(2, slot * 0.6));
-        const series = bars
-            ? points.map(c => `<rect class="chart-bar" x="${(c.x - barWidth / 2).toFixed(1)}" y="${Math.min(c.y, zeroY).toFixed(1)}" width="${barWidth.toFixed(1)}" height="${Math.abs(zeroY - c.y).toFixed(1)}" fill="#dc2626"/>`).join("")
-            : `<path d="${area}" fill="#fee2e2" fill-opacity="0.7" stroke="none"/>
-                <path d="${line}" fill="none" stroke="#dc2626" stroke-width="2"/>`;
+        const dots = points.map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${radius}" fill="${color.line}"/>`).join("");
 
         container.innerHTML = `
             <svg viewBox="0 0 ${width} ${height}" width="100%" style="display:block;touch-action:pan-y">
                 ${grid}
-                ${series}
+                <path d="${area}" fill="${color.fill}" fill-opacity="0.7" stroke="none"/>
+                <path class="chart-line" d="${line}" fill="none" stroke="${color.line}" stroke-width="2"/>
                 <line id="chart-cursor" y1="${margin.top}" y2="${margin.top + plotH}" stroke="#94a3b8" stroke-dasharray="3 3" visibility="hidden"/>
-                ${bars ? "" : dots}
+                ${dots}
                 ${labels}
             </svg>
             <div id="chart-tip" class="hidden absolute pointer-events-none bg-slate-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap"></div>
