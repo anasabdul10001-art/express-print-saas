@@ -10,6 +10,7 @@
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
+    <script src="../list-numbers.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div class="flex min-h-screen">
@@ -352,7 +353,7 @@
                 <h3 class="text-lg font-bold"><span data-i18n="products.historyTitle">Lagerbestand-Verlauf:</span> <span id="history-product-title"></span></h3>
                 <button onclick="closeHistory()" class="text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-sm px-3 py-2 rounded-lg transition" data-i18n="products.close">Schließen</button>
             </div>
-            <div id="history-list" class="space-y-2 text-sm"></div>
+            <div id="history-list" data-numbered="list" class="space-y-2 text-sm"></div>
         </div>
 
         <!-- Empty state -->
@@ -366,7 +367,7 @@
 
         <!-- Product table -->
         <div id="table-wrap" class="hidden bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
-            <table class="w-full text-sm">
+            <table data-numbered="table" class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-slate-500 border-b border-slate-200">
                         <th class="p-3"><input type="checkbox" id="select-all" onclick="toggleAll(this.checked)" title="Alle auswählen"></th>
@@ -670,7 +671,7 @@
                 const cell = document.getElementById("cell-stock-" + id);
                 cell.innerHTML = `<div class="space-y-1 text-xs">
                     <div class="font-semibold text-amber-700">Mengen pro Variante (eBay):</div>
-                    ${info.variations.map((v, i) => `<label class="block">${Object.values(v.specifics).join(" / ") || "Variante " + (i + 1)}
+                    ${info.variations.map((v, i) => `<label class="block">${i + 1}. ${Object.values(v.specifics).join(" / ") || "Variante"}
                         <input id="var-${i}" type="number" min="0" step="1" value="${Math.max(0, Number(v.quantity || 0) - Number(v.sold || 0))}" class="p-1 w-16 rounded border border-slate-300"></label>`).join("")}
                     <button onclick='saveVariationQuantities()' class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-1 px-2 rounded">Speichern + eBay</button>
                     <button onclick="loadProducts()" class="text-slate-500 ml-1">✕</button></div>`;

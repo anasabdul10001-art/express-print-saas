@@ -6,6 +6,7 @@
     <title>USt-Voranmeldung – Ausfüllhilfe — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="trial-guard.js"></script>
+    <script src="../list-numbers.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
 <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-5">
@@ -41,7 +42,7 @@
     <section id="refund-box" class="hidden bg-white border border-slate-200 rounded-xl p-4 space-y-2">
         <h2 class="font-bold">Erstattungen ohne eBay-Buchungsdatum</h2>
         <p class="text-xs text-slate-500">Trage den Tag ein, an dem das Geld zurückgezahlt wurde. Die Erstattung zählt in diesem Zeitraum.</p>
-        <div id="refunds" class="space-y-2"></div>
+        <div id="refunds" data-numbered="list" class="space-y-2"></div>
     </section>
 
     <section class="bg-white border border-slate-200 rounded-xl p-4 overflow-x-auto">
@@ -55,7 +56,7 @@
     <section class="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
         <h2 class="font-bold">Ausgaben und Einkaufsrechnungen einordnen</h2>
         <p class="text-xs text-slate-500">Nach der Rechnung einordnen. Beträge so, wie bezahlt. Datum = Ausgabedatum bzw. Rechnungsdatum. Bei deutschen Rechnungen den Umsatzsteuerbetrag genau so abschreiben, wie er auf der Rechnung steht.</p>
-        <div id="items" class="space-y-2"></div>
+        <div id="items" data-numbered="list" class="space-y-2"></div>
     </section>
 </main>
 
@@ -109,7 +110,7 @@ async function load() {
         $("status").className = "text-sm rounded p-3 " + (d.complete ? "bg-emerald-100 text-emerald-900" : "bg-red-100 text-red-800");
         $("status").innerHTML = d.complete
             ? "Alle abgefragten Angaben sind vorhanden. Bitte trotzdem gegen die Rechnungen prüfen."
-            : `<b>Unvollständig – diese Zahlen noch nicht übertragen:</b><ul class="list-disc pl-5">${d.open_points.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
+            : `<b>Unvollständig – diese Zahlen noch nicht übertragen:</b><ul class="list-decimal pl-6">${d.open_points.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
         $("notes").innerHTML = d.notes.map(w => `<li>${esc(w)}</li>`).join("");
         $("rows").innerHTML = d.rows.map(r => `<tr class="border-t ${r.kz === "83" ? "font-bold" : ""}"><td class="py-1 pr-3">${esc(r.line)}</td><td class="pr-3 font-mono">${esc(r.kz || "")}</td><td class="pr-3">${esc(r.label)}${r.kz === "83" && !d.complete ? " (vorläufig)" : ""}</td><td class="pr-3 text-right whitespace-nowrap">${esc(de(r.value))}</td><td class="text-xs text-slate-500">${esc(SOURCE[r.source])}</td></tr>`).join("");
         $("refund-box").classList.toggle("hidden", !d.manual_refunds.length);

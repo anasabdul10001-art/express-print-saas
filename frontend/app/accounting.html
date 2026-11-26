@@ -10,6 +10,7 @@
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
+    <script src="../list-numbers.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div class="flex min-h-screen">
@@ -261,7 +262,7 @@
 
         <!-- Series -->
         <div id="series-wrap" class="hidden bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
-            <table class="w-full text-sm">
+            <table data-numbered="table" class="w-full text-sm">
                 <thead>
                     <tr class="text-left text-slate-500 border-b border-slate-200">
                         <th class="p-3">Zeitraum</th>
@@ -283,7 +284,7 @@
         <!-- Expense categories -->
         <div id="cat-wrap" class="hidden bg-white border border-slate-200 rounded-xl shadow-sm p-4">
             <h3 class="font-bold mb-2">Ausgaben nach Kategorie</h3>
-            <div id="cat-list" class="text-sm space-y-1"></div>
+            <div id="cat-list" data-numbered="list" class="text-sm space-y-1"></div>
         </div>
 
         <p class="text-xs text-slate-400">

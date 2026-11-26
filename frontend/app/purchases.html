@@ -6,6 +6,7 @@
     <title>Einkäufe — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="trial-guard.js"></script>
+    <script src="../list-numbers.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
 <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 text-sm">
@@ -37,7 +38,7 @@
             <div class="font-semibold mb-1">Positionen</div>
             <p class="text-slate-500 mb-2">Schreib den Namen so, wie er auf der Rechnung steht, und wähle dein Produkt. ShipSync merkt sich das für diesen Lieferanten, sobald du den Einkauf buchst.</p>
             <datalist id="known-items"></datalist>
-            <div id="lines" class="space-y-2"></div>
+            <div id="lines" data-numbered="list" class="space-y-2"></div>
             <button type="button" id="add-line" class="mt-2 border border-slate-300 rounded px-3 py-1.5 bg-white">+ Position</button>
         </div>
         <label class="flex items-start gap-2"><input id="add_to_stock" type="checkbox" checked class="mt-1"> <span>Stückzahlen zum Lagerbestand addieren. <b>Abwählen, wenn die neue Ware schon im Bestand mitgezählt ist</b> (z. B. Menge bereits bei eBay erhöht und importiert).</span></label>
@@ -50,11 +51,11 @@
 
     <details class="bg-white border border-slate-200 rounded-xl p-3">
         <summary class="cursor-pointer font-semibold">Gemerkte Zuordnungen (<span id="saved-count">0</span>)</summary>
-        <ul id="saved" class="mt-2"></ul>
+        <ul id="saved" data-numbered="list" class="mt-2"></ul>
     </details>
 
     <h2 class="text-lg font-bold">Gebuchte Einkäufe</h2>
-    <div id="list" class="space-y-2"></div>
+    <div id="list" data-numbered="list" class="space-y-2"></div>
 </main>
 
 <script>
@@ -296,7 +297,7 @@ $("preview").onclick = async () => {
     dirty();
     try {
         const d = await request("/purchases/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(collect()) });
-        $("preview-box").innerHTML = `<p class="font-semibold mb-1">Rechnung gesamt: ${eur(d.total)}</p><table class="w-full"><thead><tr class="text-left text-slate-500 border-b"><th>Produkt</th><th>Alter Bestand</th><th>Neu</th><th>Einkaufspreis je Stück</th><th>Nebenkosten je Stück</th></tr></thead><tbody>${d.lines.map(l => `<tr class="border-b"><td class="pr-2">${esc(l.title)}</td><td>${esc(l.stock_before)}</td><td>${esc(l.quantity)}</td><td>${eur(l.old_purchase_price)} → <b>${eur(l.new_purchase_price)}</b></td><td>${eur(l.old_shipping_cost)} → <b>${eur(l.new_shipping_cost)}</b></td></tr>`).join("")}</tbody></table><p class="text-slate-500 mt-1">Durchschnittspreise werden auf Cent gerundet.</p>`;
+        $("preview-box").innerHTML = `<p class="font-semibold mb-1">Rechnung gesamt: ${eur(d.total)}</p><table data-numbered="table" class="w-full"><thead><tr class="text-left text-slate-500 border-b"><th>Produkt</th><th>Alter Bestand</th><th>Neu</th><th>Einkaufspreis je Stück</th><th>Nebenkosten je Stück</th></tr></thead><tbody>${d.lines.map(l => `<tr class="border-b"><td class="pr-2">${esc(l.title)}</td><td>${esc(l.stock_before)}</td><td>${esc(l.quantity)}</td><td>${eur(l.old_purchase_price)} → <b>${eur(l.new_purchase_price)}</b></td><td>${eur(l.old_shipping_cost)} → <b>${eur(l.new_shipping_cost)}</b></td></tr>`).join("")}</tbody></table><p class="text-slate-500 mt-1">Durchschnittspreise werden auf Cent gerundet.</p>`;
         $("book").classList.remove("hidden");
     } catch (e) { banner(e.message, true); }
 };
@@ -336,7 +337,7 @@ async function loadList() {
     $("list").innerHTML = rows.length ? rows.map(p => `
         <div class="bg-white border border-slate-200 rounded-xl p-3 ${p.cancelled ? "opacity-60" : ""}">
             <div class="flex flex-wrap justify-between gap-2"><b>${esc(p.supplier)} ${esc(p.invoice_number)}</b><span>${esc(p.invoice_date)} · ${eur(p.total)}${p.cancelled ? " · zurückgenommen" : ""}</span></div>
-            <ul class="text-slate-600 list-disc pl-5">${p.lines.map(l => `<li>${esc(l.quantity)} × ${esc(l.title)} – Einkaufspreis jetzt ${eur(l.new_purchase_price)} + Nebenkosten ${eur(l.new_shipping_cost)}</li>`).join("")}</ul>
+            <ul class="text-slate-600 list-decimal pl-6">${p.lines.map(l => `<li>${esc(l.quantity)} × ${esc(l.title)} – Einkaufspreis jetzt ${eur(l.new_purchase_price)} + Nebenkosten ${eur(l.new_shipping_cost)}</li>`).join("")}</ul>
             <button type="button" class="underline text-sky-700" onclick="download('${esc(p.id)}')">Rechnung herunterladen</button>
             ${p.cancelled ? "" : `<button type="button" class="ml-3 text-red-600 hover:underline" onclick="cancelPurchase('${esc(p.id)}')">zurücknehmen</button>`}
         </div>`).join("") : "<p class='text-slate-500'>Noch keine Einkäufe gebucht.</p>";

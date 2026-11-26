@@ -10,6 +10,7 @@
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
+    <script src="../list-numbers.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div class="flex min-h-screen">
@@ -150,7 +151,7 @@
 
         <section id="alerts-box" class="hidden bg-white border border-slate-200 rounded-xl p-4">
             <h2 class="text-lg font-bold mb-3">Hinweise</h2>
-            <ul id="alerts-list" class="space-y-2"></ul>
+            <ul id="alerts-list" data-numbered="list" class="space-y-2"></ul>
         </section>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -181,7 +182,7 @@
             <h2 class="text-xl font-bold mb-2" data-i18n="dashboard.ebayTitle">eBay-Konto</h2>
             <p class="text-slate-500 text-sm mb-4" id="ebay-desc" data-i18n="dashboard.ebayLoading">Status wird geladen...</p>
 
-            <ul id="ebay-accounts" class="mb-4 space-y-2"></ul>
+            <ul id="ebay-accounts" data-numbered="list" class="mb-4 space-y-2"></ul>
 
             <button id="ebay-connect-btn" onclick="connectEbay()"
                     class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition hidden">
@@ -194,7 +195,7 @@
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
             <h2 class="text-xl font-bold mb-2">Shopify-Shop</h2>
             <p class="text-slate-500 text-sm mb-4" id="shopify-desc">Status wird geladen...</p>
-            <ul id="shopify-accounts" class="mb-4 space-y-2"></ul>
+            <ul id="shopify-accounts" data-numbered="list" class="mb-4 space-y-2"></ul>
             <div id="shopify-connect" class="hidden flex flex-wrap gap-2 items-center">
                 <input id="shopify-shop" type="text" placeholder="dein-shop.myshopify.com"
                        class="border border-slate-300 rounded px-3 py-2 text-sm w-64" />
@@ -208,7 +209,7 @@
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm">
             <h2 class="text-xl font-bold mb-2">Amazon-Konto</h2>
             <p class="text-slate-500 text-sm mb-4" id="amazon-desc">Status wird geladen...</p>
-            <ul id="amazon-accounts" class="mb-4 space-y-2"></ul>
+            <ul id="amazon-accounts" data-numbered="list" class="mb-4 space-y-2"></ul>
             <div id="amazon-connect" class="hidden space-y-3">
                 <button id="amazon-consent-btn" onclick="connectAmazon()" class="hidden bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded transition">
                     Mit Amazon verbinden
@@ -605,7 +606,7 @@
                     <li class="border-l-4 rounded p-3 text-sm ${ALERT_STYLE[a.severity] || ALERT_STYLE.info}">
                         <details>
                             <summary class="cursor-pointer font-semibold">${escapeHtml(a.title)} (${a.count})</summary>
-                            <ul class="mt-2 list-disc pl-5 text-slate-600">
+                            <ul class="mt-2 list-decimal pl-6 text-slate-600">
                                 ${a.items.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
                                 ${a.count > a.items.length ? `<li>… und ${a.count - a.items.length} weitere</li>` : ""}
                             </ul>
