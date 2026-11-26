@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Boolean, Column, DateTime, DECIMAL, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, DateTime, DECIMAL, ForeignKey, Integer, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.database import Base
@@ -38,6 +38,11 @@ class Product(Base):
     width_cm = Column(Integer)
     height_cm = Column(Integer)
     active = Column(Boolean, nullable=False, default=True)
+    # Goods that are in stock but not offered for sale yet (capital tied up in stock).
+    unlisted = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    acquired_on = Column(Date)  # when the goods were bought, if the seller says so
+    # Set when stock goods were joined with their listing: this row is only kept for the record.
+    merged_into = Column(UUID(as_uuid=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
 

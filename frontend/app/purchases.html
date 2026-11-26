@@ -118,7 +118,7 @@ async function createProduct(row) {
     const sku = prompt("SKU (eigene Artikelnummer):", row.querySelector(".sc").value.trim() || "NEU-" + Date.now().toString().slice(-6));
     if (!sku || !sku.trim()) return;
     try {
-        const product = await request("/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sku: sku.trim(), title: title.trim(), stock_quantity: 0 }) });
+        const product = await request("/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sku: sku.trim(), title: title.trim(), stock_quantity: 0, unlisted: true }) });
         await loadProducts();
         document.querySelectorAll(".line .p").forEach(select => { const value = select.value; select.innerHTML = productOptions(); select.value = value; });
         row.querySelector(".p").value = product.id; row.dataset.auto = ""; showHint(row, ""); dirty();

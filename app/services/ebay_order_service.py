@@ -43,6 +43,7 @@ from app.models.ebay_account import EbayAccount
 from app.models.expense import Expense
 from app.models.order import Order, OrderItem
 from app.models.product import Product
+from app.services import stock_listing_service
 from app.models.stock_movement import StockMovement
 from app.services import ebay_oauth_service, ebay_signing_service
 from app.services.ebay_deletion_service import deleted_order_ref
@@ -252,6 +253,9 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
                 db.add(product)
                 db.flush()
                 products_created += 1
+
+            if product:
+                stock_listing_service.now_listed(db, product)
 
             if not product:
                 order_ok = False
