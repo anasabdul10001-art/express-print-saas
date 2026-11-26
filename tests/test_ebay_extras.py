@@ -158,3 +158,18 @@ def test_messages_are_fetched_in_batches_of_ten_without_html(register, client, m
     items = client.get("/ebay/messages", headers=headers).json()["items"]
     assert batches == [10, 10]
     assert len(items) == 20 and all(m["text"] is None for m in items)
+
+
+def test_typed_text_takes_only_what_the_member_wrote():
+    mail = ('<!DOCTYPE html><html><body><table><tr><td>Hallo Verkäufername</td></tr></table>'
+            '<div id="UserInputtedText">Wo ist mein Paket?<br/><div>Passt es für M&#252;ller&nbsp;Handy?</div></div>'
+            '<div id="ReferenceId">Referenz 123, Max Beispiel</div></body></html>')
+    assert ebay_extras_service.typed_text(mail) == "Wo ist mein Paket?\nPasst es für Müller Handy?"
+
+
+def test_typed_text_gives_nothing_for_system_empty_or_broken_mails():
+    assert ebay_extras_service.typed_text("<html><body><div>Ihre Rechnung, Max Beispiel</div></body></html>") is None
+    assert ebay_extras_service.typed_text('<html><div id="UserInputtedText"> </div></html>') is None
+    assert ebay_extras_service.typed_text('<html><div id="UserInputtedText">offen<div>Max</html>') is None
+    assert ebay_extras_service.typed_text(None) is None
+    assert ebay_extras_service.typed_text("Passt das Kabel?") == "Passt das Kabel?"
