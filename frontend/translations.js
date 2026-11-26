@@ -563,6 +563,11 @@ window.TRANSLATIONS = {
         "settings.companySaved": "Unternehmensdaten gespeichert.",
         "settings.printModeRequired": "Bitte einen Druckmodus auswählen.",
         "settings.printModeSaved": "Druckmodus gespeichert.",
+        "settings.labelPaperTitle": "Papiergröße für DHL-Etiketten",
+        "settings.labelPaperOriginal": "Originalgröße von DHL (nicht anpassen)",
+        "settings.labelPaperHint": "Einmal passend zum Papier im Drucker wählen. Neue DHL-Etiketten werden automatisch darauf zugeschnitten.",
+        "settings.labelPaperSaved": "Papiergröße gespeichert.",
+        "settings.labelPaperFailed": "Speichern fehlgeschlagen.",
 
         "settings.packageTitle": "Standard-Paketgröße",
         "settings.packageDesc": "Wird für Versandetiketten verwendet, wenn ein Produkt keine eigene Paketgröße hat.",
@@ -1305,6 +1310,11 @@ window.TRANSLATIONS = {
         "settings.companySaved": "Company data saved.",
         "settings.printModeRequired": "Please select a print mode.",
         "settings.printModeSaved": "Print mode saved.",
+        "settings.labelPaperTitle": "Paper size for DHL labels",
+        "settings.labelPaperOriginal": "DHL's original size (do not resize)",
+        "settings.labelPaperHint": "Choose once to match the paper in your printer. New DHL labels are fitted to it automatically.",
+        "settings.labelPaperSaved": "Paper size saved.",
+        "settings.labelPaperFailed": "Could not save.",
 
         "settings.packageTitle": "Default package size",
         "settings.packageDesc": "Used for shipping labels when a product doesn't have its own package size.",
