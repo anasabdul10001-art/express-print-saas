@@ -1,7 +1,8 @@
 import uuid
 from zoneinfo import ZoneInfo
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
@@ -150,25 +151,51 @@ def order_summary(current_user: User = Depends(get_current_user), db: Session = 
     )
 
 
+MAX_HISTORY_DAYS = 3660
+
+
 @router.get("/profit-history", response_model=list[ProfitHistoryPoint])
 def profit_history(
     days: int = 14,
+    start: date | None = None,
+    end: date | None = None,
+    group: Literal["day", "month"] = "day",
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    Daily profit totals for the last `days` days (including today), powering the dashboard's
-    trend chart. Days with no orders come back as 0 so the x-axis stays evenly spaced.
+    Totals per day or per month for the dashboard's trend chart. Without start/end it covers
+    the last `days` days including today. Days (months) with no orders come back as 0 so the
+    x-axis stays evenly spaced. With group=month each point is dated on the 1st of its month,
+    but only sales inside start..end are counted.
     """
-    days = max(1, min(days, 90))
-    start_date = datetime.now(BERLIN).date() - timedelta(days=days - 1)
-    by_day: dict = {}
-    for order in _recent_orders(db, current_user.tenant_id, start_date):
-        by_day[_sale_day(order)] = by_day.get(_sale_day(order), Decimal("0")) + _order_profit(order)
-    return [
-        ProfitHistoryPoint(date=start_date + timedelta(days=i), profit=by_day.get(start_date + timedelta(days=i), Decimal("0")))
-        for i in range(days)
-    ]
+    today = datetime.now(BERLIN).date()
+    end = min(end or today, today)
+    if start is None:
+        start = end - timedelta(days=max(1, min(days, MAX_HISTORY_DAYS)) - 1)
+    if start > end:
+        raise HTTPException(status_code=400, detail="Das Startdatum liegt nach dem Enddatum oder in der Zukunft.")
+    if (end - start).days >= MAX_HISTORY_DAYS:
+        raise HTTPException(status_code=400, detail="Der Zeitraum darf höchstens 10 Jahre umfassen.")
+
+    def bucket(day: date) -> date:
+        return day.replace(day=1) if group == "month" else day
+
+    points: dict = {}
+    for offset in range((end - start).days + 1):
+        key = bucket(start + timedelta(days=offset))
+        if key not in points:
+            points[key] = ProfitHistoryPoint(date=key, profit=Decimal("0"))
+
+    for order in _recent_orders(db, current_user.tenant_id, start):
+        day = _sale_day(order)
+        if day > end:
+            continue
+        point = points[bucket(day)]
+        point.profit += _order_profit(order)
+        point.revenue += order_money.revenue(order) - order_money.refund(order)
+        point.orders += 1
+    return list(points.values())
 
 
 @router.post("", response_model=OrderOut, status_code=201)

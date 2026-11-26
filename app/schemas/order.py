@@ -76,6 +76,8 @@ class OrderSummaryOut(BaseModel):
 class ProfitHistoryPoint(BaseModel):
     date: date
     profit: Decimal
+    revenue: Decimal = Decimal("0")  # what buyers paid, minus refunds
+    orders: int = 0
 
 
 class RefundUpdate(BaseModel):
