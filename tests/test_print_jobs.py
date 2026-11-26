@@ -26,6 +26,14 @@ DHL_CONNECT_PAYLOAD = {
 }
 
 
+def _connect_production(client, headers):
+    """Only a production connection is used for orders."""
+    assert client.post("/dhl/connect", headers=headers, json=DHL_CONNECT_PAYLOAD).status_code == 200
+    engine = create_engine(settings.database_url)
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE dhl_accounts SET environment='PRODUCTION'"))
+
+
 def _make_product(client, headers, **overrides):
     payload = {"sku": "PJ-SKU", "title": "Print Job Product", "selling_price": 20, "purchase_price": 10, "stock_quantity": 10}
     payload.update(overrides)
@@ -97,7 +105,7 @@ def test_print_with_dhl_connected_but_no_address_returns_400(client, register):
     product = _make_product(client, headers)
     _make_agent(client, headers)
     order = _make_order(client, headers, product)
-    client.post("/dhl/connect", headers=headers, json=DHL_CONNECT_PAYLOAD)
+    _connect_production(client, headers)
 
     response = client.post(f"/print-jobs/order/{order['id']}", headers=headers)
     assert response.status_code == 400
@@ -110,7 +118,7 @@ def test_print_with_dhl_success_stores_label_and_tracking_number(client, registe
     _make_agent(client, headers)
     order = _make_order(client, headers, product, quantity=3)
     _set_recipient_address(order["id"])
-    client.post("/dhl/connect", headers=headers, json=DHL_CONNECT_PAYLOAD)
+    _connect_production(client, headers)
 
     fake_label = b"%PDF-1.4 fake label"
     with patch("app.routers.print_jobs.dhl_service.create_shipment_label") as mock_create:
@@ -140,7 +148,7 @@ def test_print_with_dhl_rejection_returns_502_and_leaves_order_untouched(client,
     _make_agent(client, headers)
     order = _make_order(client, headers, product)
     _set_recipient_address(order["id"])
-    client.post("/dhl/connect", headers=headers, json=DHL_CONNECT_PAYLOAD)
+    _connect_production(client, headers)
 
     with patch("app.routers.print_jobs.dhl_service.create_shipment_label") as mock_create:
         mock_create.side_effect = DhlShipmentError("DHL hat die Anfrage abgelehnt (Status 400): invalid billing number")
