@@ -121,10 +121,13 @@
         const plotH = height - margin.top - margin.bottom;
 
         const positive = steps(Math.max(...values, 10));
-        const negative = steps(-Math.min(...values, 0)).slice(1).map(v => -v);
+        const hi = scale(positive[positive.length - 1]);
+        // Below zero the axis ends just under the lowest value, not at the next full step:
+        // a loss of a few cents must not take up a whole empty band.
+        const lowest = Math.min(...values, 0);
+        const lo = lowest < 0 ? scale(lowest) - hi * 0.04 : 0;
+        const negative = steps(-lowest).slice(1).map(v => -v).filter(v => scale(v) >= lo);
         const ticks = negative.reverse().concat(positive);
-        const lo = scale(ticks[0]);
-        const hi = scale(ticks[ticks.length - 1]);
         const yOf = v => margin.top + plotH - ((scale(v) - lo) / (hi - lo)) * plotH;
 
         // Grid lines from the top down; a label that would touch its neighbour is left out
