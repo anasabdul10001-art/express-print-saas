@@ -15,17 +15,17 @@ def test_default_is_kleinunternehmer_without_vat(client, register):
     headers, _ = register()
     _sale(client, headers)
     r = _summary(client, headers)
-    assert r["vat_mode"] == "kleinunternehmer" and r["vat"] is None
+    assert r["vat_mode"] == "kleinunternehmer" and "vat" not in r
 
 
 def test_regular_shows_19_percent(client, register):
     headers, _ = register()
     _sale(client, headers)
     assert client.put("/accounting/vat-settings", headers=headers, json={"vat_mode": "regular"}).status_code == 200
-    vat = _summary(client, headers)["vat"]
-    # gross 11.90 -> VAT 1.90, net 10.00; goods cost 1.00 gross -> input VAT 0.16
-    assert vat["sales_vat"] == "1.90" and vat["net_sales"] == "10.00"
-    assert vat["input_vat_estimate"] == "0.16" and vat["payable_estimate"] == "1.74"
+    r = _summary(client, headers)
+    # no estimated VAT figures: they come from the invoices in /accounting/ustva
+    assert r["vat_mode"] == "regular" and "vat" not in r
+    assert client.get("/accounting/vat-report", headers=headers).status_code == 404
 
 
 def test_invalid_mode_rejected(client, register):
