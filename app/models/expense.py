@@ -36,6 +36,10 @@ class Expense(Base):
     supplier = Column(String(255), nullable=True)
     invoice_number = Column(String(100), nullable=True)
 
+    # How the cost counts in the VAT advance return (see services/ustva_service.py); empty = not decided.
+    tax_treatment = Column(String(20), nullable=True)
+    vat_amount = Column(DECIMAL(10, 2), nullable=True)  # VAT as shown on a German invoice
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     receipts = relationship("ExpenseReceipt", cascade="all, delete-orphan", lazy="selectin",

@@ -36,6 +36,9 @@ class Purchase(Base):
     content_type = Column(String(50), nullable=False)
     file_data = deferred(Column(LargeBinary, nullable=False))  # only loaded for downloads
 
+    tax_treatment = Column(String(20))  # for the VAT advance return; empty = not decided
+    vat_amount = Column(DECIMAL(10, 2))  # VAT as shown on a German invoice
+
     cancelled_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
