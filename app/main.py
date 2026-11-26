@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
@@ -6,6 +7,7 @@ from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 
 from app.config import settings
+from app.core.errors import validation_error_handler
 from app.core.rate_limit import limiter
 from app.core.sentry import init_sentry
 from app.database import Base, SessionLocal, engine
@@ -103,6 +105,7 @@ with engine.begin() as connection:
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RequestValidationError, validation_error_handler)
 
 # Restricted to known frontend origins rather than "*". In production the
 # frontend is served from this same app (see the StaticFiles mount below),
