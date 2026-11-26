@@ -346,6 +346,17 @@
             <p class="text-amber-600 text-xs" data-i18n="settings.dhlPhase1Notice">Eine Test-Verbindung (Sandbox) wird nie für Bestellungen verwendet. Erst eine freigeschaltete Produktiv-Verbindung kauft echte Etiketten.</p>
 
             <!-- DHL test environment: clearly separate from real orders -->
+            <div class="text-sm">
+                <label class="block mb-1 font-semibold" for="label-paper" data-i18n="settings.labelPaperTitle">Papiergröße für DHL-Etiketten</label>
+                <select id="label-paper" onchange="saveLabelPaper()" class="border border-slate-300 rounded p-2">
+                    <option value="100x150">100 × 150 mm (4×6 Zoll)</option>
+                    <option value="105x148">105 × 148 mm (A6)</option>
+                    <option value="100x200">100 × 200 mm</option>
+                    <option value="original" data-i18n="settings.labelPaperOriginal">Originalgröße von DHL (nicht anpassen)</option>
+                </select>
+                <p class="text-slate-500 text-xs mt-1" data-i18n="settings.labelPaperHint">Einmal passend zum Papier im Drucker wählen. Neue DHL-Etiketten werden automatisch darauf zugeschnitten.</p>
+                <p id="label-paper-result" class="text-xs mt-1" aria-live="polite"></p>
+            </div>
             <div id="dhl-test" class="hidden border-2 border-amber-400 bg-amber-50 rounded-lg p-4 space-y-3 text-sm">
                 <p class="font-bold text-amber-900">TESTUMGEBUNG – wird nicht für deine Bestellungen verwendet.</p>
                 <p class="text-amber-900">Das Testetikett geht an eine erfundene Adresse, liest und ändert keine Bestellung und ist nicht versandfähig. Echte DHL-Etiketten gibt es erst mit dem freigeschalteten Produktivzugang.</p>
@@ -890,6 +901,31 @@
         let dhlStatus = undefined;
 
         let dhlTestPdf = null;
+
+        async function loadLabelPaper() {
+            const response = await fetch(`${API_URL}/tenants/me`, { headers: authHeaders() });
+            if (response.ok) document.getElementById("label-paper").value = (await response.json()).label_paper;
+        }
+
+        async function saveLabelPaper() {
+            const select = document.getElementById("label-paper"), result = document.getElementById("label-paper-result");
+            let saved = false;
+            try {
+                const response = await fetch(`${API_URL}/tenants/me/label-paper`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json", ...authHeaders() },
+                    body: JSON.stringify({ label_paper: select.value }),
+                });
+                saved = response.ok;
+            } catch (e) { /* shown below */ }
+            result.textContent = saved ? t("settings.labelPaperSaved") : t("settings.labelPaperFailed");
+            if (!saved) { loadLabelPaper(); return; }
+            // An already created test label still has the old size.
+            dhlTestPdf = null;
+            document.getElementById("dhl-test-open").classList.add("hidden");
+            document.getElementById("dhl-test-print").classList.add("hidden");
+            document.getElementById("dhl-test-result").textContent = "";
+        }
+        loadLabelPaper();
         function showDhlTest() {
             const sandbox = !!dhlStatus && dhlStatus.environment === "SANDBOX";
             document.getElementById("dhl-test").classList.toggle("hidden", !sandbox);

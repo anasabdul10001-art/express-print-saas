@@ -13,7 +13,7 @@ from app.models.print_job import PrintJob
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.schemas.print_job import PrintJobStatusUpdate, TestPrintJobCreate
-from app.services import dhl_service, picking_slip_service
+from app.services import dhl_service, label_paper_service, picking_slip_service
 from app.services.dhl_service import DhlShipmentError
 
 router = APIRouter(prefix="/print-jobs", tags=["print-jobs"])
@@ -136,6 +136,7 @@ def trigger_print_for_order(
     job_id = uuid.uuid4()
     label_pdf_url = None
     label_pdf_data = None
+    rotation = 90
 
     if not dhl_account:
         # No DHL contract: the only real label is one the seller uploaded for
@@ -156,6 +157,7 @@ def trigger_print_for_order(
                            if connected else "oder verbinde ein DHL-Konto."),
             )
         label_pdf_data = previous.label_pdf_data
+        rotation = previous.rotation_degrees
         label_pdf_url = f"{str(request.base_url).rstrip('/')}/print-jobs/{job_id}/label"
 
     if dhl_account:
@@ -173,7 +175,11 @@ def trigger_print_for_order(
         except DhlShipmentError as exc:
             raise HTTPException(status_code=502, detail=str(exc))
 
-        label_pdf_data = result.label_pdf
+        try:
+            label_pdf_data, rotation = label_paper_service.fit_label(result.label_pdf, tenant.label_paper)
+        except Exception:  # noqa: BLE001 - the label is paid for: print it unfitted rather than lose it
+            log.warning("could not fit the DHL label for job %s", job_id, exc_info=True)
+            label_pdf_data = result.label_pdf
         label_pdf_url = f"{str(request.base_url).rstrip('/')}/print-jobs/{job_id}/label"
         order.tracking_number = result.tracking_number
 
@@ -184,7 +190,7 @@ def trigger_print_for_order(
         order_id=order.id,
         label_pdf_url=label_pdf_url,
         label_pdf_data=label_pdf_data,
-        rotation_degrees=90,
+        rotation_degrees=rotation,
         label_format="4x6",
         status="pending",
     )

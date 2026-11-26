@@ -12,6 +12,13 @@ class PrintModeUpdate(BaseModel):
     print_mode: PrintMode
 
 
+LabelPaper = Literal["100x150", "105x148", "100x200", "original"]
+
+
+class LabelPaperUpdate(BaseModel):
+    label_paper: LabelPaper
+
+
 class TenantUpdate(BaseModel):
     company_name: str | None = None
     country_code: str | None = None
@@ -26,6 +33,7 @@ class TenantOut(BaseModel):
     company_name: str
     country_code: str
     print_mode: PrintMode
+    label_paper: LabelPaper
     default_package_weight_kg: Decimal
     default_package_length_cm: int
     default_package_width_cm: int

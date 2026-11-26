@@ -96,6 +96,7 @@ with engine.begin() as connection:
     connection.execute(text("CREATE INDEX IF NOT EXISTS ix_orders_buyer_username ON orders (buyer_username)"))
     connection.execute(text("ALTER TABLE ebay_accounts ADD COLUMN IF NOT EXISTS ebay_immutable_id VARCHAR(255)"))
     connection.execute(text("ALTER TABLE print_jobs ADD COLUMN IF NOT EXISTS label_pdf_data BYTEA"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS label_paper VARCHAR(10) NOT NULL DEFAULT '100x150'"))
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS early_service_consent_at TIMESTAMPTZ"))
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS business_confirmed_at TIMESTAMPTZ"))
     connection.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ"))

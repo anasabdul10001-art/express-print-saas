@@ -5,7 +5,7 @@ from app.core.deps import get_current_user, get_db
 from app.models.plan import Plan
 from app.models.tenant import Tenant
 from app.models.user import User
-from app.schemas.tenant import PrintModeUpdate, TenantOut, TenantUpdate
+from app.schemas.tenant import LabelPaperUpdate, PrintModeUpdate, TenantOut, TenantUpdate
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])
 
@@ -46,6 +46,19 @@ def update_print_mode(
 ):
     tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).first()
     tenant.print_mode = payload.print_mode
+    db.commit()
+    db.refresh(tenant)
+    return tenant
+
+
+@router.patch("/me/label-paper", response_model=TenantOut)
+def update_label_paper(
+    payload: LabelPaperUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).first()
+    tenant.label_paper = payload.label_paper
     db.commit()
     db.refresh(tenant)
     return tenant

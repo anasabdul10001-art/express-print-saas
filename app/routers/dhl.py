@@ -15,7 +15,7 @@ from app.models.print_job import PrintJob
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.schemas.dhl import DhlAccountConnect, DhlAccountOut
-from app.services import dhl_service, dhl_test_service
+from app.services import dhl_service, dhl_test_service, label_paper_service
 
 router = APIRouter(prefix="/dhl", tags=["dhl"])
 
@@ -107,7 +107,8 @@ def test_label(request: Request, current_user: User = Depends(get_current_user),
     except dhl_service.DhlShipmentError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
     try:
-        pdf = dhl_test_service.stamp(result.label_pdf)
+        fitted, _ = label_paper_service.fit_label(result.label_pdf, tenant.label_paper)
+        pdf = dhl_test_service.stamp(fitted)
     except Exception:  # never hand out a label that could not be marked as a test
         raise HTTPException(status_code=502, detail="DHL hat geantwortet, aber das Etikett ist keine lesbare PDF-Datei.")
     return Response(content=pdf, media_type="application/pdf", headers={
@@ -131,10 +132,12 @@ async def print_test_label(request: Request, file: UploadFile = File(...),
              .order_by(PrintAgent.last_seen_at.desc().nullslast()).first())
     if not agent:
         raise HTTPException(status_code=400, detail="Kein aktiver Print-Agent gefunden.")
+    paper = db.query(Tenant.label_paper).filter(Tenant.id == current_user.tenant_id).scalar()
     job_id = uuid.uuid4()
     job = PrintJob(id=job_id, tenant_id=current_user.tenant_id, print_agent_id=agent.id, order_id=None,
                    label_pdf_url=f"{str(request.base_url).rstrip('/')}/print-jobs/{job_id}/label",
-                   label_pdf_data=content, rotation_degrees=90, label_format="4x6", status="pending")
+                   label_pdf_data=content,
+                   rotation_degrees=0 if label_paper_service.PAPERS.get(paper) else 90, label_format="4x6", status="pending")
     db.add(job)
     db.commit()
     return {"id": str(job_id), "status": job.status}

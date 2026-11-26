@@ -39,6 +39,9 @@ class Tenant(Base):
     #                          slip (product photo, name, shelf location)
     print_mode = Column(String(20), nullable=False, default="DASHBOARD_MANUAL")
 
+    # Paper in the seller's label printer; DHL labels are fitted to it (see label_paper_service).
+    label_paper = Column(String(10), nullable=False, default="100x150", server_default="100x150")
+
     # Fallback package size/weight used to create a DHL shipment when an
     # order's product(s) don't have their own weight_kg/length_cm/etc. set
     # (see Product model) - keeps label creation from ever being blocked on
