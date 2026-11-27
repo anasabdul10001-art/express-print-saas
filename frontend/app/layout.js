@@ -4,7 +4,7 @@ window.ebayQuantityNote = function (results) {
     const reason = {
         failed: r => `eBay hat die Menge NICHT übernommen: ${r.error || "unbekannter Fehler"}`,
         ambiguous: () => "mehrere eBay-Angebote gehören dazu, bitte die Menge bei eBay ändern",
-        no_listing: () => "kein aktives eBay-Angebot, nur in ShipSync gespeichert",
+        no_listing: () => "kein aktives eBay-Angebot, nur in NettoDesk gespeichert",
     };
     const done = results.filter(r => r.status === "ok").map(r => `bei eBay jetzt ${r.quantity}: ${r.title}`);
     const open = results.filter(r => reason[r.status]).map(r => `${r.title}: ${reason[r.status](r)}`);
@@ -43,6 +43,7 @@ window.ebayQuantityNote = function (results) {
             .nav-collapsed body aside { width: 4rem; }
             .nav-collapsed aside > a:first-of-type { justify-content: center; padding: .75rem .25rem; }
             .nav-collapsed aside > a:first-of-type > * { max-width: 3rem; max-height: 3rem; object-fit: contain; }
+            .nav-collapsed aside > a:first-of-type > img[src$="nettodesk-logo.svg"] { content: url("../assets/nettodesk-icon.svg"); height: 2rem !important; width: 2rem !important; }
             .nav-collapsed aside nav { padding-left: .5rem; padding-right: .5rem; overflow-x: hidden; }
             .nav-collapsed aside nav a { justify-content: center; padding-left: 0; padding-right: 0; }
             .nav-collapsed aside nav a > span,

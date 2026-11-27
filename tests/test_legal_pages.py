@@ -109,8 +109,17 @@ def test_stored_drafts_are_replaced_once_and_keep_the_published_email(client):
     impressum = _page(client, "impressum")
     assert 'mailto:me@example.com' in impressum and not any(w in impressum for w in FORBIDDEN)
     assert client.get("/legal/operator").json()["email"] == "me@example.com"
-    assert _page(client, "faq") == 'Was ist ShipSync? Siehe <a href="policies.html">AGB</a>.'
+    assert _page(client, "faq") == 'Was ist NettoDesk? Siehe <a href="policies.html">AGB</a>.'
     assert _page(client, "blog") == "Unverändert"
+
+
+def test_stored_pages_get_the_new_product_name_once(client):
+    with SessionLocal() as db:
+        db.add(SitePage(slug="about", title="Über uns", content="ShipSync hilft. Der ShipSync-Print-Agent druckt."))
+        db.commit()
+        assert site_page_fixes.apply(db) == 1
+        assert site_page_fixes.apply(db) == 0
+    assert _page(client, "about") == "NettoDesk hilft. Der NettoDesk-Print-Agent druckt."
 
 
 def test_a_page_the_admin_completed_is_left_alone():

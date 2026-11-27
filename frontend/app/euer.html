@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EÜR — ShipSync</title>
+    <title>EÜR — NettoDesk</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/nettodesk.js"></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
 </head>
@@ -12,7 +13,7 @@
 <main class="max-w-5xl mx-auto p-4 sm:p-6 space-y-4 text-sm">
     <div class="flex items-center justify-between gap-2">
         <h1 class="text-2xl font-bold">EÜR (nach Zahlungsdatum)</h1>
-        <a href="accounting.html" class="text-slate-500 hover:text-red-600">← Buchhaltung</a>
+        <a href="accounting.html" class="text-slate-500 hover:text-brand-deep">← Buchhaltung</a>
     </div>
     <div id="banner" class="hidden p-3 rounded"></div>
 
@@ -27,7 +28,7 @@
         <label class="block">Aufteilung <select id="group" class="mt-1 block p-2 border border-slate-300 rounded"><option value="quarter">Quartale</option><option value="month">Monate</option><option value="year">Ganzes Jahr</option></select></label>
         <button type="button" id="show" class="bg-slate-900 text-white font-semibold px-4 py-2 rounded">Anzeigen</button>
         <button type="button" id="csv" class="border border-slate-300 rounded px-4 py-2 bg-white">Alle Buchungen als CSV</button>
-        <button type="button" id="zip" class="bg-red-600 text-white font-semibold rounded px-4 py-2 disabled:opacity-50">Alles mit Belegen (ZIP)</button>
+        <button type="button" id="zip" class="bg-brand text-ink font-semibold rounded px-4 py-2 disabled:opacity-50">Alles mit Belegen (ZIP)</button>
     </div>
 
     <div id="warnings" class="space-y-2"></div>

@@ -28,14 +28,14 @@ class Settings(BaseSettings):
     # Resend's own onboarding@resend.dev sandbox address (which only
     # delivers to the Resend account's own verified email until a real
     # domain is verified).
-    resend_from_email: str = "ShipSync <onboarding@resend.dev>"
+    resend_from_email: str = "NettoDesk <onboarding@resend.dev>"
     # --- Scheduled market-research snapshots ---
     # Shared secret checked on POST /market-research/tracked/run-snapshots,
     # so only our own daily scheduler (not the public internet) can trigger
     # it - it fans out to many eBay API calls and writes to the database.
     cron_secret: str = ""
     # --- DHL Parcel DE Shipping API ---
-    # App-level key from developer.dhl.com (one per ShipSync, required on
+    # App-level key from developer.dhl.com (one per NettoDesk, required on
     # every call regardless of which tenant's own DHL account is billed).
     # Each tenant's own billing_number/username/password (per
     # app/models/dhl_account.py) identifies whose shipping contract
@@ -98,7 +98,7 @@ class Settings(BaseSettings):
     mistral_vision_model: str = "mistral-small-latest"
     openrouter_vision_model: str = "google/gemma-4-31b-it:free"
     # Public sign-up. Closed unless switched on (REGISTRATION_OPEN=true), until the
-    # legal pages and contracts for offering ShipSync to others are complete.
+    # legal pages and contracts for offering NettoDesk to others are complete.
     registration_open: bool = False
     # --- Who runs this installation (shown on Impressum, privacy page, terms) ---
     # Set on the server; deliberately not part of the public repository.

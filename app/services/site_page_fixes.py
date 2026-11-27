@@ -22,7 +22,7 @@ INVENTED_QUOTE = re.compile(r"mehrere\s+Stunden\s+manuellen\s+Etikettendruck\s+e
 CUSTOMERS_PAGE = (
     "<h1>Erfolgsgeschichten</h1>\n"
     "<p>Hier veröffentlichen wir Erfahrungsberichte, sobald es echte gibt.</p>\n"
-    '<p>Du nutzt ShipSync und möchtest berichten? <a href="contact.html">Schreib uns</a>.</p>'
+    '<p>Du nutzt NettoDesk und möchtest berichten? <a href="contact.html">Schreib uns</a>.</p>'
 )
 
 # the withdrawal page no longer applies, so the FAQ must not point to it
@@ -53,8 +53,9 @@ def corrected(slug: str, content: str) -> str:
     replaced = _replacement(slug, content)
     if replaced is not None:
         return replaced
-    # the product's former name
-    content = content.replace("Express-Print-", "ShipSync-").replace("Express Print", "ShipSync")
+    # the product's former names
+    content = content.replace("Express-Print-", "NettoDesk-").replace("Express Print", "NettoDesk")
+    content = content.replace("ShipSync", "NettoDesk")
     if slug == "faq":
         content = FAQ_WITHDRAWAL.sub(r"\1", content)
     return content

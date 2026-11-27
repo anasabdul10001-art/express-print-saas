@@ -37,7 +37,7 @@
     banner.setAttribute("role", "region");
     banner.setAttribute("aria-label", "Cookie notice");
     banner.style.cssText =
-        "position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#0f172a;color:#e2e8f0;" +
+        "position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#1c1413;color:#f4efec;" +
         "padding:14px 20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;" +
         "gap:12px;font-family:system-ui,-apple-system,sans-serif;font-size:13px;" +
         "box-shadow:0 -2px 10px rgba(0,0,0,0.15);";
@@ -49,14 +49,14 @@
     var link = document.createElement("a");
     link.href = "privacy.html";
     link.textContent = t.linkText;
-    link.style.cssText = "color:#fca5a5;text-decoration:underline;white-space:nowrap;";
+    link.style.cssText = "color:#f6a07c;text-decoration:underline;white-space:nowrap;";
     text.appendChild(link);
 
     var button = document.createElement("button");
     button.type = "button";
     button.textContent = t.button;
     button.style.cssText =
-        "background:#e11d48;color:#fff;border:none;padding:8px 18px;border-radius:8px;" +
+        "background:#f48050;color:#1c1413;border:none;padding:8px 18px;border-radius:8px;" +
         "font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;";
     button.onclick = function () {
         localStorage.setItem(STORAGE_KEY, "1");

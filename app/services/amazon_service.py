@@ -24,7 +24,7 @@ Notes worth knowing:
       breakdown named "Expenses" is taken as the order's Amazon fees; if it is
       not there the fee stays empty (never guessed). Refunds are not read yet.
     - Stock: FBA orders (fulfilled by Amazon) and orders placed before the account
-      was connected never touch ShipSync stock; everything else decrements it.
+      was connected never touch NettoDesk stock; everything else decrements it.
 """
 
 from datetime import datetime, timedelta, timezone

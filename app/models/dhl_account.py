@@ -2,11 +2,11 @@
 One tenant's own DHL Business Customer (Geschäftskundenversand) account,
 connected the same way each tenant connects their own eBay account (see
 app/models/ebay_account.py) - each seller ships (and pays DHL) under their
-own contract, ShipSync never becomes a shipping cost intermediary.
+own contract, NettoDesk never becomes a shipping cost intermediary.
 
 Unlike eBay, this isn't an OAuth redirect flow: DHL's Parcel DE Shipping
 API authenticates with the account's own username/password (Basic Auth)
-plus ShipSync's own app-level API key (see app/config.py's dhl_api_key) -
+plus NettoDesk's own app-level API key (see app/config.py's dhl_api_key) -
 so the tenant types their DHL login in directly, and it's encrypted at
 rest exactly like eBay's tokens are.
 """

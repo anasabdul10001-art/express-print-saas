@@ -3,7 +3,7 @@ Print job creation, including the DHL branch in
 app/routers/print_jobs.py::trigger_print_for_order - the DHL API call
 itself is mocked (see app/services/dhl_service.py's own docstring: its
 request/response shape is unverified against a live sandbox), so these
-tests cover ShipSync's own branching logic, not DHL's actual API.
+tests cover NettoDesk's own branching logic, not DHL's actual API.
 """
 
 from decimal import Decimal

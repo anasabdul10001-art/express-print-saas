@@ -17,7 +17,7 @@ class RegisterRequest(BaseModel):
     # unknown code is silently ignored rather than blocking signup, same
     # spirit as plan_name above.
     referral_code: str | None = None
-    # ShipSync is offered to businesses only (§ 14 BGB), and the terms include
+    # NettoDesk is offered to businesses only (§ 14 BGB), and the terms include
     # the processing agreement. Both must be confirmed at sign-up.
     business_confirmed: bool = Field(..., description="Must be true: the customer acts as a business.")
     terms_accepted: bool = Field(..., description="Must be true: accepts the terms and the processing agreement.")

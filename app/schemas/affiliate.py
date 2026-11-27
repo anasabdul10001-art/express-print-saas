@@ -12,7 +12,7 @@ AffiliateStatus = Literal["ACTIVE", "DISABLED"]
 class AffiliateCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     email: EmailStr | None = None
-    # Optional: set when this affiliate is also an existing ShipSync tenant.
+    # Optional: set when this affiliate is also an existing NettoDesk tenant.
     tenant_id: uuid.UUID | None = None
     commission_type: CommissionType
     commission_value: Decimal = Field(..., gt=0)

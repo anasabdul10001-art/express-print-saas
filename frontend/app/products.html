@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-    <title>Produkte — ShipSync</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <title>Produkte — NettoDesk</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/nettodesk.js"></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
     <script src="auto-sync.js"></script>
@@ -18,11 +19,11 @@
         .tool-group { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: .75rem; box-shadow: 0 1px 2px rgba(15, 23, 42, .05); display: flex; flex-direction: column; gap: .25rem; }
         .tool-group h3 { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; padding: .25rem .5rem .35rem; }
         .tool-btn { display: flex; align-items: center; gap: .75rem; width: 100%; min-height: 2.75rem; padding: .35rem .5rem; border-radius: .75rem; font-size: .875rem; font-weight: 600; color: #334155; text-align: left; transition: background-color .15s, color .15s; }
-        .tool-btn:hover { background: #fff1f2; color: #be123c; }
-        .tool-btn:focus-visible, .tool-btn:focus-within { outline: 2px solid #e11d48; outline-offset: 1px; }
+        .tool-btn:hover { background: #fdebe2; color: #a8431f; }
+        .tool-btn:focus-visible, .tool-btn:focus-within { outline: 2px solid #c4552b; outline-offset: 1px; }
         .tool-btn:disabled { opacity: .55; cursor: wait; }
         .tool-icon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 2.1rem; height: 2.1rem; border-radius: .6rem; background: #f1f5f9; color: #475569; transition: background-color .15s, color .15s; }
-        .tool-btn:hover .tool-icon { background: #ffe4e6; color: #e11d48; }
+        .tool-btn:hover .tool-icon { background: #fbdccd; color: #c4552b; }
     </style>
     <style>
         /* Tight columns, so the whole table fits without sideways scrolling. */
@@ -34,45 +35,42 @@
     <div class="flex min-h-screen">
     <aside class="hidden md:flex md:flex-col md:w-60 bg-white border-r border-slate-200 flex-shrink-0">
         <a href="dashboard.html" class="flex items-center gap-2 p-5 border-b border-slate-100">
-            <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <img class="brand-logo" src="../assets/nettodesk-logo.svg" alt="NettoDesk" style="height:28px;width:auto" />
         </a>
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
                     <span data-i18n="nav.dashboard">Dashboard</span>
                 </a>
-                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-soft text-brand-deep">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
                     <span data-i18n="nav.products">Produkte</span>
                 </a>
-                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
                     <span data-i18n="nav.orders">Bestellungen</span>
                 </a>
-                <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
                     <span data-i18n="nav.expenses">Ausgaben</span>
                 </a>
-                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M13 16V8"/><path d="M18 16v-8"/></svg>
                     <span data-i18n="nav.accounting">Buchhaltung</span>
                 </a>
-                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                     <span data-i18n="nav.marketResearch">Marktrecherche</span>
                 </a>
-                <a href="label-print.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="label-print.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/></svg>
                     <span data-i18n="nav.labelPrint">Etikett drucken</span>
                 </a>
-                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     <span data-i18n="nav.printAgents">Print-Agents</span>
                 </a>
-                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     <span data-i18n="nav.settings">Einstellungen</span>
                 </a>
@@ -98,10 +96,7 @@
     <div class="flex-1 min-w-0">
         <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
             <a href="dashboard.html" class="flex items-center gap-2">
-                <svg class="brand-logo" width="24" height="24" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <img class="brand-logo" src="../assets/nettodesk-logo.svg" alt="NettoDesk" style="height:24px;width:auto" />
             </a>
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-1 text-xs font-semibold">
@@ -120,7 +115,7 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
                 <span data-i18n="nav.dashboard">Dashboard</span>
             </a>
-            <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+            <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-soft text-brand-deep">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
                 <span data-i18n="nav.products">Produkte</span>
             </a>
@@ -168,8 +163,8 @@
         <div class="flex flex-wrap items-center justify-between gap-4">
             <h2 class="text-2xl font-bold" data-i18n="products.title">Produkte</h2>
             <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-                <a href="new-listing.html" class="inline-flex items-center justify-center h-11 px-5 rounded-xl bg-white border border-red-200 text-red-700 text-sm font-bold shadow-sm hover:bg-red-50 hover:border-red-300 transition">+ Neues eBay-Angebot</a>
-                <button onclick="openForm()" class="inline-flex items-center justify-center h-11 px-5 rounded-xl bg-red-600 text-white text-sm font-bold shadow-sm hover:bg-red-700 transition">
+                <a href="new-listing.html" class="inline-flex items-center justify-center h-11 px-5 rounded-xl bg-white border border-brand text-brand-deep text-sm font-bold shadow-sm hover:bg-brand-soft hover:border-brand transition">+ Neues eBay-Angebot</a>
+                <button onclick="openForm()" class="inline-flex items-center justify-center h-11 px-5 rounded-xl bg-brand text-ink text-sm font-bold shadow-sm hover:bg-brand-hover transition">
                     <span data-i18n="products.newButton">+ Neues Produkt</span>
                 </button>
             </div>
@@ -218,7 +213,7 @@
                 <label><input id="sp-price" type="checkbox" checked onchange="document.getElementById('sp-apply').classList.add('hidden')"> Preise</label>
                 <label><input id="sp-qty" type="checkbox" onchange="document.getElementById('sp-apply').classList.add('hidden')"> Mengen</label>
                 <button type="button" onclick="pushShopify(true)" class="bg-slate-900 text-white font-semibold py-2 px-4 rounded">Vergleichen</button>
-                <button type="button" id="sp-apply" onclick="pushShopify(false)" class="hidden bg-red-600 text-white font-bold py-2 px-4 rounded">Jetzt an Shopify senden</button>
+                <button type="button" id="sp-apply" onclick="pushShopify(false)" class="hidden bg-brand text-ink font-bold py-2 px-4 rounded">Jetzt an Shopify senden</button>
             </div>
             <pre id="shopify-push-result" class="mt-3 whitespace-pre-wrap text-xs text-slate-600"></pre>
         </details>
@@ -234,7 +229,7 @@
                 <label class="block">Gekauft am <input id="st-date" type="date" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
                 <label class="block">Bild (optional) <input id="st-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="mt-1 w-full"></label>
             </div>
-            <div class="flex gap-2"><button class="bg-red-600 text-white font-bold px-4 py-2 rounded">Speichern</button><button type="button" onclick="document.getElementById('stock-form').classList.add('hidden')" class="border border-slate-300 rounded px-4 py-2">Abbrechen</button></div>
+            <div class="flex gap-2"><button class="bg-brand text-ink font-bold px-4 py-2 rounded">Speichern</button><button type="button" onclick="document.getElementById('stock-form').classList.add('hidden')" class="border border-slate-300 rounded px-4 py-2">Abbrechen</button></div>
         </form>
         <div id="link-panel" class="hidden bg-white border-2 border-sky-300 rounded-xl p-4 text-sm space-y-3"></div>
         <div id="stock-value" class="hidden bg-white border border-slate-200 rounded-xl p-4 text-sm"></div>
@@ -244,7 +239,7 @@
 
         <input type="text" id="search-input" data-i18n-placeholder="products.searchPlaceholder" placeholder="Suche nach SKU oder Titel..."
                oninput="debouncedLoad()"
-               class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+               class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
 
         <div class="flex flex-wrap items-center gap-2 text-sm">
             <button id="tab-available" onclick="setTab('available')" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Verfügbar</button>
@@ -253,20 +248,20 @@
             <button id="sort-sold" onclick="toggleSoldSort()" class="ml-auto px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50" title="Nach verkaufter Menge sortieren">Verkauft: Standard</button>
         </div>
 
-        <!-- eBay quantities: preview first, saved only in ShipSync -->
+        <!-- eBay quantities: preview first, saved only in NettoDesk -->
         <div id="ebay-stock-panel" class="hidden bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-3 text-sm">
             <h3 class="text-lg font-bold">Mengen von eBay holen (bei eBay wird nichts geändert)</h3>
             <p class="text-slate-500">Neue eBay-Bestellungen werden dabei zuerst abgerufen. Die Mengen werden erst gespeichert, wenn du es bestätigst.</p>
             <div id="ebay-stock-preview" class="space-y-2"></div>
             <div class="flex gap-2">
-                <button id="ebay-stock-apply" onclick="applyEbayStock()" class="hidden bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Ausgewählte in ShipSync speichern</button>
+                <button id="ebay-stock-apply" onclick="applyEbayStock()" class="hidden bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded">Ausgewählte in NettoDesk speichern</button>
                 <button onclick="document.getElementById('ebay-stock-panel').classList.add('hidden')" class="text-slate-500 px-3 py-2">Schließen</button>
             </div>
         </div>
 
         <!-- Add / edit form, hidden by default -->
         <div id="price-panel" class="hidden bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
-            <h3 class="text-lg font-bold">Preise ändern (nur in ShipSync, nichts wird bei eBay geändert)</h3>
+            <h3 class="text-lg font-bold">Preise ändern (nur in NettoDesk, nichts wird bei eBay geändert)</h3>
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
                 <label>Für welche Produkte
                     <select id="bp-scope" class="mt-1 w-full p-2 border border-slate-300 rounded">
@@ -295,16 +290,16 @@
             <div id="bp-preview" class="text-sm text-slate-700"></div>
             <div class="border-t border-slate-200 pt-4 space-y-2">
                 <h4 class="font-bold text-sm">Preise an eBay senden</h4>
-                <p class="text-xs text-slate-500">Vergleicht die ShipSync-Preise (für die oben gewählten Produkte) mit deinen eBay-Angeboten. Es wird nichts gesendet, bevor du bestätigst.</p>
+                <p class="text-xs text-slate-500">Vergleicht die NettoDesk-Preise (für die oben gewählten Produkte) mit deinen eBay-Angeboten. Es wird nichts gesendet, bevor du bestätigst.</p>
                 <div id="ep-preview" class="text-sm text-slate-700"></div>
                 <div class="flex gap-2">
                     <button onclick="pushPrices(true)" class="bg-slate-900 text-white font-semibold py-2 px-4 rounded text-sm">Mit eBay vergleichen</button>
-                    <button id="ep-apply" onclick="pushPrices(false)" class="hidden bg-red-600 text-white font-bold py-2 px-4 rounded text-sm">Jetzt an eBay senden</button>
+                    <button id="ep-apply" onclick="pushPrices(false)" class="hidden bg-brand text-ink font-bold py-2 px-4 rounded text-sm">Jetzt an eBay senden</button>
                 </div>
             </div>
             <div class="flex gap-2">
                 <button onclick="bulkPrice(true)" class="bg-slate-900 text-white font-semibold py-2 px-4 rounded text-sm">Vorschau</button>
-                <button id="bp-apply" onclick="bulkPrice(false)" class="hidden bg-red-600 text-white font-bold py-2 px-4 rounded text-sm">Jetzt anwenden</button>
+                <button id="bp-apply" onclick="bulkPrice(false)" class="hidden bg-brand text-ink font-bold py-2 px-4 rounded text-sm">Jetzt anwenden</button>
                 <button onclick="togglePricePanel()" class="text-slate-500 px-3 py-2 text-sm">Schließen</button>
             </div>
         </div>
@@ -317,22 +312,22 @@
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.sku">SKU *</label>
                     <input type="text" id="field-sku"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.titleLabel">Titel *</label>
                     <input type="text" id="field-title"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.shelf">Regalplatz</label>
                     <input type="text" id="field-shelf" data-i18n-placeholder="products.shelfPlaceholder" placeholder="z.B. A3-14"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.imageUrl">Bild-URL</label>
                     <input type="text" id="field-image"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                     <div class="mt-2 flex items-center gap-3">
                         <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-1.5 px-3 rounded transition">
                             <span id="upload-label" data-i18n="products.uploadImage">Bild vom Gerät hochladen</span>
@@ -345,33 +340,33 @@
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.purchasePrice">Einkaufspreis (€)</label>
                     <input type="number" step="0.01" id="field-purchase"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1">Versandkosten vom Lieferanten pro Stück (€)</label>
                     <input type="number" step="0.01" min="0" id="field-supplier-ship"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1">Verpackungskosten pro Stück (€)</label>
                     <input type="number" step="0.01" min="0" id="field-packaging"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1">eBay-Verkaufsprovision dieser Kategorie (%)</label>
                     <input type="number" step="0.01" min="0" max="99" id="field-fee-percent" placeholder="leer = automatisch"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                     <p class="text-xs text-slate-400 mt-1">Für den Preisrechner. Leer: aus deinen bisherigen Verkäufen, sonst 11 %.</p>
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.sellingPrice">Verkaufspreis (€)</label>
                     <input type="number" step="0.01" id="field-selling"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.stock">Lagerbestand (Menge)</label>
                     <input type="number" step="1" min="0" id="field-stock"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                     <p class="text-xs text-slate-400 mt-1" data-i18n="products.stockHint">Nur für die Ersteinrichtung. Später bitte "+ Bestand" in der Tabelle verwenden, damit die Änderung im Verlauf protokolliert wird.</p>
                 </div>
             </div>
@@ -382,22 +377,22 @@
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.weight">Gewicht (kg)</label>
                     <input type="number" step="0.001" min="0" id="field-weight"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.length">Länge (cm)</label>
                     <input type="number" step="1" min="0" id="field-length"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.width">Breite (cm)</label>
                     <input type="number" step="1" min="0" id="field-width"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.height">Höhe (cm)</label>
                     <input type="number" step="1" min="0" id="field-height"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
             </div>
 
@@ -405,7 +400,7 @@
 
             <div class="flex gap-3">
                 <button onclick="saveProduct()"
-                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                        class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">
                     <span data-i18n="products.save">Speichern</span>
                 </button>
                 <button onclick="closeForm()"
@@ -428,7 +423,7 @@
         <div id="empty-state" class="hidden bg-white border border-slate-200 p-8 rounded-xl text-center space-y-3">
             <p class="text-slate-500" data-i18n="products.empty">Noch keine Produkte vorhanden.</p>
             <button onclick="openForm()"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">
                 <span data-i18n="products.createFirst">Erstes Produkt anlegen</span>
             </button>
         </div>
@@ -509,7 +504,7 @@
 
                 const desktopLogout = document.querySelector('aside button[onclick="logout()"]');
                 const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
-                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
                 if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
             } catch (err) {
                 // Non-critical - sidebar profile info and the admin link just don't show.
@@ -637,7 +632,7 @@
             if (data.new_orders) notes.unshift(`Neu abgerufene Bestellungen: ${data.new_orders}.`);
             const unclear = data.ambiguous.map(a => `<div class="text-amber-700">${text(a.title)}: mehrere Angebote (${a.item_ids.map(text).join(", ")}), wird nicht automatisch geändert.</div>`).join("");
             document.getElementById("ebay-stock-preview").innerHTML = (data.items.length
-                ? `<div class="overflow-x-auto"><table class="min-w-full"><thead><tr class="text-left text-slate-500"><th></th><th>Produkt</th><th class="px-3 text-right">ShipSync</th><th class="px-3 text-right">eBay</th></tr></thead><tbody>${rows}</tbody></table></div>`
+                ? `<div class="overflow-x-auto"><table class="min-w-full"><thead><tr class="text-left text-slate-500"><th></th><th>Produkt</th><th class="px-3 text-right">NettoDesk</th><th class="px-3 text-right">eBay</th></tr></thead><tbody>${rows}</tbody></table></div>`
                 : "<b>Keine Abweichungen.</b>") + unclear + `<div class="text-slate-500">${notes.join(" ")}</div>`;
             document.getElementById("ebay-stock-apply").classList.toggle("hidden", data.items.length === 0);
         }
@@ -651,7 +646,7 @@
                 const data = await callPullStock({ dry_run: false, confirmed });
                 if (!data) return;
                 document.getElementById("ebay-stock-panel").classList.add("hidden");
-                showBanner(`In ShipSync gespeichert: ${data.updated}.` + (data.outdated.length ? ` Nicht geändert, weil sich die Zahlen inzwischen geändert haben: ${data.outdated.length}. Bitte neu holen.` : ""), data.outdated.length > 0);
+                showBanner(`In NettoDesk gespeichert: ${data.updated}.` + (data.outdated.length ? ` Nicht geändert, weil sich die Zahlen inzwischen geändert haben: ${data.outdated.length}. Bitte neu holen.` : ""), data.outdated.length > 0);
                 loadProducts();
             } catch (err) {
                 showBanner(err.message, true);
@@ -783,7 +778,7 @@
             }
         }
 
-        // Edit stock or price right in the list; saves in ShipSync and sends the same value to eBay.
+        // Edit stock or price right in the list; saves in NettoDesk and sends the same value to eBay.
         function inlineEdit(id, field) {
             const p = (window.__products || []).find(x => x.id === id);
             if (!p) return;
@@ -861,10 +856,10 @@
                 });
                 const result = await push.json();
                 const what = "Preis";
-                if (!push.ok) showBanner(`${what} in ShipSync gespeichert, aber eBay: ` + (result.detail || "Fehler"), true);
-                else if (result.updated > 0) showBanner(`${what} in ShipSync und bei eBay geändert.`, false);
-                else if (result.failed > 0) showBanner(`${what} in ShipSync gespeichert, eBay lehnte ab: ` + (result.items[0]?.result || result.errors[0] || ""), true);
-                else if (result.no_ebay_match > 0) showBanner(`${what} in ShipSync gespeichert – kein passendes eBay-Angebot gefunden.`, true);
+                if (!push.ok) showBanner(`${what} in NettoDesk gespeichert, aber eBay: ` + (result.detail || "Fehler"), true);
+                else if (result.updated > 0) showBanner(`${what} in NettoDesk und bei eBay geändert.`, false);
+                else if (result.failed > 0) showBanner(`${what} in NettoDesk gespeichert, eBay lehnte ab: ` + (result.items[0]?.result || result.errors[0] || ""), true);
+                else if (result.no_ebay_match > 0) showBanner(`${what} in NettoDesk gespeichert – kein passendes eBay-Angebot gefunden.`, true);
                 else showBanner(`${what} gespeichert; bei eBay war er schon gleich.`, false);
             } catch (err) {
                 showBanner(t("products.serverErrorRetry"), true);
@@ -946,7 +941,7 @@
                 showBanner((id ? t("products.updated") : t("products.created")) + (note ? " " + note.text : ""), note ? note.isError : false);
                 loadProducts();
                 if (id && payload.selling_price != null && payload.selling_price !== originalSelling
-                    && confirm("Der Preis wurde in ShipSync geändert. Jetzt auch bei eBay ändern (sofort für Käufer sichtbar)?")) {
+                    && confirm("Der Preis wurde in NettoDesk geändert. Jetzt auch bei eBay ändern (sofort für Käufer sichtbar)?")) {
                     await pushOnePrice(id);
                 }
             } catch (err) {
@@ -1130,7 +1125,7 @@
                 const differ = stock.unit_cost !== null && target.unit_cost !== null && ["purchase_price", "supplier_shipping_cost", "packaging_cost"].some(f => Number(stock[f] || 0) !== Number(target[f] || 0));
                 details.innerHTML = `<p>Im Lager: <b>${stock.stock_quantity}</b> Stück, Kosten je Stück ${costs(stock)} · Beim Angebot: <b>${target.stock_quantity}</b> Stück, Kosten ${costs(target)}</p>
                     <label class="block">Wie viele Stück hast du wirklich insgesamt? <input id="ln-quantity" type="number" min="0" step="1" class="mt-1 w-32 p-2 border border-slate-300 rounded"></label>
-                    <p class="text-slate-500">Nicht einfach addieren, wenn das Angebot dieselben Stücke schon zählt. Die Zahl wird nur in ShipSync gespeichert, nicht an den Shop gesendet.</p>
+                    <p class="text-slate-500">Nicht einfach addieren, wenn das Angebot dieselben Stücke schon zählt. Die Zahl wird nur in NettoDesk gespeichert, nicht an den Shop gesendet.</p>
                     ${differ ? `<fieldset class="space-y-1"><legend>Welche Kosten gelten?</legend><label class="block"><input type="radio" name="ln-cost" value="stock"> die der Lagerware (${costs(stock)})</label><label class="block"><input type="radio" name="ln-cost" value="listing"> die des Angebots (${costs(target)})</label></fieldset>` : ""}`;
             };
         }
@@ -1169,7 +1164,7 @@
                     : (a.sold_quantity ?? 0) - (b.sold_quantity ?? 0));
             }
             const soldoutCount = offered.filter(p => (p.stock_quantity ?? 0) === 0).length;
-            const on = "bg-red-50 border-red-400";
+            const on = "bg-brand-soft border-brand";
             document.getElementById("tab-available").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "available" ? on : "border-slate-300");
             document.getElementById("tab-soldout").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "soldout" ? on : "border-slate-300");
             document.getElementById("tab-stock").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "stock" ? on : "border-slate-300");
@@ -1280,7 +1275,7 @@
                     document.getElementById("bp-preview").innerHTML = `<b>${data.changed} Produkte werden geändert</b> (${data.skipped_no_price} ohne Preis übersprungen)${rows}${data.changed > 8 ? "<div>…</div>" : ""}`;
                     document.getElementById("bp-apply").classList.toggle("hidden", data.changed === 0);
                 } else {
-                    showBanner(`${data.changed} Preise in ShipSync geändert.`, false);
+                    showBanner(`${data.changed} Preise in NettoDesk geändert.`, false);
                     resetPreview();
                     await loadProducts();
                     if (document.getElementById("bp-ebay").checked) {

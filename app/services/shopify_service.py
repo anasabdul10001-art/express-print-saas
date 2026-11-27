@@ -108,7 +108,7 @@ query($cursor: String) {
 
 
 def fetch_variants(account: ShopifyAccount, max_pages: int = 20) -> tuple[list[dict], str | None]:
-    """Every variant of the store as flat dicts (one ShipSync product each)."""
+    """Every variant of the store as flat dicts (one NettoDesk product each)."""
     variants, cursor, shop_name = [], None, None
     for _ in range(max_pages):
         data = graphql(account, PRODUCTS_QUERY, {"cursor": cursor})
@@ -381,7 +381,7 @@ def _user_errors(result: dict, name: str) -> str | None:
 
 def plan_push(account: ShopifyAccount, products: dict, include_price: bool, include_quantity: bool,
               max_pages: int = 20) -> list[dict]:
-    """What differs between ShipSync (products by SKU) and the store. Changes nothing."""
+    """What differs between NettoDesk (products by SKU) and the store. Changes nothing."""
     changes, cursor = [], None
     for _ in range(max_pages):
         page = graphql(account, PUSH_VARIANTS_QUERY, {"cursor": cursor}).get("productVariants") or {}

@@ -1,16 +1,16 @@
-"""A quantity changed in ShipSync is sent to the eBay listing.
+"""A quantity changed in NettoDesk is sent to the eBay listing.
 
 Without this the next sync would put eBay's old number back. Called after the
-change is saved, only for what the seller did in ShipSync (never for sales that
+change is saved, only for what the seller did in NettoDesk (never for sales that
 came from eBay: eBay has already counted those).
 
 Two kinds of change:
 - "set": the seller typed the available quantity; exactly that number is sent.
 - "add": goods came in or went out (restock, purchase, own order, return). The
-  difference is applied to what eBay reports right now, so a sale ShipSync has
+  difference is applied to what eBay reports right now, so a sale NettoDesk has
   not read yet is not undone.
 
-It never raises: the change in ShipSync is already saved, so the caller only
+It never raises: the change in NettoDesk is already saved, so the caller only
 reports what happened at eBay.
 """
 
@@ -129,7 +129,7 @@ def _send_locked(db: Session, tenant_id, accounts: list, targets: list, wanted: 
 
 
 def _store(db: Session, tenant_id, product_id: str, quantity: int, item_id: str, follow: bool) -> None:
-    """ShipSync shows what eBay now has."""
+    """NettoDesk shows what eBay now has."""
     if not follow:
         return
     product = db.query(Product).filter(Product.tenant_id == tenant_id, Product.id == product_id)\

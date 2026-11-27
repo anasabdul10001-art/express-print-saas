@@ -1,7 +1,7 @@
-# ShipSync Agent
+# NettoDesk Agent
 
 The small Windows program that runs on a seller's own PC, next to their
-label printer. It checks the ShipSync backend every few seconds for
+label printer. It checks the NettoDesk backend every few seconds for
 new print jobs and prints them automatically - no manual clicking, no print
 dialog.
 

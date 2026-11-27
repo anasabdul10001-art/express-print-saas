@@ -1,5 +1,5 @@
 """
-The legal pages as published text. ShipSync is offered to businesses only
+The legal pages as published text. NettoDesk is offered to businesses only
 (§ 14 BGB); sign-up asks to confirm that. {{operator_*}} is filled in when a
 page is shown (see operator_service).
 
@@ -35,10 +35,10 @@ Telefon: {{operator_phone}}{{/phone}}</p>
 """
 
 WITHDRAWAL = """<h1>Widerrufsrecht</h1>
-<p>ShipSync richtet sich ausschließlich an <strong>Unternehmer</strong> im Sinne des § 14 BGB, also an
+<p>NettoDesk richtet sich ausschließlich an <strong>Unternehmer</strong> im Sinne des § 14 BGB, also an
 Personen und Gesellschaften, die beim Vertragsschluss in Ausübung ihrer gewerblichen oder
 selbständigen beruflichen Tätigkeit handeln. Verbraucher können kein Konto anlegen und keinen
-Vertrag über ShipSync schließen. Das bei der Registrierung bestätigt jeder Kunde.</p>
+Vertrag über NettoDesk schließen. Das bei der Registrierung bestätigt jeder Kunde.</p>
 <p>Ein gesetzliches Widerrufsrecht für Verbraucher besteht für diese Verträge daher nicht.</p>
 <p>Wie du kündigen kannst, steht in § 5 der <a href="policies.html">AGB</a>.</p>
 <p>Fragen: {{operator_email}}</p>
@@ -54,12 +54,12 @@ def _price_sentence() -> str:
 def policies() -> str:
     return """<h1>Allgemeine Geschäftsbedingungen (AGB)</h1>
 <h2>§ 1 Geltungsbereich und Vertragspartner</h2>
-<p>Diese Bedingungen gelten für alle Verträge über die Nutzung der Software ShipSync zwischen
-{{operator_name}}, {{operator_street}}, {{operator_city}} („Anbieter“) und dem Kunden. ShipSync wird
+<p>Diese Bedingungen gelten für alle Verträge über die Nutzung der Software NettoDesk zwischen
+{{operator_name}}, {{operator_street}}, {{operator_city}} („Anbieter“) und dem Kunden. NettoDesk wird
 ausschließlich Unternehmern im Sinne des § 14 BGB angeboten. Verträge mit Verbrauchern werden nicht
 geschlossen.</p>
 <h2>§ 2 Leistung</h2>
-<p>ShipSync ist eine über das Internet genutzte Software zur Verwaltung von Bestellungen, Produkten,
+<p>NettoDesk ist eine über das Internet genutzte Software zur Verwaltung von Bestellungen, Produkten,
 Lagerbestand, Versandetiketten, Rechnungen und Buchhaltungsunterlagen von Online-Händlern. Der Umfang
 richtet sich nach dem gebuchten Plan. Auswertungen zu Steuern und für Behörden (z. B. EÜR, Anlage EKS)
 sind Rechenhilfen aus den erfassten Daten. Sie sind keine Steuer- oder Rechtsberatung; der Kunde prüft
@@ -77,18 +77,18 @@ Nutzung nur mit einem gebuchten Plan möglich.</p>
 <p>Der Vertrag läuft auf unbestimmte Zeit. Beide Seiten können ihn jederzeit zum Ende der laufenden
 monatlichen Abrechnungsperiode in Textform (z. B. per E-Mail) kündigen. Das Recht zur Kündigung aus
 wichtigem Grund bleibt unberührt. Der Kunde sichert vor dem Vertragsende die Unterlagen, die er
-aufbewahren muss; ShipSync stellt dafür Exportfunktionen bereit.</p>
+aufbewahren muss; NettoDesk stellt dafür Exportfunktionen bereit.</p>
 <h2>§ 6 Verfügbarkeit und Änderungen des Dienstes</h2>
 <p>Der Anbieter bemüht sich um eine hohe Verfügbarkeit, sichert aber keine ununterbrochene
 Erreichbarkeit zu. Er darf den Funktionsumfang mit angemessener Ankündigung anpassen, soweit der
-vertragliche Zweck erhalten bleibt. ShipSync ist kein revisionssicheres Archiv; eigene
+vertragliche Zweck erhalten bleibt. NettoDesk ist kein revisionssicheres Archiv; eigene
 Aufbewahrungspflichten des Kunden bleiben bestehen.</p>
 <h2>§ 7 Pflichten des Kunden</h2>
-<p>Der Kunde nutzt ShipSync nur rechtmäßig, hält die Bedingungen der verbundenen Dienste ein und ist
+<p>Der Kunde nutzt NettoDesk nur rechtmäßig, hält die Bedingungen der verbundenen Dienste ein und ist
 für die Rechtmäßigkeit der Daten verantwortlich, die er verarbeiten lässt, einschließlich der Daten
 seiner Käufer.</p>
 <h2>§ 8 Daten und Datenschutz</h2>
-<p>Die Daten des Kunden bleiben seine Daten. Für personenbezogene Daten, die ShipSync im Auftrag des
+<p>Die Daten des Kunden bleiben seine Daten. Für personenbezogene Daten, die NettoDesk im Auftrag des
 Kunden verarbeitet, gilt der <a href="avv.html">Vertrag zur Auftragsverarbeitung</a>; er ist Bestandteil
 dieses Vertrags. Im Übrigen gilt die <a href="privacy.html">Datenschutzerklärung</a>.</p>
 <h2>§ 9 Haftung</h2>
@@ -109,7 +109,7 @@ im Übrigen wirksam.</p>
 
 
 COOKIES = """<h1>Cookie-Hinweis</h1>
-<p>ShipSync setzt keine Analyse-, Tracking- oder Werbe-Cookies ein. Im lokalen Speicher deines Browsers
+<p>NettoDesk setzt keine Analyse-, Tracking- oder Werbe-Cookies ein. Im lokalen Speicher deines Browsers
 liegen nur Angaben, die für die von dir gewünschten Funktionen nötig sind (§ 25 Abs. 2 TDDDG):</p>
 <ul>
 <li>dein Anmeldestatus (auch für das Partnerportal),</li>

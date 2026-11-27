@@ -1,4 +1,4 @@
-// Swaps the default "ShipSync" mark (any <svg class="brand-logo">) for
+// Swaps the default "NettoDesk" mark (any .brand-logo) for
 // the logo uploaded via admin.html's Super Admin panel, if one has been set.
 // Public endpoint - no auth needed, safe to call from every page.
 (function () {
@@ -15,7 +15,7 @@
             // default icon mark used.
             const height = Number(data.logo_height) || 32;
 
-            document.querySelectorAll("svg.brand-logo").forEach((svg) => {
+            document.querySelectorAll(".brand-logo").forEach((svg) => {
                 const img = document.createElement("img");
                 img.src = data.logo_url;
                 img.alt = "Logo";

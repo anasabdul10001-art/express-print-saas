@@ -158,7 +158,7 @@ class PushIn(BaseModel):
 
 @router.post("/push-listings")
 def push_listings(payload: PushIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Sends ShipSync prices / stock to the connected stores (matched by SKU)."""
+    """Sends NettoDesk prices / stock to the connected stores (matched by SKU)."""
     query = db.query(Product).filter(Product.tenant_id == current_user.tenant_id, Product.active.is_(True),
                                      Product.unlisted.is_(False))
     if payload.product_ids is not None:

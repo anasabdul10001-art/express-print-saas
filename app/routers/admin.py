@@ -156,6 +156,20 @@ def update_site_settings(
     return settings_row
 
 
+@router.delete("/logo", response_model=SiteSettingsOut)
+def remove_logo(
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    """Goes back to the built-in logo. The uploaded file stays in storage; the next upload overwrites it."""
+    settings_row = _get_or_create_settings(db)
+    settings_row.logo_url = None
+    settings_row.logo_height = None
+    db.commit()
+    db.refresh(settings_row)
+    return settings_row
+
+
 @router.post("/logo", response_model=SiteSettingsOut)
 async def upload_logo(
     file: UploadFile,

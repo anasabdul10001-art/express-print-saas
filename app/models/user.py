@@ -29,7 +29,7 @@ class User(Base):
     # BGB - see the "withdrawal" SitePage in app/routers/plans.py). Null would
     # only happen for accounts created before this consent was required.
     early_service_consent_at = Column(DateTime(timezone=True), nullable=True)  # accounts before 25.11.2026
-    # Confirmations given at sign-up since ShipSync is offered to businesses only.
+    # Confirmations given at sign-up since NettoDesk is offered to businesses only.
     business_confirmed_at = Column(DateTime(timezone=True), nullable=True)
     terms_accepted_at = Column(DateTime(timezone=True), nullable=True)
     terms_version = Column(String(20), nullable=True)

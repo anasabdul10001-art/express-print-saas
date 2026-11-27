@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-    <title>Partner-Dashboard — ShipSync</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <title>Partner-Dashboard — NettoDesk</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/nettodesk.js"></script>
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
@@ -14,10 +15,7 @@
     <nav class="bg-white border-b border-slate-200 px-6 py-4">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
             <a href="../index.html" class="flex items-center gap-2">
-                <svg class="brand-logo" width="26" height="26" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <img class="brand-logo" src="../assets/nettodesk-logo.svg" alt="NettoDesk" style="height:26px;width:auto" />
                 <span class="font-bold text-sm" data-i18n="affiliateDashboard.brandLabel">Partner-Portal</span>
             </a>
             <div class="flex items-center gap-4">
@@ -26,7 +24,7 @@
                     <span class="text-slate-300">|</span>
                     <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
                 </div>
-                <button onclick="logout()" class="text-slate-500 hover:text-red-600 text-sm font-semibold transition" data-i18n="affiliateDashboard.logout">Abmelden</button>
+                <button onclick="logout()" class="text-slate-500 hover:text-brand-deep text-sm font-semibold transition" data-i18n="affiliateDashboard.logout">Abmelden</button>
             </div>
         </div>
     </nav>
@@ -46,7 +44,7 @@
                 <h2 class="text-sm font-semibold text-slate-500" data-i18n="affiliateDashboard.referralLinkTitle">Dein Empfehlungslink</h2>
                 <div class="flex flex-col sm:flex-row gap-2">
                     <input id="referral-link-input" type="text" readonly class="flex-1 min-w-0 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-sm font-mono text-slate-700">
-                    <button onclick="copyReferralLink()" class="bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition flex-shrink-0" data-i18n="affiliateDashboard.copyLink">Link kopieren</button>
+                    <button onclick="copyReferralLink()" class="bg-brand hover:bg-brand-hover text-ink font-semibold text-sm py-2 px-4 rounded-lg transition flex-shrink-0" data-i18n="affiliateDashboard.copyLink">Link kopieren</button>
                 </div>
             </div>
 
@@ -58,7 +56,7 @@
                 </div>
                 <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <p class="text-xs text-slate-400" data-i18n="affiliateDashboard.statBalance">Guthaben</p>
-                    <p id="stat-balance" class="text-xl font-bold mt-1 text-red-600">—</p>
+                    <p id="stat-balance" class="text-xl font-bold mt-1 text-brand-deep">—</p>
                 </div>
                 <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <p class="text-xs text-slate-400" data-i18n="affiliateDashboard.statTotalEarned">Gesamt verdient</p>

@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>eBay-Zentrale — ShipSync</title>
+    <title>eBay-Zentrale — NettoDesk</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/nettodesk.js"></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
     <script src="../list-numbers.js"></script>
@@ -13,12 +14,12 @@
 <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">eBay-Zentrale</h1>
-        <a href="dashboard.html" class="text-sm text-slate-500 hover:text-red-600">← Dashboard</a>
+        <a href="dashboard.html" class="text-sm text-slate-500 hover:text-brand-deep">← Dashboard</a>
     </div>
     <div id="banner" class="hidden p-3 rounded text-sm"></div>
 
     <nav class="flex flex-wrap gap-2 text-sm font-semibold">
-        <button data-tab="messages" class="tab px-3 py-2 rounded bg-red-600 text-white">Nachrichten</button>
+        <button data-tab="messages" class="tab px-3 py-2 rounded bg-brand text-ink">Nachrichten</button>
         <button data-tab="cases" class="tab px-3 py-2 rounded bg-white border border-slate-300">Rückgaben &amp; Streitfälle</button>
         <button data-tab="traffic" class="tab px-3 py-2 rounded bg-white border border-slate-300">Statistik</button>
         <button data-tab="policies" class="tab px-3 py-2 rounded bg-white border border-slate-300">Versandrichtlinien</button>
@@ -158,7 +159,7 @@ const TABS = { messages: showMessages, cases: showCases, traffic: showTraffic, p
 async function open(tab) {
     document.querySelectorAll(".tab").forEach(b => {
         const on = b.dataset.tab === tab;
-        b.className = "tab px-3 py-2 rounded " + (on ? "bg-red-600 text-white" : "bg-white border border-slate-300");
+        b.className = "tab px-3 py-2 rounded " + (on ? "bg-brand text-ink" : "bg-white border border-slate-300");
     });
     panel.innerHTML = "<p class='text-slate-400'>Lade…</p>";
     document.getElementById("banner").className = "hidden";

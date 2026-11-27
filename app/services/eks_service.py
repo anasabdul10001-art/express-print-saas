@@ -168,7 +168,7 @@ def _warnings(checks: dict, categories: set, parts: dict) -> list[str]:
     if checks["large_expenses"]:
         out.append("Anschaffungen von Geräten gehören in B8 (Investitionen); ungeplante größere Ausgaben sollen "
                    "dem Jobcenter sofort gemeldet werden. Bitte prüfen: " + "; ".join(checks["large_expenses"][:10]))
-    out.append("Leere Zeilen kennt ShipSync nicht (z. B. A2, A4, Kfz, Reisen): bitte selbst ausfüllen oder 0 "
+    out.append("Leere Zeilen kennt NettoDesk nicht (z. B. A2, A4, Kfz, Reisen): bitte selbst ausfüllen oder 0 "
                "eintragen. Summen und Gewinn ändern sich dann.")
     return out
 

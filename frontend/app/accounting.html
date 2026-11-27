@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-    <title>Buchhaltung — ShipSync</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <title>Buchhaltung — NettoDesk</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/nettodesk.js"></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
     <script src="../site-logo.js"></script>
@@ -17,21 +18,18 @@
     <div class="flex min-h-screen">
     <aside class="hidden md:flex md:flex-col md:w-60 bg-white border-r border-slate-200 flex-shrink-0">
         <a href="dashboard.html" class="flex items-center gap-2 p-5 border-b border-slate-100">
-            <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <img class="brand-logo" src="../assets/nettodesk-logo.svg" alt="NettoDesk" style="height:28px;width:auto" />
         </a>
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
                     <span data-i18n="nav.dashboard">Dashboard</span>
                 </a>
-                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
                     <span data-i18n="nav.products">Produkte</span>
                 </a>
-                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
                     <span data-i18n="nav.orders">Bestellungen</span>
                 </a>
@@ -39,23 +37,23 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
                     <span data-i18n="nav.expenses">Ausgaben</span>
                 </a>
-                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-soft text-brand-deep">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M13 16V8"/><path d="M18 16v-8"/></svg>
                     <span data-i18n="nav.accounting">Buchhaltung</span>
                 </a>
-                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                     <span data-i18n="nav.marketResearch">Marktrecherche</span>
                 </a>
-                <a href="label-print.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="label-print.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/></svg>
                     <span data-i18n="nav.labelPrint">Etikett drucken</span>
                 </a>
-                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     <span data-i18n="nav.printAgents">Print-Agents</span>
                 </a>
-                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     <span data-i18n="nav.settings">Einstellungen</span>
                 </a>
@@ -81,10 +79,7 @@
     <div class="flex-1 min-w-0">
         <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
             <a href="dashboard.html" class="flex items-center gap-2">
-                <svg class="brand-logo" width="24" height="24" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <img class="brand-logo" src="../assets/nettodesk-logo.svg" alt="NettoDesk" style="height:24px;width:auto" />
             </a>
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-1 text-xs font-semibold">
@@ -115,7 +110,7 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
                 <span data-i18n="nav.expenses">Ausgaben</span>
             </a>
-                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-soft text-brand-deep">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M13 16V8"/><path d="M18 16v-8"/></svg>
                     <span data-i18n="nav.accounting">Buchhaltung</span>
                 </a>
@@ -153,7 +148,7 @@
 
         <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="text-2xl font-bold" data-i18n="accounting.title">Buchhaltung</h2>
-            <a href="expenses.html" class="text-sm font-semibold text-red-600 hover:underline">+ Ausgaben erfassen</a>
+            <a href="expenses.html" class="text-sm font-semibold text-brand-deep hover:underline">+ Ausgaben erfassen</a>
         </div>
 
         <!-- Period selection -->
@@ -179,17 +174,17 @@
                         <option value="year">Pro Jahr</option>
                     </select>
                 </label>
-                <button onclick="loadAccounting()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Anzeigen</button>
+                <button onclick="loadAccounting()" class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">Anzeigen</button>
                 <button id="sync-btn" onclick="syncSales(true)" class="border border-slate-300 hover:bg-slate-50 font-semibold py-2 px-4 rounded transition disabled:opacity-50">Verkäufe aktualisieren</button>
             </div>
             <p id="sync-status" class="text-xs text-slate-500" aria-live="polite"></p>
         </div>
 
         <!-- The one profit figure: same calculation as the EÜR page -->
-        <div class="bg-white border-2 border-red-500 p-4 rounded-xl shadow-sm space-y-3">
+        <div class="bg-white border-2 border-brand p-4 rounded-xl shadow-sm space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <h3 class="font-bold">Gewinn nach Zahlungsdatum (EÜR)</h3>
-                <a href="euer.html" class="text-sm text-red-600 underline">Einzelheiten und Annahmen</a>
+                <a href="euer.html" class="text-sm text-brand-deep underline">Einzelheiten und Annahmen</a>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div><p class="text-slate-500 text-sm">Betriebseinnahmen</p><p id="o-income" class="text-xl font-bold text-slate-900">—</p></div>
@@ -240,7 +235,7 @@
                 <p class="text-slate-500 text-sm">Sonstige Ausgaben</p>
                 <p id="t-expenses" class="text-xl font-bold text-red-600">—</p>
             </div>
-            <div class="bg-white border-2 border-red-500 p-4 rounded-xl shadow-sm col-span-2 lg:col-span-1">
+            <div class="bg-white border-2 border-brand p-4 rounded-xl shadow-sm col-span-2 lg:col-span-1">
                 <p class="text-slate-500 text-sm">Verkaufsergebnis (Kontrolle)</p>
                 <p id="t-net" class="text-2xl font-bold text-slate-900">—</p>
             </div>
@@ -345,7 +340,7 @@
 
                 const desktopLogout = document.querySelector('aside button[onclick="logout()"]');
                 const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
-                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
                 if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
             } catch (err) {
                 // Non-critical - sidebar profile info and the admin link just don't show.
@@ -400,8 +395,8 @@
             document.getElementById("f-end").value = localIso(e);
             document.getElementById("f-group").value = g;
             document.querySelectorAll("#presets button").forEach(b => {
-                b.classList.toggle("bg-red-50", b.dataset.preset === name);
-                b.classList.toggle("border-red-400", b.dataset.preset === name);
+                b.classList.toggle("bg-brand-soft", b.dataset.preset === name);
+                b.classList.toggle("border-brand", b.dataset.preset === name);
             });
             loadAccounting();
         }
@@ -411,7 +406,7 @@
         function colored(el, v) {
             el.innerText = money(v);
             el.classList.toggle("text-emerald-600", Number(v) >= 0);
-            el.classList.toggle("text-red-600", Number(v) < 0);
+            el.classList.toggle("text-brand-deep", Number(v) < 0);
         }
         function esc(s) {
             const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -422,7 +417,7 @@
             document.getElementById("vat-mode").value = data.vat_mode;
             const regular = data.vat_mode === "regular";
             document.getElementById("vat-note").innerHTML = regular
-                ? 'Die Zahlen für die Umsatzsteuer stehen in der <a href="ustva.html" class="text-red-600 underline">USt-Voranmeldung (Test)</a>.'
+                ? 'Die Zahlen für die Umsatzsteuer stehen in der <a href="ustva.html" class="text-brand-deep underline">USt-Voranmeldung (Test)</a>.'
                 : "Als Kleinunternehmer wird keine Umsatzsteuer ausgewiesen.";
         }
 

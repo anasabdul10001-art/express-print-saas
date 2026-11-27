@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-    <title>Einstellungen — ShipSync</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <title>Einstellungen — NettoDesk</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/nettodesk.js"></script>
     <script src="../password-toggle.js" defer></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
@@ -17,45 +18,42 @@
     <div class="flex min-h-screen">
     <aside class="hidden md:flex md:flex-col md:w-60 bg-white border-r border-slate-200 flex-shrink-0">
         <a href="dashboard.html" class="flex items-center gap-2 p-5 border-b border-slate-100">
-            <svg class="brand-logo" width="28" height="28" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <img class="brand-logo" src="../assets/nettodesk-logo.svg" alt="NettoDesk" style="height:28px;width:auto" />
         </a>
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
                     <span data-i18n="nav.dashboard">Dashboard</span>
                 </a>
-                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
                     <span data-i18n="nav.products">Produkte</span>
                 </a>
-                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
                     <span data-i18n="nav.orders">Bestellungen</span>
                 </a>
-                <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="expenses.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><path d="M12 1v22"/></svg>
                     <span data-i18n="nav.expenses">Ausgaben</span>
                 </a>
-                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="accounting.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-5"/><path d="M13 16V8"/><path d="M18 16v-8"/></svg>
                     <span data-i18n="nav.accounting">Buchhaltung</span>
                 </a>
-                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="market-research.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                     <span data-i18n="nav.marketResearch">Marktrecherche</span>
                 </a>
-                <a href="label-print.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="label-print.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/></svg>
                     <span data-i18n="nav.labelPrint">Etikett drucken</span>
                 </a>
-                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition">
+                <a href="print-agents.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     <span data-i18n="nav.printAgents">Print-Agents</span>
                 </a>
-                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+                <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-soft text-brand-deep">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     <span data-i18n="nav.settings">Einstellungen</span>
                 </a>
@@ -81,10 +79,7 @@
     <div class="flex-1 min-w-0">
         <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
             <a href="dashboard.html" class="flex items-center gap-2">
-                <svg class="brand-logo" width="24" height="24" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <img class="brand-logo" src="../assets/nettodesk-logo.svg" alt="NettoDesk" style="height:24px;width:auto" />
             </a>
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-1 text-xs font-semibold">
@@ -131,7 +126,7 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 <span data-i18n="nav.printAgents">Print-Agents</span>
             </a>
-            <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-600">
+            <a href="settings.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-soft text-brand-deep">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 <span data-i18n="nav.settings">Einstellungen</span>
             </a>
@@ -158,16 +153,16 @@
             <div>
                 <label class="block text-sm mb-1" data-i18n="settings.companyName">Firmenname</label>
                 <input type="text" id="field-company-name"
-                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
             </div>
             <div>
                 <label class="block text-sm mb-1" data-i18n="settings.country">Land (Ländercode, z.B. DE, AT, CH)</label>
                 <input type="text" id="field-country" maxlength="2"
-                       class="w-24 p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none uppercase">
+                       class="w-24 p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none uppercase">
             </div>
             <div id="company-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="saveCompany()"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">
                 <span data-i18n="settings.save">Speichern</span>
             </button>
         </div>
@@ -185,7 +180,7 @@
                 <button id="subscription-manage-btn" onclick="openBillingPortal()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-900 font-semibold text-sm py-2 px-4 rounded-lg transition">
                     <span data-i18n="settings.subscriptionManage">Abo verwalten</span>
                 </button>
-                <a href="../pricing.html" id="subscription-choose-link" class="hidden bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2 px-4 rounded-lg transition">
+                <a href="../pricing.html" id="subscription-choose-link" class="hidden bg-brand hover:bg-brand-hover text-ink font-semibold text-sm py-2 px-4 rounded-lg transition">
                     <span data-i18n="settings.subscriptionChoosePlan">Plan wählen</span>
                 </a>
             </div>
@@ -210,11 +205,11 @@
             <div>
                 <label class="block text-sm mb-1" data-i18n="settings.name">Name</label>
                 <input type="text" id="field-full-name"
-                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
             </div>
             <div id="profile-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="saveProfile()"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">
                 <span data-i18n="settings.saveName">Name speichern</span>
             </button>
         </div>
@@ -225,16 +220,16 @@
             <div>
                 <label class="block text-sm mb-1" data-i18n="settings.email">E-Mail (zum Anmelden)</label>
                 <input type="email" id="field-email"
-                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
             </div>
             <div>
                 <label class="block text-sm mb-1" data-i18n="settings.currentPasswordConfirm">Aktuelles Passwort (zur Bestätigung)</label>
                 <input type="password" id="field-email-password" autocomplete="current-password"
-                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
             </div>
             <div id="email-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="saveEmail()"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">
                 <span data-i18n="settings.changeEmail">E-Mail ändern</span>
             </button>
         </div>
@@ -245,22 +240,22 @@
             <div>
                 <label class="block text-sm mb-1" data-i18n="settings.currentPassword">Aktuelles Passwort</label>
                 <input type="password" id="field-current-password" autocomplete="current-password"
-                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
             </div>
             <div>
                 <label class="block text-sm mb-1" data-i18n="settings.newPassword">Neues Passwort</label>
                 <input type="password" id="field-new-password" autocomplete="new-password" minlength="8"
-                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 <p class="text-xs text-slate-400 mt-1" data-i18n="settings.minChars">Mindestens 8 Zeichen</p>
             </div>
             <div>
                 <label class="block text-sm mb-1" data-i18n="settings.confirmNewPassword">Neues Passwort bestätigen</label>
                 <input type="password" id="field-new-password-confirm" autocomplete="new-password"
-                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                       class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
             </div>
             <div id="password-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="savePassword()"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">
                 <span data-i18n="settings.changePassword">Passwort ändern</span>
             </button>
         </div>
@@ -272,7 +267,7 @@
                 Bestimmt, wie Versandetiketten für neue Bestellungen gedruckt werden.
             </p>
 
-            <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
+            <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-brand hover:bg-brand-soft/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="DASHBOARD_MANUAL" class="mt-1">
                 <span>
                     <span class="font-semibold" data-i18n="settings.modeManualTitle">Manuell im Dashboard</span>
@@ -280,7 +275,7 @@
                 </span>
             </label>
 
-            <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
+            <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-brand hover:bg-brand-soft/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="INSTANT" class="mt-1">
                 <span>
                     <span class="font-semibold" data-i18n="settings.modeInstantTitle">Sofort automatisch</span>
@@ -289,7 +284,7 @@
                 </span>
             </label>
 
-            <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-red-300 hover:bg-red-50/30 cursor-pointer transition">
+            <label class="flex items-start gap-3 p-3 rounded border border-slate-200 hover:border-brand hover:bg-brand-soft/30 cursor-pointer transition">
                 <input type="radio" name="print-mode" value="INTEGRATED" class="mt-1">
                 <span>
                     <span class="font-semibold" data-i18n="settings.modeIntegratedTitle">Kombiniert (Etikett + Kommissionierzettel)</span>
@@ -300,7 +295,7 @@
 
             <div id="mode-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="savePrintMode()"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">
                 <span data-i18n="settings.savePrintMode">Druckmodus speichern</span>
             </button>
         </div>
@@ -314,28 +309,28 @@
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.weight">Gewicht (kg)</label>
                     <input type="number" step="0.001" min="0.001" id="field-default-weight"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.length">Länge (cm)</label>
                     <input type="number" step="1" min="1" id="field-default-length"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.width">Breite (cm)</label>
                     <input type="number" step="1" min="1" id="field-default-width"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="products.height">Höhe (cm)</label>
                     <input type="number" step="1" min="1" id="field-default-height"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
             </div>
 
             <div id="package-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <button onclick="saveDefaultPackage()"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                    class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">
                 <span data-i18n="settings.save">Speichern</span>
             </button>
         </div>
@@ -373,18 +368,18 @@
                 <div>
                     <label class="block text-sm mb-1" data-i18n="settings.dhlBillingNumber">Abrechnungsnummer (EKP)</label>
                     <input type="text" id="dhl-billing-number"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div></div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="settings.dhlUsername">DHL-Benutzername</label>
                     <input type="text" id="dhl-username" autocomplete="off"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="settings.dhlPassword">DHL-Passwort</label>
                     <input type="password" id="dhl-password" autocomplete="new-password"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
             </div>
 
@@ -393,34 +388,34 @@
                 <div>
                     <label class="block text-sm mb-1" data-i18n="settings.dhlSenderName">Name / Firma</label>
                     <input type="text" id="dhl-sender-name"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="settings.dhlSenderStreet">Straße und Hausnummer</label>
                     <input type="text" id="dhl-sender-street"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="settings.dhlSenderZip">PLZ</label>
                     <input type="text" id="dhl-sender-zip"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="settings.dhlSenderCity">Ort</label>
                     <input type="text" id="dhl-sender-city"
-                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                           class="w-full p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm mb-1" data-i18n="settings.dhlSenderCountry">Land (Ländercode)</label>
                     <input type="text" id="dhl-sender-country" maxlength="2" value="DE"
-                           class="w-24 p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none uppercase">
+                           class="w-24 p-2 rounded bg-white border border-slate-300 text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none uppercase">
                 </div>
             </div>
 
             <div id="dhl-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
             <div class="flex items-center gap-3">
                 <button id="dhl-connect-btn" onclick="connectDhl()"
-                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+                        class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">
                     <span data-i18n="settings.dhlConnect">DHL verbinden</span>
                 </button>
                 <button id="dhl-disconnect-btn" onclick="disconnectDhl()" hidden
@@ -497,7 +492,7 @@
 
                 const desktopLogout = document.querySelector('aside button[onclick="logout()"]');
                 const mobileLogout = document.querySelector('#mobile-menu button[onclick="logout()"]');
-                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
+                if (desktopLogout) desktopLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-deep transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
                 if (mobileLogout) mobileLogout.insertAdjacentHTML("beforebegin", '<a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> <span data-i18n="nav.admin">Admin</span> </a>');
             } catch (err) {
                 // Non-critical - sidebar profile info and the admin link just don't show.
@@ -1120,7 +1115,7 @@
             if (!r.ok) { privacyMessage("Der Download hat nicht geklappt. Bitte später erneut versuchen.", true); return; }
             const a = document.createElement("a");
             a.href = URL.createObjectURL(await r.blob());
-            a.download = "shipsync-meine-daten.zip";
+            a.download = "nettodesk-meine-daten.zip";
             document.body.appendChild(a); a.click(); a.remove();
             URL.revokeObjectURL(a.href);
         };

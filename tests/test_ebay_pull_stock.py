@@ -1,4 +1,4 @@
-"""Taking eBay's available quantities over into ShipSync (never the other way)."""
+"""Taking eBay's available quantities over into NettoDesk (never the other way)."""
 
 import uuid
 

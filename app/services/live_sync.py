@@ -1,4 +1,4 @@
-"""Keeps ShipSync up to date with eBay while the seller is using it.
+"""Keeps NettoDesk up to date with eBay while the seller is using it.
 
 One run reads, in this order: new orders, new listings (and missing pictures), then
 the available quantities. eBay is only read. Runs for one tenant never overlap

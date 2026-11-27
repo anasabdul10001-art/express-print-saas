@@ -18,7 +18,7 @@ DEFAULT_SITE_PAGES = {
     "about": {
         "title": "Über uns",
         "content": (
-            "ShipSync hilft eBay-Verkäufern, Bestellungen, Produkte und den Versand an einem Ort zu verwalten."
+            "NettoDesk hilft eBay-Verkäufern, Bestellungen, Produkte und den Versand an einem Ort zu verwalten."
         ),
     },
     "policies": {
@@ -54,7 +54,7 @@ DEFAULT_SITE_PAGES = {
     "careers": {
         "title": "Karriere",
         "content": (
-            "ShipSync wächst - aktuell haben wir keine offenen Stellen ausgeschrieben, freuen "
+            "NettoDesk wächst - aktuell haben wir keine offenen Stellen ausgeschrieben, freuen "
             "uns aber jederzeit über Initiativbewerbungen.\n\n"
             "Warum bei uns arbeiten?\n\n"
             "Direkter Einfluss auf ein Produkt, das echten eBay-Verkäufern täglich Zeit spart. "
@@ -68,7 +68,7 @@ DEFAULT_SITE_PAGES = {
         "content": (
             "Hier findest du die schnellsten Wege zu Antworten:\n\n"
             "Häufige Fragen (/faq.html) - Antworten auf die häufigsten Fragen.\n\n"
-            "Systemstatus (/status.html) - aktueller Betriebsstatus von ShipSync.\n\n"
+            "Systemstatus (/status.html) - aktueller Betriebsstatus von NettoDesk.\n\n"
             "Änderungsprotokoll (/changelog.html) - was sich zuletzt geändert hat.\n\n"
             "Direkter E-Mail-Support: {{operator_email}} - für alles, was hier nicht "
             "beantwortet wird."
@@ -88,11 +88,11 @@ DEFAULT_SITE_PAGES = {
     "integrations": {
         "title": "Integrationen",
         "content": (
-            "ShipSync verbindet sich direkt mit den Werkzeugen, die du als eBay-Verkäufer "
+            "NettoDesk verbindet sich direkt mit den Werkzeugen, die du als eBay-Verkäufer "
             "bereits nutzt.\n\n"
             "Verfügbar: eBay (automatische Synchronisierung deiner Bestellungen über die "
-            "offizielle eBay-API), DHL (Versandetiketten direkt aus ShipSync), lokale "
-            "Etikettendrucker über den ShipSync-Print-Agent.\n\n"
+            "offizielle eBay-API), DHL (Versandetiketten direkt aus NettoDesk), lokale "
+            "Etikettendrucker über den NettoDesk-Print-Agent.\n\n"
             "Geplant: weitere Marktplatz- und Buchhaltungs-Integrationen. Wünsche? Schreib uns "
             "an {{operator_email}}."
         ),
@@ -105,8 +105,8 @@ DEFAULT_SITE_PAGES = {
         "title": "Partnerprogramm",
         "content": (
             "Du berätst eBay-Verkäufer oder betreibst eine Agentur im E-Commerce-Umfeld? Als "
-            "ShipSync-Partner empfiehlst du unseren Dienst weiter und profitierst davon.\n\n"
-            "Wie es funktioniert: Du empfiehlst ShipSync an deine Kunden oder dein Netzwerk, "
+            "NettoDesk-Partner empfiehlst du unseren Dienst weiter und profitierst davon.\n\n"
+            "Wie es funktioniert: Du empfiehlst NettoDesk an deine Kunden oder dein Netzwerk, "
             "wir stimmen die Konditionen individuell mit dir ab.\n\n"
             "Interesse? Melde dich unter {{operator_email}} - wir melden uns zeitnah "
             "zurück."

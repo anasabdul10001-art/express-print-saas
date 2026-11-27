@@ -1,7 +1,7 @@
 """
-Affiliate/referral program. An affiliate can be an existing ShipSync tenant
+Affiliate/referral program. An affiliate can be an existing NettoDesk tenant
 referring other sellers, or a completely external marketer/influencer with
-no ShipSync account at all (tenant_id stays null) - both share the same
+no NettoDesk account at all (tenant_id stays null) - both share the same
 referral_code + commission mechanism, per the product decision to support
 either kind under one system.
 
@@ -28,7 +28,7 @@ class Affiliate(Base):
     __tablename__ = "affiliates"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    # Null when this affiliate has no ShipSync account of their own (a pure
+    # Null when this affiliate has no NettoDesk account of their own (a pure
     # external marketer) - set when an existing tenant is also an affiliate.
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True)
 
@@ -38,7 +38,7 @@ class Affiliate(Base):
     # Null until the affiliate sets a password (via the emailed setup link -
     # see app/routers/affiliate_portal.py). Deliberately separate from
     # User.password_hash even when tenant_id is set: an affiliate's portal
-    # login is independent of any ShipSync tenant login they might also have.
+    # login is independent of any NettoDesk tenant login they might also have.
     # An affiliate with no email at all can never set one and simply has no
     # self-service portal access - the admin panel remains the only way to
     # manage them.

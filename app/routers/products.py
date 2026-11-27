@@ -64,7 +64,7 @@ def bulk_price(
     db: Session = Depends(get_db),
 ):
     """Raises/lowers the selling price of many products at once. Only changes
-    the price in ShipSync - nothing is sent to eBay. dry_run=True only previews."""
+    the price in NettoDesk - nothing is sent to eBay. dry_run=True only previews."""
     if payload.value == 0:
         raise HTTPException(status_code=400, detail="Der Wert darf nicht 0 sein.")
     query = db.query(Product).filter(Product.tenant_id == current_user.tenant_id, Product.active.is_(True))

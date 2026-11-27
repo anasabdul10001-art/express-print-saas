@@ -31,7 +31,7 @@ def send_password_reset_email(to_email: str, reset_link: str) -> None:
         json={
             "from": settings.resend_from_email,
             "to": [to_email],
-            "subject": "Passwort zurücksetzen — ShipSync",
+            "subject": "Passwort zurücksetzen — NettoDesk",
             "html": (
                 f"<p>Klicke auf den folgenden Link, um dein Passwort zurückzusetzen:</p>"
                 f'<p><a href="{reset_link}">{reset_link}</a></p>'
@@ -58,7 +58,7 @@ def send_affiliate_password_email(to_email: str, set_password_link: str, is_init
         raise RuntimeError("RESEND_API_KEY ist nicht konfiguriert.")
 
     intro = (
-        "du wurdest als ShipSync-Partner (Affiliate) angelegt. Klicke auf den folgenden Link, "
+        "du wurdest als NettoDesk-Partner (Affiliate) angelegt. Klicke auf den folgenden Link, "
         "um dein Passwort für das Partner-Portal festzulegen:"
         if is_initial_setup
         else "klicke auf den folgenden Link, um dein Passwort für das Partner-Portal zurückzusetzen:"
@@ -73,7 +73,7 @@ def send_affiliate_password_email(to_email: str, set_password_link: str, is_init
         json={
             "from": settings.resend_from_email,
             "to": [to_email],
-            "subject": "Partner-Portal — ShipSync",
+            "subject": "Partner-Portal — NettoDesk",
             "html": (
                 f"<p>{intro}</p>"
                 f'<p><a href="{set_password_link}">{set_password_link}</a></p>'
@@ -97,7 +97,7 @@ def send_invoice_email(to_email: str, invoice_number: str, pdf_bytes: bytes, com
     if not settings.resend_api_key:
         raise RuntimeError("RESEND_API_KEY ist nicht konfiguriert.")
 
-    sender_name = company_name or "ShipSync"
+    sender_name = company_name or "NettoDesk"
 
     response = httpx.post(
         RESEND_API_URL,
