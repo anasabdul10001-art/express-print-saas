@@ -12,7 +12,7 @@ from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.stock_movement import StockMovement
 from app.models.user import User
-from app.services import order_money
+from app.services import ebay_quantity_push, order_money
 from app.schemas.order import OrderCreate, OrderItemOut, OrderOut, OrderSummaryOut, ProfitHistoryPoint, RecipientAddressOut, RefundUpdate
 router = APIRouter(prefix="/orders", tags=["orders"])
 def _serialize_order(order: Order) -> OrderOut:
@@ -263,13 +263,17 @@ def create_order(
         ))
 
     db.commit()
+    sent = ebay_quantity_push.send(db, current_user.tenant_id, [
+        ebay_quantity_push.add(item_in.product_id, -item_in.quantity) for item_in in payload.items])
     order = (
         db.query(Order)
         .options(joinedload(Order.items).joinedload(OrderItem.product))
         .filter(Order.id == order.id)
         .first()
     )
-    return _serialize_order(order)
+    out = _serialize_order(order)
+    out.ebay_quantity_results = sent
+    return out
 
 
 @router.patch("/{order_id}/refund", response_model=OrderOut)
@@ -292,6 +296,7 @@ def update_refund(
     for field in payload.model_fields_set:
         setattr(order, field, getattr(payload, field))
     # Marking the item as back (and resellable) puts it on the shelf again; unmarking takes it off.
+    stock_changes = []
     now_returned = bool(order.item_returned_to_stock)
     if now_returned != was_returned:
         sign = 1 if now_returned else -1
@@ -299,10 +304,14 @@ def update_refund(
             if item.product is None:
                 continue
             item.product.stock_quantity = max(0, item.product.stock_quantity + sign * item.quantity)
+            stock_changes.append(ebay_quantity_push.add(item.product.id, sign * item.quantity))
             db.add(StockMovement(
                 tenant_id=order.tenant_id, product_id=item.product.id, quantity_change=sign * item.quantity,
                 reason="manual_correction", reference=f"return {order.external_order_ref or order.id}",
             ))
     db.commit()
+    sent = ebay_quantity_push.send(db, current_user.tenant_id, stock_changes)
     db.refresh(order)
-    return _serialize_order(order)
+    out = _serialize_order(order)
+    out.ebay_quantity_results = sent
+    return out

@@ -474,7 +474,8 @@
                 }
 
                 closeForm();
-                showBanner(t("orders.created"), false);
+                const note = ebayQuantityNote(data.ebay_quantity_results);
+                showBanner(t("orders.created") + (note ? " " + note.text : ""), note ? note.isError : false);
                 loadOrders();
             } catch (err) {
                 errorBox.innerText = t("orders.serverErrorRetry");
@@ -497,7 +498,8 @@
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
                 if (!response.ok) { showBanner(data.detail || "Fehler", true); return; }
-                showBanner("Rückgabe gespeichert.", false);
+                const note = ebayQuantityNote(data.ebay_quantity_results);
+                showBanner("Rückgabe gespeichert." + (note ? " " + note.text : ""), note ? note.isError : false);
                 loadOrders();
             } catch (err) { showBanner("Serverfehler, bitte erneut versuchen.", true); }
         }

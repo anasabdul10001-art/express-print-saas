@@ -8,6 +8,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel, Field, ValidationError, model_validator
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from app.core.errors import readable
 from app.core.deps import get_current_user, get_db
@@ -17,7 +18,7 @@ from app.models.purchase import Purchase, PurchaseLine
 from app.models.stock_movement import StockMovement
 from app.models.supplier_item import SupplierItem
 from app.models.user import User
-from app.services import document_files, invoice_ai_service, purchase_service, supplier_item_service
+from app.services import document_files, ebay_quantity_push, invoice_ai_service, purchase_service, supplier_item_service
 
 router = APIRouter(prefix="/purchases", tags=["purchases"])
 
@@ -248,9 +249,12 @@ async def book(
     db.add(purchase)
     # only a booked invoice teaches a link: every product was checked against the account above
     supplier_item_service.remember(db, tenant_id, payload.supplier, payload.supplier_items)
+    came_in = [ebay_quantity_push.add(product.id, line.quantity)
+               for product, line, _ in plan] if payload.add_to_stock else []
     db.commit()
+    sent = await run_in_threadpool(ebay_quantity_push.send, db, tenant_id, came_in)
     db.refresh(purchase)
-    return _out(purchase)
+    return {**_out(purchase), "ebay_quantity_results": sent}
 
 
 @router.get("")
@@ -286,14 +290,18 @@ def cancel(purchase_id: uuid.UUID, current_user: User = Depends(get_current_user
             raise HTTPException(status_code=409, detail=f"Die Kosten von „{line.title}“ wurden danach geändert. "
                                 "Bitte zuerst den neueren Einkauf zurücknehmen.")
         changes.append((product, line))
+    taken_out = []
     for product, line in changes:
         product.purchase_price = line.old_purchase_price
         product.supplier_shipping_cost = line.old_shipping_cost
         if purchase.added_to_stock:
             removed = min(line.quantity, product.stock_quantity)
             product.stock_quantity -= removed
+            # the whole line: eBay's own number decides what is left to take away
+            taken_out.append(ebay_quantity_push.add(product.id, -line.quantity))
             db.add(StockMovement(tenant_id=purchase.tenant_id, product_id=product.id, quantity_change=-removed,
                                  reason="manual_correction", reference=f"Einkauf zurückgenommen {purchase.invoice_number}"[:255]))
     purchase.cancelled_at = datetime.now(timezone.utc)
     db.commit()
-    return _out(purchase)
+    sent = ebay_quantity_push.send(db, current_user.tenant_id, taken_out)
+    return {**_out(purchase), "ebay_quantity_results": sent}

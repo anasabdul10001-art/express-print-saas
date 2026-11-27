@@ -322,9 +322,11 @@ def variation_quantities(
                 if not match:
                     continue
                 item_id = match["item_id"]
-            ebay_listing_service.revise_variation_quantities(account, db, item_id, payload.available)
-            product.stock_quantity = sum(payload.available)
-            db.commit()
+            with live_sync.lock_for(current_user.tenant_id):
+                ebay_listing_service.revise_variation_quantities(account, db, item_id, payload.available)
+                product.stock_quantity = sum(payload.available)
+                db.commit()
+                live_sync.postpone(current_user.tenant_id)
             return {"item_id": item_id, "stock_quantity": product.stock_quantity}
         except (ValueError, httpx.HTTPError) as exc:
             errors.append(str(exc))

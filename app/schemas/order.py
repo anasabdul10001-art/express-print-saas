@@ -64,6 +64,8 @@ class OrderOut(BaseModel):
     refund_amount: Decimal | None = None
     item_returned_to_stock: bool = False
     return_shipping_cost: Decimal | None = None
+    ebay_quantity_results: list[dict] | None = None
+
     class Config:
         from_attributes = True
 class OrderSummaryOut(BaseModel):

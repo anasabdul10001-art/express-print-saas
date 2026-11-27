@@ -1,3 +1,19 @@
+// What happened at eBay after a quantity change, as {text, isError}, or null.
+window.ebayQuantityNote = function (results) {
+    if (!results || !results.length) return null;
+    const reason = {
+        failed: r => `eBay hat die Menge NICHT übernommen: ${r.error || "unbekannter Fehler"}`,
+        ambiguous: () => "mehrere eBay-Angebote gehören dazu, bitte die Menge bei eBay ändern",
+        no_listing: () => "kein aktives eBay-Angebot, nur in ShipSync gespeichert",
+    };
+    const done = results.filter(r => r.status === "ok").map(r => `bei eBay jetzt ${r.quantity}: ${r.title}`);
+    const open = results.filter(r => reason[r.status]).map(r => `${r.title}: ${reason[r.status](r)}`);
+    if (results.some(r => r.status === "failed"))
+        open.push("Ohne Änderung bei eBay setzt die Synchronisierung wieder die eBay-Menge ein.");
+    const text = done.concat(open).join(" | ");
+    return text ? { text, isError: results.some(r => r.status === "failed" || r.status === "ambiguous") } : null;
+};
+
 // Included on every page under app/. Lets the page content use the whole
 // browser width and makes the desktop sidebar collapsible to an icon rail.
 // The choice is remembered in this browser.

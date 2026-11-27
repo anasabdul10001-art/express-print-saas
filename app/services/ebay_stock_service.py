@@ -13,10 +13,9 @@ from app.models.stock_movement import StockMovement
 REASON = "ebay_stock"
 
 
-def compare(db: Session, tenant_id, listings: list[dict]) -> dict:
-    """Matches listings to products (listing SKU, else item number) and returns the
-    products whose quantity differs. A product matched by more than one listing is
-    only reported: it is unknown whether those listings share the same goods."""
+def match(db: Session, tenant_id, listings: list[dict]) -> tuple[list, dict]:
+    """Matches listings to products (listing SKU, else item number). Returns all
+    offered products and {product id: (product, its listings)}."""
     products = db.query(Product).filter(
         Product.tenant_id == tenant_id, Product.active.is_(True),
         Product.unlisted.is_(False), Product.merged_into.is_(None)).all()
@@ -27,6 +26,14 @@ def compare(db: Session, tenant_id, listings: list[dict]) -> dict:
         product = by_sku.get(listing["sku"] or "") or by_sku.get(listing["item_id"])
         if product:
             found.setdefault(product.id, (product, []))[1].append(listing)
+    return products, found
+
+
+def compare(db: Session, tenant_id, listings: list[dict]) -> dict:
+    """The products whose quantity differs from their listing. A product matched by
+    more than one listing is only reported: it is unknown whether those listings
+    share the same goods."""
+    products, found = match(db, tenant_id, listings)
 
     items, ambiguous, equal = [], [], 0
     for product, matches in found.values():
