@@ -127,7 +127,7 @@ window.TRANSLATIONS = {
         "login.serverError": "Server nicht erreichbar. Bitte 30s warten (Render Free Tier) und erneut versuchen.",
 
         "pricing.title": "Einfache, transparente Preise",
-        "pricing.subtitle": "Wähle den Plan, der zu deinem Versandvolumen passt. Jederzeit kündbar.",
+        "pricing.subtitle": "Wähle den Plan, der zu deinem Versandvolumen passt. Monatlich kündbar.",
         "pricing.loading": "Preise werden geladen...",
         "pricing.loadError": "Preise konnten nicht geladen werden. Bitte Seite neu laden.",
         "pricing.empty": "Aktuell sind keine Preispläne verfügbar.",
@@ -894,7 +894,7 @@ window.TRANSLATIONS = {
         "login.serverError": "Server unreachable. Please wait 30s (Render free tier) and try again.",
 
         "pricing.title": "Simple, transparent pricing",
-        "pricing.subtitle": "Choose the plan that fits your shipping volume. Cancel anytime.",
+        "pricing.subtitle": "Choose the plan that fits your shipping volume. Cancel monthly.",
         "pricing.loading": "Loading prices...",
         "pricing.loadError": "Prices could not be loaded. Please reload the page.",
         "pricing.empty": "No pricing plans are available right now.",
