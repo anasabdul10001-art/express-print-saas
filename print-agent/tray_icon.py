@@ -33,7 +33,7 @@ def run_tray_app(config: dict) -> None:
         state["status_text"] = text
         is_ok = text.startswith("Verbunden") or text.startswith("Drucke")
         icon.icon = ICON_OK if is_ok else ICON_WARN
-        icon.title = f"ShipSync Agent - {text}"
+        icon.title = f"NettoDesk Agent - {text}"
         # pystray rebuilds the menu lazily from these callables, so no
         # explicit "refresh" call is needed for the status line below.
 
@@ -78,7 +78,7 @@ def run_tray_app(config: dict) -> None:
     icon = pystray.Icon(
         "ExpressPrintAgent",
         ICON_OK,
-        "ShipSync Agent",
+        "NettoDesk Agent",
         menu=pystray.Menu(
             pystray.MenuItem(status_menu_text, None, enabled=False),
             pystray.Menu.SEPARATOR,

@@ -40,7 +40,7 @@
         });
         document.querySelectorAll("[data-lang-btn]").forEach((btn) => {
             const active = btn.getAttribute("data-lang-btn") === currentLang;
-            btn.classList.toggle("text-red-600", active);
+            btn.classList.toggle("text-brand-deep", active);
             btn.classList.toggle("text-slate-400", !active);
         });
 

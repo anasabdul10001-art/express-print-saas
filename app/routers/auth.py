@@ -53,7 +53,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
 
     if not payload.business_confirmed:
-        raise HTTPException(status_code=400, detail="ShipSync wird nur Unternehmern (§ 14 BGB) angeboten.")
+        raise HTTPException(status_code=400, detail="NettoDesk wird nur Unternehmern (§ 14 BGB) angeboten.")
     if not payload.terms_accepted:
         raise HTTPException(status_code=400, detail="Bitte die AGB und den Vertrag zur Auftragsverarbeitung annehmen.")
 

@@ -37,7 +37,7 @@ def test_register_requires_both_confirmations(client, missing):
             "business_confirmed": True, "terms_accepted": True}
     del body[missing]
     assert client.post("/auth/register", json=body).status_code == 422
-    # declined is refused too: ShipSync is for businesses and needs the accepted terms
+    # declined is refused too: NettoDesk is for businesses and needs the accepted terms
     assert client.post("/auth/register", json={**body, missing: False}).status_code == 400
 
 

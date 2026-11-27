@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Anlage EKS — ShipSync</title>
+    <title>Anlage EKS — NettoDesk</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/nettodesk.js"></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
 </head>
@@ -12,7 +13,7 @@
 <main class="max-w-6xl mx-auto p-4 sm:p-6 space-y-4 text-sm">
     <div class="flex items-center justify-between gap-2">
         <h1 class="text-2xl font-bold">Anlage EKS (Jobcenter)</h1>
-        <a href="accounting.html" class="text-slate-500 hover:text-red-600">← Buchhaltung</a>
+        <a href="accounting.html" class="text-slate-500 hover:text-brand-deep">← Buchhaltung</a>
     </div>
     <div id="banner" class="hidden p-3 rounded"></div>
 
@@ -64,7 +65,7 @@
                     <label class="block">Rechtsform<input data-f="legal_form" autocomplete="off" placeholder="" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
                 </div>
             </fieldset>
-            <label class="flex items-start gap-2"><input id="consent" type="checkbox" class="mt-1"> <span>Ich möchte, dass ShipSync diese Angaben speichert, um das Formular auszufüllen.</span></label>
+            <label class="flex items-start gap-2"><input id="consent" type="checkbox" class="mt-1"> <span>Ich möchte, dass NettoDesk diese Angaben speichert, um das Formular auszufüllen.</span></label>
             <div class="flex flex-wrap gap-2">
                 <button type="button" id="profile-save" class="bg-slate-900 text-white font-semibold px-4 py-2 rounded">Speichern</button>
                 <button type="button" id="profile-delete" class="text-red-600 border border-red-300 rounded px-4 py-2">Gespeicherte Angaben löschen</button>
@@ -73,12 +74,12 @@
         </div>
     </details>
 
-    <div class="bg-white border-2 border-red-500 rounded-xl p-4 space-y-2">
+    <div class="bg-white border-2 border-brand rounded-xl p-4 space-y-2">
         <div class="font-bold">Offizielles Formular ausgefüllt herunterladen (höchstens 6 Monate)</div>
         <label class="flex items-start gap-2"><input id="final" type="checkbox" class="mt-1"> <span>Als <b>abschließende</b> Erklärung ankreuzen (nur wenn der Zeitraum vorbei ist)</span></label>
         <label class="flex items-start gap-2"><input id="sums" type="checkbox" checked class="mt-1"> <span>Summen und Gewinn eintragen. <b>Ergänzt du danach selbst Beträge, musst du die Summen und den Gewinn im PDF ändern</b> oder hier abwählen und selbst rechnen.</span></label>
         <label class="flex items-start gap-2"><input id="personal" type="checkbox" checked class="mt-1"> <span>Gespeicherte persönliche Angaben (A, B, D) mit eintragen</span></label>
-        <button type="button" id="pdf" class="bg-red-600 text-white font-bold px-4 py-2 rounded disabled:opacity-50">Anlage EKS als PDF</button>
+        <button type="button" id="pdf" class="bg-brand text-ink font-bold px-4 py-2 rounded disabled:opacity-50">Anlage EKS als PDF</button>
         <p class="text-slate-600">Eingetragen werden Zeitraum, Monate, Tabellen A und B und die Anmerkungen. Abschnitte A, B und D nur, wenn du sie oben gespeichert hast. Die übrigen Fragen, Tabelle C, leere Zeilen und die Unterschriften füllst du selbst aus. Vor dem Abgeben alles mit Kontoauszug und Belegen vergleichen.</p>
         <div id="pdf-note" class="hidden p-3 rounded bg-amber-100 text-amber-900"></div>
     </div>

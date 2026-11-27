@@ -155,7 +155,7 @@ class PushPricesIn(BaseModel):
     product_ids: list[str] | None = None  # None = all active products
     dry_run: bool = True
     include_price: bool = True
-    include_quantity: bool = False  # also send the ShipSync stock as the eBay available quantity
+    include_quantity: bool = False  # also send the NettoDesk stock as the eBay available quantity
 
 
 @router.post("/push-prices")
@@ -164,7 +164,7 @@ def push_prices(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Sends the ShipSync selling price of products to their eBay listings
+    """Sends the NettoDesk selling price of products to their eBay listings
     (matched by SKU, else item number). dry_run=True only compares and
     changes nothing on eBay. Only listings whose price differs are touched."""
     accounts = _connected_accounts(current_user, db).all()
@@ -260,7 +260,7 @@ def orders_raw(
     db: Session = Depends(get_db),
 ):
     """Read-only diagnostic: the money fields eBay returns per order (prices, discounts,
-    shipping, refunds, payment summary), to reconcile ShipSync's accounting with eBay."""
+    shipping, refunds, payment summary), to reconcile NettoDesk's accounting with eBay."""
     accounts = _connected_accounts(current_user, db).all()
     if not accounts:
         raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
@@ -304,7 +304,7 @@ def variation_quantities(
     db: Session = Depends(get_db),
 ):
     """Sets the per-variation (e.g. colour) quantities of a product's eBay listing and stores
-    their sum as the product's stock in ShipSync."""
+    their sum as the product's stock in NettoDesk."""
     if any(q < 0 for q in payload.available):
         raise HTTPException(status_code=400, detail="Mengen dürfen nicht negativ sein.")
     product = db.query(Product).filter(Product.id == payload.product_id, Product.tenant_id == current_user.tenant_id).first()
@@ -416,7 +416,7 @@ def pull_stock(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Takes eBay's available quantities over into ShipSync. Nothing is changed
+    """Takes eBay's available quantities over into NettoDesk. Nothing is changed
     on eBay. New orders are imported first: eBay has already subtracted them, so
     importing them afterwards would subtract them a second time. If anything
     cannot be read from eBay, no quantity is taken over."""

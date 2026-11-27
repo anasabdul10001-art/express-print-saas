@@ -1,6 +1,6 @@
-"""Takes the available quantities of the active eBay listings over into ShipSync.
+"""Takes the available quantities of the active eBay listings over into NettoDesk.
 
-One direction only: eBay is read, ShipSync is written. The import sets a
+One direction only: eBay is read, NettoDesk is written. The import sets a
 product's stock once and never touches it again, so a restock done on eBay
 would otherwise never arrive here.
 """

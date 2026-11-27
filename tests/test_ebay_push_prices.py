@@ -1,4 +1,4 @@
-"""Push ShipSync selling prices to eBay (Trading API ReviseInventoryStatus)."""
+"""Push NettoDesk selling prices to eBay (Trading API ReviseInventoryStatus)."""
 
 import uuid
 

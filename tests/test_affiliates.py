@@ -28,7 +28,7 @@ def _make_superadmin(headers, client):
 
 def _set_billing_details(client, admin_headers):
     response = client.patch("/admin/settings", headers=admin_headers, json={
-        "company_legal_name": "ShipSync Test GmbH",
+        "company_legal_name": "NettoDesk Test GmbH",
         "company_address": "Teststraße 1, 10115 Berlin",
         "company_tax_id": "DE123456789",
         "company_email": "billing@example.com",

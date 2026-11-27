@@ -92,7 +92,7 @@ def export(request: Request, user: User = Depends(_owner), db: Session = Depends
     except eks_profile_service.UnreadableProfile:
         data["eks_angaben"] = "nicht lesbar"
     text = json.dumps(data, ensure_ascii=False, indent=2, default=str)
-    note = ("Deine in ShipSync gespeicherten Daten (konto.json), Stand "
+    note = ("Deine in NettoDesk gespeicherten Daten (konto.json), Stand "
             f"{datetime.now(timezone.utc):%d.%m.%Y %H:%M} UTC.\r\n"
             "Nicht enthalten: Passwörter, Zugangsschlüssel und Dateien.\r\n"
             "Rechnungen, Lieferantenrechnungen und Belege lädst du unter Buchhaltung > EÜR > "
@@ -102,5 +102,5 @@ def export(request: Request, user: User = Depends(_owner), db: Session = Depends
         archive.writestr("konto.json", text)
         archive.writestr("LIESMICH.txt", "﻿" + note)
     return Response(content=buffer.getvalue(), media_type="application/zip", headers={
-        "Content-Disposition": 'attachment; filename="shipsync-meine-daten.zip"',
+        "Content-Disposition": 'attachment; filename="nettodesk-meine-daten.zip"',
         "Cache-Control": "no-store"})

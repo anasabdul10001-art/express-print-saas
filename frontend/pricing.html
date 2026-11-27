@@ -3,37 +3,36 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23E11D48'/%3E%3Cpath d='M9 21V11h6a4 4 0 0 1 0 8h-3' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-    <title>Preise — ShipSync</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <title>Preise — NettoDesk</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="site-logo.js"></script>
+    <script src="assets/nettodesk.js"></script>
     <script src="cookie-notice.js"></script>
     <script src="translations.js"></script>
     <script src="i18n.js"></script>
+    <style>[data-lang-btn].text-brand-deep { color: #A8431F; }</style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
-<div id="signup-closed" class="hidden bg-amber-50 border-b border-amber-200 text-amber-900 text-sm text-center p-2">Die Registrierung ist derzeit geschlossen. ShipSync richtet sich ausschließlich an Unternehmer. · Sign-up is currently closed.</div>
+<body class="bg-cream text-ink min-h-screen">
+<div id="signup-closed" class="hidden bg-amber-50 border-b border-amber-200 text-amber-900 text-sm text-center p-2">Die Registrierung ist derzeit geschlossen. NettoDesk richtet sich ausschließlich an Unternehmer. · Sign-up is currently closed.</div>
 <script>
     fetch((["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com") + "/auth/registration-status")
         .then(r => r.json()).then(s => { if (!s.open) document.getElementById("signup-closed").classList.remove("hidden"); })
         .catch(() => {});
 </script>
-    <nav class="bg-white border-b border-slate-200 px-6 py-4">
+    <nav class="bg-white border-b border-line px-4 sm:px-6 py-4">
         <div class="max-w-6xl mx-auto flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-2">
-                <svg class="brand-logo" width="30" height="30" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="9" fill="#E11D48"/>
-                    <path d="M9 21V11h6a4 4 0 0 1 0 8h-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <img src="assets/nettodesk-logo.svg" alt="NettoDesk" class="h-7 sm:h-9 w-auto" />
             </a>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 sm:gap-4">
                 <div class="flex items-center gap-1 text-xs font-semibold">
                     <button type="button" data-lang-btn="de" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">DE</button>
                     <span class="text-slate-300">|</span>
                     <button type="button" data-lang-btn="en" class="px-1.5 py-1 rounded hover:bg-slate-100 transition">EN</button>
                 </div>
-                <a href="login.html" class="text-slate-600 hover:text-red-600 text-sm font-semibold transition" data-i18n="nav.login">Anmelden</a>
-                <a href="register.html" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition" data-i18n="nav.registerCta">Kostenlos starten</a>
+                <a href="login.html" class="text-slate-600 hover:text-brand-deep text-sm font-semibold transition" data-i18n="nav.login">Anmelden</a>
+                <a href="register.html" class="hidden sm:inline-block bg-brand hover:bg-brand-hover text-ink text-sm font-bold py-2 px-4 rounded-lg transition" data-i18n="nav.registerCta">Kostenlos starten</a>
             </div>
         </div>
     </nav>
@@ -52,7 +51,7 @@
             Aktuell sind keine Preispläne verfügbar.
         </div>
 
-        <div id="plans-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"></div>
+        <div id="plans-grid" class="hidden flex flex-wrap justify-center items-stretch gap-6"></div>
 
         <div id="payment-methods-section" class="hidden mt-16 max-w-2xl mx-auto">
             <h2 class="text-xl font-bold text-center" data-i18n="pricing.paymentMethodsTitle">Zahlungsarten</h2>
@@ -61,7 +60,7 @@
 
         <p class="text-center text-slate-400 text-xs mt-14">
             <span data-i18n="pricing.footNote">Angebot nur für Unternehmer. Alle Preise ohne Umsatzsteuer gemäß § 19 UStG. Fragen?</span>
-            <a href="impressum.html" class="text-red-600 font-semibold" data-i18n="pricing.contactUs">Kontaktiere uns</a>.
+            <a href="impressum.html" class="text-brand-deep font-semibold" data-i18n="pricing.contactUs">Kontaktiere uns</a>.
         </p>
     </main>
 
@@ -83,7 +82,7 @@
             const text = value === null || value === undefined ? `${t("pricing.unlimited")} ${label}` : `${value} ${label}`;
             return `
                 <li class="flex items-start gap-3">
-                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xs">✓</span>
+                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-brand-soft text-brand-deep flex items-center justify-center text-xs">✓</span>
                     <span class="text-sm text-slate-600">${text}</span>
                 </li>`;
         }
@@ -91,7 +90,7 @@
         function featureLine(feature) {
             return `
                 <li class="flex items-start gap-3">
-                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xs">✓</span>
+                    <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-brand-soft text-brand-deep flex items-center justify-center text-xs">✓</span>
                     <span class="text-sm text-slate-600">${feature}</span>
                 </li>`;
         }
@@ -107,12 +106,12 @@
 
             const highlight = plan.is_recommended;
             const cardClasses = highlight
-                ? "border-2 border-red-600 shadow-lg relative"
-                : "border border-slate-200 shadow-sm";
+                ? "border-2 border-brand shadow-lg relative"
+                : "border border-line shadow-sm";
 
             return `
-                <div class="bg-white rounded-2xl p-8 flex flex-col ${cardClasses}">
-                    ${highlight ? `<span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full">${t("pricing.recommended")}</span>` : ""}
+                <div class="w-full sm:w-80 bg-white rounded-3xl p-8 flex flex-col ${cardClasses}">
+                    ${highlight ? `<span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-ink text-white text-xs font-semibold px-3 py-1 rounded-full">${t("pricing.recommended")}</span>` : ""}
                     <h3 class="text-lg font-bold">${plan.name}</h3>
                     <p class="text-slate-500 text-sm mt-1 min-h-[2.5rem]">${plan.description || ""}</p>
                     <div class="mt-4 mb-2">
@@ -132,7 +131,7 @@
         // redirect) subscribe directly via Stripe instead of registering
         // again; a logged-out visitor gets the normal signup CTA.
         function planCta(plan, highlight) {
-            const ctaClasses = `mt-8 block text-center font-semibold py-2.5 rounded-lg transition ${highlight ? "bg-red-600 hover:bg-red-700 text-white shadow-sm shadow-red-600/20" : "bg-slate-100 hover:bg-slate-200 text-slate-900"}`;
+            const ctaClasses = `mt-8 block text-center font-semibold py-2.5 rounded-lg transition ${highlight ? "bg-brand hover:bg-brand-hover text-ink" : "bg-cream border border-line hover:border-brand text-ink"}`;
             const isLoggedIn = !!localStorage.getItem("access_token");
 
             if (!isLoggedIn) {

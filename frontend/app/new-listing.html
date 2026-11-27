@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Neues eBay-Angebot — ShipSync</title>
+    <title>Neues eBay-Angebot — NettoDesk</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/nettodesk.js"></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
 </head>
@@ -12,7 +13,7 @@
 <main class="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">Neues eBay-Angebot</h1>
-        <a href="products.html" class="text-sm text-slate-500 hover:text-red-600">← Produkte</a>
+        <a href="products.html" class="text-sm text-slate-500 hover:text-brand-deep">← Produkte</a>
     </div>
     <p class="text-sm text-slate-500">„Prüfen“ lässt eBay das Angebot kontrollieren, ohne es einzustellen. Eingestellt wird erst nach „Veröffentlichen“ und deiner Bestätigung. Varianten, GPSR- und WEEE-Angaben werden noch nicht unterstützt.</p>
 
@@ -35,7 +36,7 @@
         <label class="block sm:col-span-2">Geplanter Start (optional, deine Ortszeit) <input id="schedule_at" type="datetime-local" class="mt-1 w-full p-2 border border-slate-300 rounded"></label>
         <div class="sm:col-span-2 flex flex-wrap gap-2">
             <button type="button" id="verify" class="bg-white border border-slate-300 font-semibold px-4 py-2 rounded">Prüfen (stellt nichts ein)</button>
-            <button type="button" id="publish" class="bg-red-600 text-white font-semibold px-4 py-2 rounded">Veröffentlichen…</button>
+            <button type="button" id="publish" class="bg-brand text-ink font-semibold px-4 py-2 rounded">Veröffentlichen…</button>
         </div>
     </form>
     <div id="result" class="space-y-2 text-sm"></div>

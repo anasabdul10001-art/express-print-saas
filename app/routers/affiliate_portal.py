@@ -1,6 +1,6 @@
 """
 Self-service portal for affiliates (see app/models/affiliate.py) - lets an
-affiliate log in on their own, independent of any ShipSync tenant login they
+affiliate log in on their own, independent of any NettoDesk tenant login they
 might also have, and see their own referral link, balance, and history
 without going through the admin panel.
 

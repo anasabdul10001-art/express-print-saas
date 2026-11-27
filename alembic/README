@@ -2,7 +2,7 @@ Generic single-database configuration.
 
 ---
 
-Added for ShipSync (see PR that introduced this file for context):
+Added for NettoDesk (see PR that introduced this file for context):
 
 This is NEW infrastructure, ready for the *next* schema change - it does
 NOT yet replace how the app actually migrates its schema today. Right now,

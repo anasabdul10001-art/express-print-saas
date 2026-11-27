@@ -134,7 +134,7 @@ def ustva(
     # Nothing recorded is not the same as nothing to report: a zero must not look finished.
     has_figures = figures is not None and bool(figures.ebay_amount or figures.labels_vat)
     if not (items or has_ebay or has_figures or data["sold"] or data["refunded"] or data["manual_refunds"]):
-        open_points.append("Für diesen Zeitraum sind in ShipSync keine Daten erfasst. Eine Null heißt hier nicht, "
+        open_points.append("Für diesen Zeitraum sind in NettoDesk keine Daten erfasst. Eine Null heißt hier nicht, "
                            "dass nichts zu melden ist.")
 
     rows = svc.compute(regular=regular, sales_gross=data["net_gross"], sums=sums, input_vat=input_vat,

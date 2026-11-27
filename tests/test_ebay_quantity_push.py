@@ -1,4 +1,4 @@
-"""A quantity changed in ShipSync reaches the eBay listing. eBay is faked."""
+"""A quantity changed in NettoDesk reaches the eBay listing. eBay is faked."""
 
 import uuid
 
@@ -68,7 +68,7 @@ def test_an_old_page_without_stock_seen_sends_nothing(shop, client):
 
 def test_restock_adds_to_what_ebay_has_now(shop, client):
     headers, _, ids, ebay = shop
-    ebay["available"]["111"] = 8  # two sold, not yet read by ShipSync
+    ebay["available"]["111"] = 8  # two sold, not yet read by NettoDesk
     body = client.post(f"/products/{ids['listed']}/restock", headers=headers, json={"quantity": 5}).json()
     assert ebay["sent"] == [("111", 13)] and body["stock_quantity"] == 13
 
