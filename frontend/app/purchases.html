@@ -312,10 +312,11 @@ $("book").onclick = async () => {
         const form = new FormData();
         form.append("data", JSON.stringify(collect()));
         form.append("file", file);
-        await request("/purchases", { method: "POST", body: form });
+        const booked = await request("/purchases", { method: "POST", body: form });
         $("form").reset(); $("lines").innerHTML = ""; clearAi(); dirty();
         await loadProducts(); addLine(); await loadList(); await loadSaved();
-        banner("Einkauf gebucht.", false);
+        const note = ebayQuantityNote(booked.ebay_quantity_results);
+        banner("Einkauf gebucht." + (note ? " " + note.text : ""), note ? note.isError : false);
     } catch (e) { banner(e.message, true); }
     $("book").disabled = false;
 };
@@ -330,7 +331,12 @@ async function download(id) {
 }
 async function cancelPurchase(id) {
     if (!confirm("Diesen Einkauf zurücknehmen? Die alten Einkaufspreise werden wiederhergestellt. Die Rechnung bleibt als zurückgenommen gespeichert.")) return;
-    try { await request(`/purchases/${id}/cancel`, { method: "POST" }); await loadProducts(); await loadList(); banner("Einkauf zurückgenommen.", false); }
+    try {
+        const undone = await request(`/purchases/${id}/cancel`, { method: "POST" });
+        await loadProducts(); await loadList();
+        const note = ebayQuantityNote(undone.ebay_quantity_results);
+        banner("Einkauf zurückgenommen." + (note ? " " + note.text : ""), note ? note.isError : false);
+    }
     catch (e) { banner(e.message, true); }
 }
 async function loadList() {

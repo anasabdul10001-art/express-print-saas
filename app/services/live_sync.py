@@ -34,7 +34,12 @@ def lock_for(tenant_id) -> threading.Lock:
     return _locks[str(tenant_id)]
 
 
-def _sells_elsewhere(db: Session, tenant_id) -> bool:
+def postpone(tenant_id) -> None:
+    """The next run waits a full interval from now."""
+    _last_run[str(tenant_id)] = time.monotonic()
+
+
+def sells_elsewhere(db: Session, tenant_id) -> bool:
     return any(
         db.query(model.id).filter(model.tenant_id == tenant_id, model.status == "CONNECTED").first()
         for model in (ShopifyAccount, AmazonAccount))
@@ -83,7 +88,7 @@ def _run_accounts(db: Session, tenant_id, accounts: list, result: dict) -> None:
             result["errors"].append(f"{name}: {str(exc)[:200]}")
 
     # With one account missing, goods listed on two accounts would look unambiguous.
-    if not complete or _sells_elsewhere(db, tenant_id):
+    if not complete or sells_elsewhere(db, tenant_id):
         return
     differences = ebay_stock_service.compare(db, tenant_id, listings)["items"]
     if differences:

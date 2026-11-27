@@ -697,6 +697,7 @@
             document.getElementById("field-selling").value = product ? (product.selling_price ?? "") : "";
             originalSelling = product && product.selling_price != null ? Number(product.selling_price) : null;
             document.getElementById("field-stock").value = product ? (product.stock_quantity ?? 0) : 0;
+            originalStock = product ? (product.stock_quantity ?? 0) : null;
             document.getElementById("field-weight").value = product && product.weight_kg != null ? Number(product.weight_kg) : "";
             document.getElementById("field-length").value = product ? (product.length_cm ?? "") : "";
             document.getElementById("field-width").value = product ? (product.width_cm ?? "") : "";
@@ -760,6 +761,11 @@
         }
 
         let originalSelling = null;
+        let originalStock = null;
+
+        function confirmZero() {
+            return confirm("Menge 0 wird auch an eBay gesendet. Das Angebot ist dann ausverkauft und kann von eBay beendet werden. Fortfahren?");
+        }
 
         async function pushOnePrice(productId) {
             try {
@@ -831,22 +837,32 @@
             if (raw === "") { showBanner("Bitte einen Wert eingeben.", true); return; }
             const isStock = field === "stock_quantity";
             const value = Number(raw);
+            const p = (window.__products || []).find(x => x.id === id) || {};
+            if (isStock && value === 0 && (p.stock_quantity ?? 0) !== 0 && !confirmZero()) return;
             try {
                 const response = await fetch(`${API_URL}/products/${id}`, {
-                    method: "PATCH", headers: authHeaders(true), body: JSON.stringify({ [field]: value }),
+                    method: "PATCH", headers: authHeaders(true),
+                    body: JSON.stringify(isStock ? { stock_quantity: value, stock_seen: p.stock_quantity ?? 0 } : { [field]: value }),
                 });
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
                 if (!response.ok) { showBanner(data.detail || t("products.saveFailed"), true); return; }
+                if (isStock) {
+                    const sent = data.ebay_quantity_results || [];
+                    if (sent.some(r => r.status === "failed" && String(r.error).includes("Varianten"))) { await openVariationEditor(id); return; }
+                    const note = ebayQuantityNote(sent);
+                    showBanner(note ? note.text : "Menge gespeichert.", note ? note.isError : false);
+                    loadProducts();
+                    return;
+                }
                 const push = await fetch(`${API_URL}/ebay/push-prices`, {
                     method: "POST", headers: authHeaders(true),
-                    body: JSON.stringify({ product_ids: [id], dry_run: false, include_price: !isStock, include_quantity: isStock }),
+                    body: JSON.stringify({ product_ids: [id], dry_run: false, include_price: true, include_quantity: false }),
                 });
                 const result = await push.json();
-                const what = isStock ? "Menge" : "Preis";
+                const what = "Preis";
                 if (!push.ok) showBanner(`${what} in ShipSync gespeichert, aber eBay: ` + (result.detail || "Fehler"), true);
                 else if (result.updated > 0) showBanner(`${what} in ShipSync und bei eBay geändert.`, false);
-                else if (result.failed > 0 && isStock && String(result.items[0]?.result || "").includes("Varianten")) { await openVariationEditor(id); return; }
                 else if (result.failed > 0) showBanner(`${what} in ShipSync gespeichert, eBay lehnte ab: ` + (result.items[0]?.result || result.errors[0] || ""), true);
                 else if (result.no_ebay_match > 0) showBanner(`${what} in ShipSync gespeichert – kein passendes eBay-Angebot gefunden.`, true);
                 else showBanner(`${what} gespeichert; bei eBay war er schon gleich.`, false);
@@ -898,6 +914,13 @@
                 height_cm: heightRaw === "" ? null : Number(heightRaw),
             };
 
+            if (id && originalStock !== null) {
+                // untouched: not sent, so a newer number from eBay stays
+                if (payload.stock_quantity === originalStock) delete payload.stock_quantity;
+                else if (payload.stock_quantity === 0 && !confirmZero()) return;
+                else payload.stock_seen = originalStock;
+            }
+
             try {
                 const response = await fetch(
                     id ? `${API_URL}/products/${id}` : `${API_URL}/products`,
@@ -919,7 +942,8 @@
                 }
 
                 closeForm();
-                showBanner(id ? t("products.updated") : t("products.created"), false);
+                const note = ebayQuantityNote(data.ebay_quantity_results);
+                showBanner((id ? t("products.updated") : t("products.created")) + (note ? " " + note.text : ""), note ? note.isError : false);
                 loadProducts();
                 if (id && payload.selling_price != null && payload.selling_price !== originalSelling
                     && confirm("Der Preis wurde in ShipSync geändert. Jetzt auch bei eBay ändern (sofort für Käufer sichtbar)?")) {
@@ -973,7 +997,8 @@
                     showBanner(data.detail || t("products.restockFailed"), true);
                     return;
                 }
-                showBanner(`${quantity} ${t("products.restockSuccess")} "${title}".`, false);
+                const note = ebayQuantityNote(data.ebay_quantity_results);
+                showBanner(`${quantity} ${t("products.restockSuccess")} "${title}".` + (note ? " " + note.text : ""), note ? note.isError : false);
                 loadProducts();
             } catch (err) {
                 showBanner(t("products.serverError"), true);
@@ -1125,7 +1150,8 @@
                 if (!response.ok) { showBanner(result.detail || "Verknüpfen fehlgeschlagen.", true); return; }
                 document.getElementById("link-panel").classList.add("hidden");
                 currentTab = "available";
-                showBanner("Verknüpft.", false);
+                const note = ebayQuantityNote(result.ebay_quantity_results);
+                showBanner("Verknüpft." + (note ? " " + note.text : ""), note ? note.isError : false);
                 await loadProducts();
             } catch (err) { showBanner(t("products.serverErrorRetry"), true); }
         }

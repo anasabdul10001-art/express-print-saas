@@ -32,6 +32,9 @@ class ProductUpdate(BaseModel):
     selling_price: Decimal | None = None
     active: bool | None = None
     stock_quantity: int | None = None
+    # The quantity the seller saw when editing. Only with it is a change sent to eBay,
+    # and an untouched field cannot overwrite a newer number.
+    stock_seen: int | None = None
     unlisted: bool | None = None
     acquired_on: date | None = None
     weight_kg: Decimal | None = Field(None, gt=0)
@@ -64,6 +67,8 @@ class ProductOut(BaseModel):
     margin_percent: Decimal | None = None
     # Units sold so far (non-canceled orders); filled by the list endpoint.
     sold_quantity: int = 0
+    # After a quantity change: what happened at eBay (see services/ebay_quantity_push).
+    ebay_quantity_results: list[dict] | None = None
     class Config:
         from_attributes = True
 class RestockCreate(BaseModel):

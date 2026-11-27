@@ -15,6 +15,7 @@ from app.models.purchase import PurchaseLine
 from app.models.stock_movement import StockMovement
 from app.models.supplier_item import SupplierItem
 from app.models.user import User
+from app.services import ebay_quantity_push
 from app.services.ebay_csv_import import CsvImportError, parse_active_listings_csv
 from app.schemas.product import ProductCreate, ProductOut, ProductUpdate, RestockCreate, StockMovementOut
 
@@ -284,8 +285,12 @@ def link_stock_to_listing(
                                    ).update({OrderItem.purchase_price: listing.unit_cost}, synchronize_session=False)
     stock.merged_into, stock.active, stock.unlisted, stock.stock_quantity = listing.id, False, False, 0
     db.commit()
+    sent = ebay_quantity_push.send(db, current_user.tenant_id,
+                                   [ebay_quantity_push.set_to(listing.id, payload.stock_quantity)])
     db.refresh(listing)
-    return _with_profit(listing)
+    out = _with_profit(listing)
+    out.ebay_quantity_results = sent
+    return out
 
 
 @router.get("/{product_id}", response_model=ProductOut)
@@ -320,6 +325,15 @@ def update_product(
         raise HTTPException(status_code=404, detail="Produkt nicht gefunden")
 
     update_data = payload.model_dump(exclude_unset=True)
+    stock_seen = update_data.pop("stock_seen", None)
+    quantity_to_send = None
+    if stock_seen is not None and update_data.get("stock_quantity") is not None:
+        if update_data["stock_quantity"] == stock_seen:
+            update_data.pop("stock_quantity")
+        elif update_data["stock_quantity"] < 0:
+            raise HTTPException(status_code=400, detail="Die Menge darf nicht negativ sein.")
+        else:
+            quantity_to_send = update_data["stock_quantity"]
     if update_data.get("unlisted") is None:
         update_data.pop("unlisted", None)
 
@@ -349,8 +363,14 @@ def update_product(
         ).update({OrderItem.purchase_price: product.unit_cost}, synchronize_session=False)
 
     db.commit()
+    sent = None
+    if quantity_to_send is not None:
+        sent = ebay_quantity_push.send(db, current_user.tenant_id,
+                                       [ebay_quantity_push.set_to(product.id, quantity_to_send)])
     db.refresh(product)
-    return _with_profit(product)
+    out = _with_profit(product)
+    out.ebay_quantity_results = sent
+    return out
 
 
 @router.delete("/{product_id}", status_code=204)
@@ -408,8 +428,12 @@ def restock_product(
         reference=None,
     ))
     db.commit()
+    sent = ebay_quantity_push.send(db, current_user.tenant_id,
+                                   [ebay_quantity_push.add(product.id, payload.quantity)])
     db.refresh(product)
-    return _with_profit(product)
+    out = _with_profit(product)
+    out.ebay_quantity_results = sent
+    return out
 
 
 @router.get("/{product_id}/movements", response_model=list[StockMovementOut])
