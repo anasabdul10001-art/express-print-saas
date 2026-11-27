@@ -7,6 +7,7 @@
     <title>Produkte — ShipSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="trial-guard.js"></script>
+    <script src="layout.js"></script>
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
@@ -21,6 +22,11 @@
         .tool-btn:disabled { opacity: .55; cursor: wait; }
         .tool-icon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 2.1rem; height: 2.1rem; border-radius: .6rem; background: #f1f5f9; color: #475569; transition: background-color .15s, color .15s; }
         .tool-btn:hover .tool-icon { background: #ffe4e6; color: #e11d48; }
+    </style>
+    <style>
+        /* Tight columns, so the whole table fits without sideways scrolling. */
+        #table-wrap th, #table-wrap td { padding-left: .3rem; padding-right: .3rem; }
+        #products-tbody td { white-space: nowrap; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -1184,7 +1190,7 @@
                             : `<div class="w-16 h-16 min-w-[4rem] bg-slate-100 rounded"></div>`}
                     </td>
                     <td class="px-3 py-1 font-mono text-xs">${p.sku}</td>
-                    <td class="px-3 py-1"><div class="w-56 truncate" title="${String(p.title).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")}">${p.title}</div></td>
+                    <td class="px-3 py-1"><div class="w-44 2xl:w-72 truncate" title="${String(p.title).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")}">${p.title}</div></td>
                     <td class="px-3 py-1 text-slate-500">${p.shelf_location || "—"}</td>
                     <td class="px-3 py-1 whitespace-nowrap ${p.stock_quantity === 0 ? "text-red-600 font-semibold" : ""}" id="cell-stock-${p.id}">${p.stock_quantity ?? 0} <button onclick='inlineEdit(${JSON.stringify(p.id)}, "stock_quantity")' class="text-blue-600 hover:text-blue-700 text-xs ml-1" title="Menge ändern (auch bei eBay)">✎</button></td>
                     <td class="px-3 py-1 font-semibold">${p.sold_quantity ?? 0}</td>
