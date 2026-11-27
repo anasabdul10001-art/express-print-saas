@@ -249,6 +249,7 @@
         resizeTimer = setTimeout(render, 150);
     });
     document.addEventListener("langchange", render);
+    document.addEventListener("datachanged", load);
 
     applySelection();
 })();

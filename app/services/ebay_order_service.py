@@ -30,6 +30,7 @@ Design choices worth knowing:
       created order.
 """
 
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from decimal import Decimal, InvalidOperation
@@ -43,7 +44,7 @@ from app.models.ebay_account import EbayAccount
 from app.models.expense import Expense
 from app.models.order import Order, OrderItem
 from app.models.product import Product
-from app.services import stock_listing_service
+from app.services import ebay_listing_service, stock_listing_service
 from app.models.stock_movement import StockMovement
 from app.services import ebay_oauth_service, ebay_signing_service
 from app.services.ebay_deletion_service import deleted_order_ref
@@ -149,6 +150,9 @@ ORDER_PAGE_SIZE = 200  # the most eBay returns per request
 ORDER_MAX_PAGES = 25
 
 
+PICTURE_LOOKUPS_PER_SYNC = 20
+
+
 def _fetch_orders(base_url: str, access_token: str) -> list[dict]:
     """Every order eBay lists, page by page, so a new sale is never cut off."""
     orders: list[dict] = []
@@ -169,6 +173,33 @@ def _fetch_orders(base_url: str, access_token: str) -> list[dict]:
         if len(batch) < ORDER_PAGE_SIZE:
             break
     return orders
+
+
+def _fill_missing_pictures(account: EbayAccount, tenant_id: UUID, db: Session, access_token: str,
+                           ebay_orders: list[dict]) -> None:
+    """Order lines carry no picture, so products without one get it from their listing.
+    Best effort: a failing lookup never breaks the order sync, and a picture that is
+    already there is never replaced."""
+    item_ids = {}
+    for ebay_order in ebay_orders:
+        for line in ebay_order.get("lineItems", []):
+            item_id = line.get("legacyItemId")
+            if item_id:
+                item_ids[line.get("sku") or item_id] = item_id
+    if not item_ids:
+        return
+    db.flush()
+    missing = db.query(Product).filter(
+        Product.tenant_id == tenant_id, Product.sku.in_(list(item_ids)),
+        (Product.image_url.is_(None)) | (Product.image_url == ""),
+    ).limit(PICTURE_LOOKUPS_PER_SYNC).all()
+    for product in missing:
+        try:
+            picture = ebay_listing_service.get_item_picture(account, access_token, item_ids[product.sku])
+        except (httpx.HTTPError, ET.ParseError):
+            continue
+        if picture:
+            product.image_url = picture[:1000]
 
 
 def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
@@ -306,6 +337,8 @@ def sync_orders(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
             ))
 
         created_count += 1
+
+    _fill_missing_pictures(account, tenant_id, db, access_token, ebay_orders)
 
     account.last_sync_at = datetime.now(timezone.utc)
     db.commit()

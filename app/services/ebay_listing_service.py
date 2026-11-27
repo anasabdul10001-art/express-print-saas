@@ -3,11 +3,12 @@
 Uses the Trading API call GetMyeBaySelling, which - unlike the Inventory
 API - also returns listings that were created in the eBay web UI / Seller
 Hub. Existing products (matched by SKU, else by item number) are never
-overwritten: only missing ones are created, with the listing price and
-the quantity eBay still has available.
+overwritten (only a missing picture is filled in): only missing ones are
+created, with the listing price and the quantity eBay still has available.
 """
 
 import xml.etree.ElementTree as ET
+from xml.sax.saxutils import escape
 from decimal import Decimal, InvalidOperation
 from uuid import UUID
 
@@ -107,6 +108,22 @@ def fetch_active_listings(account: EbayAccount, db: Session) -> list[dict]:
         listings += page_items
         page += 1
     return listings
+
+
+def get_item_picture(account: EbayAccount, token: str, item_id: str) -> str | None:
+    """Read-only GetItem: the picture of one listing. Also answers for ended or sold-out
+    listings (for a while), which are no longer part of the active list."""
+    xml = (
+        '<?xml version="1.0" encoding="utf-8"?>'
+        '<GetItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">'
+        f"<ItemID>{escape(item_id)}</ItemID><DetailLevel>ReturnAll</DetailLevel></GetItemRequest>"
+    )
+    resp = httpx.post(TRADING_URL[account.environment], headers=_headers(token, "GetItem"), content=xml, timeout=15.0)
+    if resp.status_code != 200:
+        return None
+    root = ET.fromstring(resp.text)
+    return (_text(root, "e:Item/e:PictureDetails/e:GalleryURL")
+            or _text(root, "e:Item/e:PictureDetails/e:PictureURL"))
 
 
 def get_item_variations(account: EbayAccount, db: Session, item_id: str) -> dict:
@@ -285,19 +302,27 @@ def revise_prices(account: EbayAccount, db: Session, items: list[tuple[str, Deci
     return revise_listings(account, db, [(item_id, price, None) for item_id, price in items])
 
 
-def import_listings(account: EbayAccount, tenant_id: UUID, db: Session) -> dict:
-    listings = fetch_active_listings(account, db)
+def import_listings(account: EbayAccount, tenant_id: UUID, db: Session,
+                    listings: list[dict] | None = None) -> dict:
+    if listings is None:
+        listings = fetch_active_listings(account, db)
 
     stock_linked = stock_listing_service.seen_in_shop(db, tenant_id, [
         (key, listing["image_url"], listing["price"])
         for listing in listings for key in (listing["sku"], listing["item_id"]) if key])
-    existing = {p.sku for p in db.query(Product).filter(Product.tenant_id == tenant_id).all()}
+    products = {p.sku: p for p in db.query(Product).filter(Product.tenant_id == tenant_id).all()}
+    existing = set(products)
     created = skipped = 0
     for listing in listings:
         sku = listing["sku"] or listing["item_id"]
         # An order line without SKU is stored under its item number, so
         # accept either spelling as "already known".
         if sku in existing or listing["item_id"] in existing:
+            # A missing picture is the one thing filled in (e.g. a product the order
+            # sync created: order lines carry no picture).
+            known = products.get(sku) or products.get(listing["item_id"])
+            if known and not known.image_url:
+                known.image_url = listing["image_url"]
             skipped += 1
             continue
         db.add(

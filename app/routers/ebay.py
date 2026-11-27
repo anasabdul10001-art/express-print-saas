@@ -17,7 +17,7 @@ from app.models.order import Order
 from app.models.product import Product
 from app.models.user import User
 from app.schemas.ebay import AuthorizeUrlOut, EbayAccountOut
-from app.services import ebay_signing_service, ebay_deletion_service, ai_reply_service, ebay_extras_service, ebay_listing_service, ebay_oauth_service, ebay_order_service, ebay_stock_service
+from app.services import ebay_signing_service, ebay_deletion_service, ai_reply_service, ebay_extras_service, ebay_listing_service, ebay_oauth_service, ebay_order_service, ebay_stock_service, live_sync
 
 router = APIRouter(prefix="/ebay", tags=["ebay"])
 
@@ -106,6 +106,16 @@ def disconnect_ebay(
     return {"status": "disconnected"}
 
 
+@router.post("/live-sync")
+def run_live_sync(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Called by the open pages: new orders, new products, pictures and quantities
+    from eBay. Does nothing if a run happened a moment ago. eBay is only read."""
+    return live_sync.run(db, current_user.tenant_id)
+
+
 @router.post("/sync-orders")
 def sync_orders(
     current_user: User = Depends(get_current_user),
@@ -124,7 +134,8 @@ def sync_orders(
     errors = []
     for account in accounts:
         try:
-            result = ebay_order_service.sync_orders(account, current_user.tenant_id, db)
+            with live_sync.lock_for(current_user.tenant_id):
+                result = ebay_order_service.sync_orders(account, current_user.tenant_id, db)
         except ValueError as exc:
             errors.append(f"{account.ebay_user_id or 'eBay'}: {exc}")
             continue
@@ -378,7 +389,8 @@ def import_products(
     errors = []
     for account in accounts:
         try:
-            result = ebay_listing_service.import_listings(account, current_user.tenant_id, db)
+            with live_sync.lock_for(current_user.tenant_id):
+                result = ebay_listing_service.import_listings(account, current_user.tenant_id, db)
         except (ValueError, httpx.HTTPError) as exc:
             errors.append(f"{account.ebay_user_id or 'eBay'}: {exc}")
             continue
@@ -416,7 +428,8 @@ def pull_stock(
     for account in accounts:
         name = account.ebay_user_id or "eBay"
         try:
-            new_orders += ebay_order_service.sync_orders(account, current_user.tenant_id, db)["created"]
+            with live_sync.lock_for(current_user.tenant_id):
+                new_orders += ebay_order_service.sync_orders(account, current_user.tenant_id, db)["created"]
             listings += ebay_listing_service.fetch_active_listings(account, db)
         except (ValueError, httpx.HTTPError) as exc:
             raise HTTPException(status_code=502, detail=f"eBay-Abruf fehlgeschlagen, keine Menge übernommen. {name}: {exc}")

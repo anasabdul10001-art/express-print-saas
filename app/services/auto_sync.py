@@ -8,7 +8,7 @@ import time
 from app.config import settings
 from app.database import SessionLocal
 from app.models.ebay_account import EbayAccount
-from app.services import ebay_order_service
+from app.services import ebay_order_service, live_sync
 
 log = logging.getLogger("auto_sync")
 
@@ -18,7 +18,8 @@ def run_once() -> int:
     with SessionLocal() as db:
         for account in db.query(EbayAccount).filter(EbayAccount.status == "CONNECTED").all():
             try:
-                ebay_order_service.sync_orders(account, account.tenant_id, db)
+                with live_sync.lock_for(account.tenant_id):
+                    ebay_order_service.sync_orders(account, account.tenant_id, db)
                 synced += 1
             except Exception as exc:  # one broken account must not stop the loop
                 db.rollback()

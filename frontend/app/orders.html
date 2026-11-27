@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
+    <script src="auto-sync.js"></script>
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
@@ -822,14 +823,8 @@
         loadOrders();
         document.addEventListener("langchange", loadOrders);
 
-        // New eBay/Shopify orders appear by themselves while this page is open.
-        setInterval(async () => {
-            if (document.hidden) return;  // a tab in the background does not sync
-            try {
-                const r = await syncChannels(["ebay", "shopify"]);
-                if (r && r.created > 0) loadOrders();
-            } catch (e) {}
-        }, 120000);
+        // New orders and changes appear by themselves while this page is open.
+        startAutoSync(loadOrders);
     </script>
 </body>
 </html>
