@@ -115,7 +115,7 @@ def test_stored_drafts_are_replaced_once_and_keep_the_published_email(client):
 
 def test_stored_pages_get_the_new_product_name_once(client):
     with SessionLocal() as db:
-        db.add(SitePage(slug="about", title="Über uns", content="NettoDesk hilft. Der NettoDesk-Print-Agent druckt."))
+        db.add(SitePage(slug="about", title="Über uns", content="ShipSync hilft. Der ShipSync-Print-Agent druckt."))
         db.commit()
         assert site_page_fixes.apply(db) == 1
         assert site_page_fixes.apply(db) == 0
