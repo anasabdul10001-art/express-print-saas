@@ -184,6 +184,7 @@
                 <div class="flex gap-3">
                     <button onclick="saveLogoSize()" class="bg-brand hover:bg-brand-hover text-ink font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.saveLogoSize">Größe speichern</span></button>
                     <button onclick="resetLogoSize()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2 px-4 rounded-lg transition"><span data-i18n="admin.resetLogoSize">Zurücksetzen (32px)</span></button>
+                    <button type="button" onclick="removeLogo()" class="ml-auto text-red-600 hover:text-red-700 text-sm font-semibold py-2 px-2"><span data-i18n="admin.removeLogo">Hochgeladenes Logo entfernen</span></button>
                 </div>
             </div>
         </div>
@@ -561,6 +562,19 @@
 
         function resetLogoSize() {
             patchLogoHeight(null);
+        }
+
+        async function removeLogo() {
+            if (!confirm(t("admin.removeLogoConfirm"))) return;
+            try {
+                const response = await fetch(`${API_URL}/admin/logo`, { method: "DELETE", headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
+                if (!response.ok) { showBanner(t("admin.saveFailed"), true); return; }
+                // reload: every logo on the page goes back to the built-in one
+                location.reload();
+            } catch (err) {
+                showBanner(t("admin.serverError"), true);
+            }
         }
 
         function applyBillingSettings(data) {

@@ -204,7 +204,7 @@
             const price = plan.price_monthly === null || plan.price_monthly === undefined ? null : Number(plan.price_monthly);
             const amount = price === null ? t("pricing.contact") : price === 0 ? t("pricing.free") : `${price.toFixed(2)} ${esc(plan.currency)}`;
             const limit = (value, label) => `${value === null || value === undefined ? t("pricing.unlimited") : esc(value)} ${label}`;
-            const lines = [limit(plan.order_limit, t("pricing.limitOrders")), limit(plan.printer_limit, t("pricing.limitPrinters")), ...(plan.features || []).map(esc)];
+            const lines = [limit(plan.order_limit, t("pricing.limitOrders")), ...(plan.features || []).map(esc)];
             const highlight = plan.is_recommended;
             return `
                 <div class="relative w-full sm:w-80 bg-white rounded-3xl p-7 flex flex-col ${highlight ? "border-2 border-brand shadow-xl shadow-brand/10" : "border border-line"}">

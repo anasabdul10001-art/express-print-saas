@@ -99,8 +99,6 @@
             const price = formatPrice(plan);
             const limits = [
                 limitLine(plan.order_limit, t("pricing.limitOrders")),
-                limitLine(plan.printer_limit, t("pricing.limitPrinters")),
-                
             ].join("");
             const features = (plan.features || []).map(featureLine).join("");
 
