@@ -460,3 +460,58 @@ def apply_push(account: ShopifyAccount, changes: list[dict]) -> None:
             error = str(exc)
         if error:
             change["errors"].append(f"Menge: {error}")
+
+
+# ---------------------------------------------------------------- create a draft
+
+CREATE_DRAFT_MUTATION = """
+mutation($product: ProductCreateInput!, $media: [CreateMediaInput!]) {
+  productCreate(product: $product, media: $media) {
+    product { id variants(first: 1) { nodes { id } } }
+    userErrors { field message }
+  }
+}
+"""
+
+DRAFT_VARIANT_MUTATION = """
+mutation($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+  productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+    productVariants { id }
+    userErrors { field message }
+  }
+}
+"""
+
+
+def _draft_errors(payload) -> list[str]:
+    return [str(e.get("message")) for e in (payload or {}).get("userErrors") or []]
+
+
+def create_draft(account: ShopifyAccount, product: Product) -> dict:
+    """Creates the product at Shopify as a DRAFT (invisible to customers).
+    Title, picture, price and SKU are sent; stock is not."""
+    existing, _ = fetch_variants(account)
+    if any(v["sku"] == product.sku for v in existing):
+        raise ValueError(f"Ein Shopify-Produkt mit der SKU '{product.sku}' gibt es schon.")
+    image = product.image_url or ""
+    media = [{"originalSource": image, "mediaContentType": "IMAGE"}] if image.startswith("https://") else []
+    payload = graphql(account, CREATE_DRAFT_MUTATION,
+                      {"product": {"title": product.title[:255], "status": "DRAFT"}, "media": media}).get("productCreate")
+    errors = _draft_errors(payload)
+    created = (payload or {}).get("product")
+    if errors or not created:
+        raise ValueError("; ".join(errors) or "Shopify hat kein Produkt angelegt.")
+    variant = {"id": created["variants"]["nodes"][0]["id"], "inventoryItem": {"sku": product.sku}}
+    if product.selling_price is not None:
+        variant["price"] = str(product.selling_price)
+    # The draft exists from here on, so a failure is a warning, not "nothing happened".
+    try:
+        result = graphql(account, DRAFT_VARIANT_MUTATION, {"productId": created["id"], "variants": [variant]})
+        warnings = _draft_errors(result.get("productVariantsBulkUpdate"))
+    except (ValueError, httpx.HTTPError) as exc:
+        warnings = [str(exc)]
+    return {
+        "admin_url": f"https://{account.shop_domain}/admin/products/{gid_number(created['id'])}",
+        "picture_sent": bool(media),
+        "warnings": warnings,
+    }

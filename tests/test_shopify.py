@@ -391,3 +391,69 @@ def test_ship_reports_shopify_errors_and_rejects_foreign_orders(register, client
     r = client.post(f"/shopify/orders/{ebay_order}/ship", json={"tracking_number": "123", "carrier": "DHL"}, headers=headers)
     assert r.status_code == 400
     assert client.post(f"/shopify/orders/{order_id}/ship", json={"tracking_number": "1", "carrier": "NOPE"}, headers=headers).status_code == 400
+
+
+# ---------------------------------------------------------------- create a draft
+
+def _product(tenant_id, sku="DRAFT-1"):
+    with SessionLocal() as db:
+        product = Product(id=uuid.uuid4(), tenant_id=uuid.UUID(tenant_id), sku=sku, title="Adapter",
+                          image_url="https://example.com/a.jpg", selling_price=2.99, stock_quantity=5)
+        db.add(product)
+        db.commit()
+        return str(product.id)
+
+
+def _fake_shopify(monkeypatch, existing=(), variant_errors=()):
+    calls = []
+
+    def graphql(account, query, variables=None):
+        calls.append((query, variables))
+        if "productCreate(" in query:
+            return {"productCreate": {"userErrors": [], "product": {
+                "id": "gid://shopify/Product/9", "variants": {"nodes": [{"id": "gid://shopify/ProductVariant/1"}]}}}}
+        return {"productVariantsBulkUpdate": {"userErrors": [{"message": m} for m in variant_errors]}}
+
+    monkeypatch.setattr(shopify_service, "graphql", graphql)
+    monkeypatch.setattr(shopify_service, "fetch_variants", lambda account: ([{"sku": s} for s in existing], "Demo"))
+    return calls
+
+
+def test_create_draft_sends_a_draft_with_price_and_sku(register, client, monkeypatch):
+    headers, tenant_id = _tenant(register, client)
+    _account(tenant_id)
+    calls = _fake_shopify(monkeypatch)
+    response = client.post("/shopify/create-draft", json={"product_id": _product(tenant_id)}, headers=headers)
+    assert response.status_code == 200, response.text
+    assert response.json()["admin_url"] == "https://demo.myshopify.com/admin/products/9"
+    assert response.json()["warnings"] == []
+    assert calls[0][1]["product"]["status"] == "DRAFT"
+    assert calls[1][1]["variants"][0] == {
+        "id": "gid://shopify/ProductVariant/1", "inventoryItem": {"sku": "DRAFT-1"}, "price": "2.99"}
+
+
+def test_create_draft_refuses_a_duplicate_sku(register, client, monkeypatch):
+    headers, tenant_id = _tenant(register, client)
+    _account(tenant_id)
+    calls = _fake_shopify(monkeypatch, existing=["DRAFT-1"])
+    response = client.post("/shopify/create-draft", json={"product_id": _product(tenant_id)}, headers=headers)
+    assert response.status_code == 502
+    assert calls == []
+
+
+def test_create_draft_reports_variant_errors_as_warning(register, client, monkeypatch):
+    headers, tenant_id = _tenant(register, client)
+    _account(tenant_id)
+    _fake_shopify(monkeypatch, variant_errors=["bad price"])
+    response = client.post("/shopify/create-draft", json={"product_id": _product(tenant_id)}, headers=headers)
+    assert response.json()["warnings"] == ["bad price"]
+
+
+def test_create_draft_needs_the_own_product_and_a_connected_store(register, client, monkeypatch):
+    headers, tenant_id = _tenant(register, client)
+    other_headers, _ = _tenant(register, client)
+    calls = _fake_shopify(monkeypatch)
+    product_id = _product(tenant_id)
+    assert client.post("/shopify/create-draft", json={"product_id": product_id}, headers=other_headers).status_code == 404
+    assert client.post("/shopify/create-draft", json={"product_id": product_id}, headers=headers).status_code == 400
+    assert calls == []
