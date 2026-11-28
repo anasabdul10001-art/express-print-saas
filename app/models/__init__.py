@@ -21,6 +21,7 @@ from app.models.payment_method import PaymentMethod
 from app.models.invoice import Invoice
 from app.models.sales_invoice import SalesInvoice, SellerProfile
 from app.models.dhl_account import DhlAccount
+from app.models.internetmarke import InternetmarkeAccount, InternetmarkePurchase
 from app.models.affiliate import Affiliate, AffiliateReferral, AffiliateCommission, AffiliatePayout
 from app.models.affiliate_password_token import AffiliatePasswordToken
 from app.models.site_page import SitePage
@@ -29,6 +30,6 @@ __all__ = [
     "Tenant", "User", "PrintAgent", "PrintJob", "Product", "Order", "OrderItem",
     "EbayAccount", "EbayOAuthState", "ShopifyAccount", "ShopifyOAuthState", "AmazonAccount", "AmazonOAuthState", "StockMovement", "Expense", "ExpenseReceipt", "Purchase", "PurchaseLine", "CashEvent", "EksProfile", "PasswordResetToken",
     "TrackedSearch", "MarketSnapshot", "Plan", "SiteSettings", "PaymentMethod", "Invoice",
-    "DhlAccount", "Affiliate", "AffiliateReferral", "AffiliateCommission", "AffiliatePayout",
+    "DhlAccount", "InternetmarkeAccount", "InternetmarkePurchase", "Affiliate", "AffiliateReferral", "AffiliateCommission", "AffiliatePayout",
     "AffiliatePasswordToken", "SitePage", "SalesInvoice", "SellerProfile", "SupplierItem",
 ]

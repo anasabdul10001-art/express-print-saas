@@ -13,7 +13,7 @@ from app.core.sentry import init_sentry
 from app.database import Base, SessionLocal, engine
 from app.services import site_page_fixes
 from app import models  # noqa: F401 - import registers all models with Base, needed for create_all() below
-from app.routers import account_data, accounting, admin, affiliate_portal, alerts, amazon, auth, billing, dhl, ebay, ebay_create_listing, ebay_offers, eks, euer, expenses, market_research, orders, plans, pricing, print_agents, print_jobs, products, purchases, sales_invoices, shopify, tenants, uploads, ustva
+from app.routers import account_data, accounting, admin, affiliate_portal, alerts, amazon, auth, billing, dhl, ebay, ebay_create_listing, ebay_offers, eks, euer, expenses, internetmarke, market_research, orders, plans, pricing, print_agents, print_jobs, products, purchases, sales_invoices, shopify, tenants, uploads, ustva
 
 # Before the app is created: a no-op until settings.sentry_dsn is set (see
 # app/core/sentry.py) - safe to always call.
@@ -189,6 +189,7 @@ app.include_router(market_research.router)
 app.include_router(admin.router)
 app.include_router(plans.router)
 app.include_router(dhl.router)
+app.include_router(internetmarke.router)
 app.include_router(affiliate_portal.router)
 app.include_router(billing.router)
 
