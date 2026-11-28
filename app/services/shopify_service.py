@@ -483,7 +483,7 @@ mutation($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
 """
 
 
-def _user_errors(payload) -> list[str]:
+def _draft_errors(payload) -> list[str]:
     return [str(e.get("message")) for e in (payload or {}).get("userErrors") or []]
 
 
@@ -497,7 +497,7 @@ def create_draft(account: ShopifyAccount, product: Product) -> dict:
     media = [{"originalSource": image, "mediaContentType": "IMAGE"}] if image.startswith("https://") else []
     payload = graphql(account, CREATE_DRAFT_MUTATION,
                       {"product": {"title": product.title[:255], "status": "DRAFT"}, "media": media}).get("productCreate")
-    errors = _user_errors(payload)
+    errors = _draft_errors(payload)
     created = (payload or {}).get("product")
     if errors or not created:
         raise ValueError("; ".join(errors) or "Shopify hat kein Produkt angelegt.")
@@ -507,7 +507,7 @@ def create_draft(account: ShopifyAccount, product: Product) -> dict:
     # The draft exists from here on, so a failure is a warning, not "nothing happened".
     try:
         result = graphql(account, DRAFT_VARIANT_MUTATION, {"productId": created["id"], "variants": [variant]})
-        warnings = _user_errors(result.get("productVariantsBulkUpdate"))
+        warnings = _draft_errors(result.get("productVariantsBulkUpdate"))
     except (ValueError, httpx.HTTPError) as exc:
         warnings = [str(exc)]
     return {
