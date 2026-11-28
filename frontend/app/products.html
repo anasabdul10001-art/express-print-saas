@@ -10,6 +10,7 @@
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
     <script src="auto-sync.js"></script>
+    <script src="listing-editor.js" defer></script>
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
@@ -793,46 +794,13 @@
             document.getElementById("ie-" + id).focus();
         }
 
-        // Listings with variations (colours) keep one quantity per variation at eBay.
-        async function openVariationEditor(id) {
-            const p = (window.__products || []).find(x => x.id === id);
-            const itemId = p && /^\d+$/.test(p.sku) ? p.sku : null;
-            if (!itemId) { showBanner("Dieses Angebot hat Varianten – Mengen pro Variante bitte bei eBay ändern.", true); loadProducts(); return; }
-            try {
-                const response = await fetch(`${API_URL}/ebay/listing-info/${itemId}`, { headers: authHeaders() });
-                const info = await response.json();
-                if (!response.ok || !info.variations.length) { showBanner(info.detail || "Keine Varianten gefunden.", true); loadProducts(); return; }
-                window.__varInfo = { id, itemId, variations: info.variations };
-                const cell = document.getElementById("cell-stock-" + id);
-                cell.innerHTML = `<div class="space-y-1 text-xs">
-                    <div class="font-semibold text-amber-700">Mengen pro Variante (eBay):</div>
-                    ${info.variations.map((v, i) => `<label class="block">${i + 1}. ${Object.values(v.specifics).join(" / ") || "Variante"}
-                        <input id="var-${i}" type="number" min="0" step="1" value="${Math.max(0, Number(v.quantity || 0) - Number(v.sold || 0))}" class="p-1 w-16 rounded border border-slate-300"></label>`).join("")}
-                    <button onclick='saveVariationQuantities()' class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-1 px-2 rounded">Speichern + eBay</button>
-                    <button onclick="loadProducts()" class="text-slate-500 ml-1">✕</button></div>`;
-            } catch (err) { showBanner(t("products.serverErrorRetry"), true); }
-        }
-
-        async function saveVariationQuantities() {
-            const info = window.__varInfo;
-            const available = info.variations.map((v, i) => Number(document.getElementById("var-" + i).value || 0));
-            try {
-                const response = await fetch(`${API_URL}/ebay/variation-quantities`, {
-                    method: "POST", headers: authHeaders(true), body: JSON.stringify({ product_id: info.id, available }),
-                });
-                const data = await response.json();
-                if (!response.ok) showBanner("eBay: " + (data.detail || "Fehler"), true);
-                else showBanner(`Mengen bei eBay geändert (Summe ${data.stock_quantity}).`, false);
-            } catch (err) { showBanner(t("products.serverErrorRetry"), true); }
-            loadProducts();
-        }
-
         async function inlineSave(id, field) {
             const raw = document.getElementById("ie-" + id).value;
             if (raw === "") { showBanner("Bitte einen Wert eingeben.", true); return; }
             const isStock = field === "stock_quantity";
             const value = Number(raw);
             const p = (window.__products || []).find(x => x.id === id) || {};
+            if (await editorIfVariations(id)) { loadProducts(); return; }
             if (isStock && value === 0 && (p.stock_quantity ?? 0) !== 0 && !confirmZero()) return;
             try {
                 const response = await fetch(`${API_URL}/products/${id}`, {
@@ -844,7 +812,7 @@
                 if (!response.ok) { showBanner(data.detail || t("products.saveFailed"), true); return; }
                 if (isStock) {
                     const sent = data.ebay_quantity_results || [];
-                    if (sent.some(r => r.status === "failed" && String(r.error).includes("Varianten"))) { await openVariationEditor(id); return; }
+                    if (sent.some(r => r.status === "failed" && String(r.error).includes("Varianten"))) { openListingEditor(id); loadProducts(); return; }
                     const note = ebayQuantityNote(sent);
                     showBanner(note ? note.text : "Menge gespeichert.", note ? note.isError : false);
                     loadProducts();
@@ -1176,6 +1144,7 @@
         }
 
         const ROW_ICONS = {
+            pictures: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
             link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
             edit: '<path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><path d="m15 5 4 4"/>',
             restock: '<path d="M21 10V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l1-.6"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/><path d="M16 17h6"/><path d="M19 14v6"/>',
@@ -1228,6 +1197,7 @@
                     </td>
                     <td class="px-3 py-1 whitespace-nowrap">
                         <div class="flex items-center gap-1">
+                        ${!p.unlisted && p.active ? rowAction("pictures", "eBay-Angebot bearbeiten (Bilder, Varianten, Preise, Mengen)", `openListingEditor(${JSON.stringify(p.id)})`, "text-amber-700 hover:bg-amber-50") : ""}
                         ${p.unlisted && p.active ? rowAction("link", "Mit Angebot verknüpfen", `openLinkPanel(${JSON.stringify(p.id)})`, "text-sky-700 hover:bg-sky-50") : ""}
                         ${rowAction("edit", t("products.edit"), `openForm(${JSON.stringify(p)})`, "text-blue-600 hover:bg-blue-50")}
                         ${rowAction("restock", t("products.restock"), `restockProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})`, "text-blue-600 hover:bg-blue-50")}

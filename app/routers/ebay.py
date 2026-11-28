@@ -1,5 +1,7 @@
 import re
 import json
+import xml.etree.ElementTree as ET
+from uuid import UUID
 
 import httpx
 
@@ -17,7 +19,7 @@ from app.models.order import Order
 from app.models.product import Product
 from app.models.user import User
 from app.schemas.ebay import AuthorizeUrlOut, EbayAccountOut
-from app.services import ebay_signing_service, ebay_deletion_service, ai_reply_service, ebay_extras_service, ebay_listing_service, ebay_oauth_service, ebay_order_service, ebay_stock_service, live_sync
+from app.services import ebay_signing_service, ebay_deletion_service, ai_reply_service, ebay_extras_service, ebay_listing_editor, ebay_listing_service, ebay_oauth_service, ebay_order_service, ebay_stock_service, live_sync
 
 router = APIRouter(prefix="/ebay", tags=["ebay"])
 
@@ -292,43 +294,98 @@ def orders_raw(
     return out
 
 
-class VariationQuantitiesIn(BaseModel):
-    product_id: str
-    available: list[int]  # one number per variation, in the order /ebay/listing-info returns them
+def _own_product(db: Session, user: User, product_id: UUID) -> Product:
+    product = db.query(Product).filter(Product.id == product_id, Product.tenant_id == user.tenant_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produkt nicht gefunden.")
+    return product
 
 
-@router.post("/variation-quantities")
-def variation_quantities(
-    payload: VariationQuantitiesIn,
+def _listing_of(account: EbayAccount, db: Session, product: Product) -> str | None:
+    """The item number of a product's listing: its SKU is the number, or an active listing has this SKU."""
+    if product.sku.isdigit() and len(product.sku) >= 9:
+        return product.sku
+    match = next((l for l in ebay_listing_service.fetch_active_listings(account, db) if l["sku"] == product.sku), None)
+    return match["item_id"] if match else None
+
+
+@router.get("/listing-editor/{product_id}")
+def listing_editor(
+    product_id: UUID,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Sets the per-variation (e.g. colour) quantities of a product's eBay listing and stores
-    their sum as the product's stock in NettoDesk."""
-    if any(q < 0 for q in payload.available):
-        raise HTTPException(status_code=400, detail="Mengen dürfen nicht negativ sein.")
-    product = db.query(Product).filter(Product.id == payload.product_id, Product.tenant_id == current_user.tenant_id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Produkt nicht gefunden.")
+    """Read-only: pictures and variations of a product's eBay listing, for the editor."""
+    product = _own_product(db, current_user, product_id)
     accounts = _connected_accounts(current_user, db).all()
     if not accounts:
         raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
-    item_id = product.sku if product.sku.isdigit() else None
     errors = []
     for account in accounts:
         try:
-            if item_id is None:
-                match = next((l for l in ebay_listing_service.fetch_active_listings(account, db) if l["sku"] == product.sku), None)
-                if not match:
-                    continue
-                item_id = match["item_id"]
+            item_id = _listing_of(account, db, product)
+            if item_id:
+                info = ebay_listing_service.get_item_variations(account, db, item_id)
+                return ebay_listing_editor.listing_view(info)
+        except (ValueError, httpx.HTTPError, ET.ParseError) as exc:
+            errors.append(str(exc))
+    raise HTTPException(status_code=502, detail="; ".join(errors) or "Kein passendes eBay-Angebot gefunden.")
+
+
+class VariationChange(BaseModel):
+    sku: str | None = None
+    specifics: dict[str, str]
+    price: Decimal | None = Field(default=None, max_digits=9, decimal_places=2)
+    quantity: int | None = None
+    quantity_seen: int | None = None
+
+
+class ListingEditIn(BaseModel):
+    item_id: str
+    variations: list[VariationChange] = Field(default_factory=list)
+    # None = leave as it is; otherwise the complete new list, the first one is the main picture
+    pictures: list[str] | None = None
+    picture_name: str | None = None
+    picture_sets: dict[str, list[str]] | None = None
+
+
+@router.post("/listing-editor/{product_id}")
+def save_listing(
+    product_id: UUID,
+    payload: ListingEditIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Changes the live eBay listing (pictures, price/quantity per variation). Only after eBay
+    accepted it, NettoDesk takes over the main picture, the total stock and the lowest price."""
+    product = _own_product(db, current_user, product_id)
+    accounts = _connected_accounts(current_user, db).all()
+    if not accounts:
+        raise HTTPException(status_code=400, detail="Kein verbundenes eBay-Konto gefunden.")
+    changes = [c.model_dump() for c in payload.variations]
+    errors = []
+    for account in accounts:
+        try:
+            if _listing_of(account, db, product) != payload.item_id:
+                continue
             with live_sync.lock_for(current_user.tenant_id):
-                ebay_listing_service.revise_variation_quantities(account, db, item_id, payload.available)
-                product.stock_quantity = sum(payload.available)
+                info = ebay_listing_service.get_item_variations(account, db, payload.item_id)
+                sent = ebay_listing_editor.apply(
+                    account, db, payload.item_id, info, changes,
+                    payload.pictures, payload.picture_name, payload.picture_sets)
+                if sent["pictures"]:
+                    product.image_url = sent["pictures"][0][:1000]
+                if sent["todo"]:
+                    quantity, lowest = ebay_listing_editor.totals(info, sent["todo"])
+                    if any(qty is not None for _, _, qty in sent["todo"]):
+                        product.stock_quantity = quantity
+                    if any(price is not None for _, price, _ in sent["todo"]):
+                        product.selling_price = lowest
                 db.commit()
                 live_sync.postpone(current_user.tenant_id)
-            return {"item_id": item_id, "stock_quantity": product.stock_quantity}
-        except (ValueError, httpx.HTTPError) as exc:
+            return {"item_id": payload.item_id, "stock_quantity": product.stock_quantity,
+                    "selling_price": str(product.selling_price) if product.selling_price is not None else None}
+        except (ValueError, httpx.HTTPError, ET.ParseError) as exc:
             errors.append(str(exc))
     raise HTTPException(status_code=502, detail="; ".join(errors) or "Kein passendes eBay-Angebot gefunden.")
 
