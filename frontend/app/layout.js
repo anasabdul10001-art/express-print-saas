@@ -49,6 +49,7 @@ window.ebayQuantityNote = function (results) {
             .nav-collapsed aside nav a > span,
             .nav-collapsed aside .nav-toggle > span,
             .nav-collapsed aside #sidebar-user-name,
+            .nav-collapsed aside [data-i18n="nav.admin"],
             .nav-collapsed aside #sidebar-user-email,
             .nav-collapsed aside button[onclick="logout()"] > span { display: none; }
             .nav-collapsed aside > a:not(:first-of-type) { justify-content: center; margin-left: .25rem; margin-right: .25rem; padding-left: 0; padding-right: 0; gap: 0; }
@@ -92,7 +93,7 @@ window.ebayQuantityNote = function (results) {
         // Icon-only entries show their name as a tooltip. Read at hover time,
         // so it follows the language switch and entries added later (Admin).
         aside.addEventListener("mouseover", (event) => {
-            const item = event.target.closest('nav a, a[href="settings.html"], button[onclick="logout()"]');
+            const item = event.target.closest('nav a, a[href="settings.html"], a[href="admin.html"], button[onclick="logout()"]');
             if (!item) return;
             if (root.classList.contains("nav-collapsed")) item.title = item.textContent.replace(/\s+/g, " ").trim();
             else item.removeAttribute("title");

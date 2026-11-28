@@ -247,6 +247,7 @@
             <button id="tab-available" onclick="setTab('available')" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Verfügbar</button>
             <button id="tab-soldout" onclick="setTab('soldout')" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Ausverkauft (Menge 0)</button>
             <button id="tab-stock" onclick="setTab('stock')" class="px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Im Lager, nicht angeboten</button>
+            <button id="tab-inactive" onclick="setTab('inactive')" class="hidden px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50">Deaktiviert</button>
             <button id="sort-sold" onclick="toggleSoldSort()" class="ml-auto px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50" title="Nach verkaufter Menge sortieren">Verkauft: Standard</button>
         </div>
 
@@ -1123,8 +1124,11 @@
         function applyView() {
             const all = window.__products || [];
             const waiting = all.filter(p => p.unlisted && p.active);
-            const offered = all.filter(p => !(p.unlisted && p.active));
-            let list = currentTab === "stock" ? waiting
+            // A deactivated ("deleted") product is only listed under its own tab.
+            const inactive = all.filter(p => !p.active);
+            const offered = all.filter(p => p.active && !p.unlisted);
+            if (currentTab === "inactive" && !inactive.length) currentTab = "available";
+            let list = currentTab === "stock" ? waiting : currentTab === "inactive" ? inactive
                 : offered.filter(p => currentTab === "soldout" ? (p.stock_quantity ?? 0) === 0 : (p.stock_quantity ?? 0) > 0);
             showStockValue(waiting);
             if (soldSort !== "none") {
@@ -1137,6 +1141,8 @@
             document.getElementById("tab-available").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "available" ? on : "border-slate-300");
             document.getElementById("tab-soldout").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "soldout" ? on : "border-slate-300");
             document.getElementById("tab-stock").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "stock" ? on : "border-slate-300");
+            document.getElementById("tab-inactive").className = "px-3 py-1.5 rounded-full border hover:bg-slate-50 " + (currentTab === "inactive" ? on : "border-slate-300") + (inactive.length ? "" : " hidden");
+            document.getElementById("tab-inactive").innerText = `Deaktiviert (${inactive.length})`;
             document.getElementById("tab-stock").innerText = `Im Lager, nicht angeboten (${waiting.length})`;
             document.getElementById("tab-available").innerText = `Verfügbar (${offered.length - soldoutCount})`;
             document.getElementById("tab-soldout").innerText = `Ausverkauft (${soldoutCount})`;
