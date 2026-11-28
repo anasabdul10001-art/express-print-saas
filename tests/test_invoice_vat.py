@@ -38,7 +38,7 @@ def test_small_business_invoice_shows_the_exemption_and_no_vat():
     assert "§ 19 UStG" in text and "keine Umsatzsteuer" in text
     for word in ("zzgl.", "% USt", "Nettobetrag", "Netto "):
         assert word not in text, word
-    assert "Gesamtbetrag 50.00 EUR" in text
+    assert "Gesamtbetrag / Total 50.00 EUR" in text
 
 
 def test_vat_liable_invoice_is_unchanged():

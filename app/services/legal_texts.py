@@ -70,7 +70,9 @@ Verfügbarkeit und Bedingungen ab.</p>
 Zugangsdaten geheim und informiert den Anbieter, wenn er einen Missbrauch vermutet.</p>
 <h2>§ 4 Preise, Testphase und Zahlung</h2>
 <p>Es gelten die beim Vertragsschluss auf der <a href="pricing.html">Preisseite</a> angegebenen
-monatlichen Preise. """ + _price_sentence() + """ Die Abrechnung erfolgt monatlich im Voraus. Eine
+monatlichen Preise. """ + _price_sentence() + """ Die Abrechnung erfolgt monatlich im Voraus.
+Rechnungen werden elektronisch als PDF bereitgestellt und per E-Mail gesendet; der Kunde ist damit
+einverstanden. Eine
 kostenlose Testphase, sofern angeboten, endet ohne Kündigung und ohne Zahlungspflicht; danach ist die
 Nutzung nur mit einem gebuchten Plan möglich.</p>
 <h2>§ 5 Laufzeit und Kündigung</h2>

@@ -122,6 +122,9 @@ class ConfirmPaymentRequest(BaseModel):
     # Set explicitly for a one-off or custom-priced charge.
     amount: Decimal | None = Field(None, gt=0)
     description: str | None = None
+    # Default: one month starting today.
+    service_start: date | None = None
+    service_end: date | None = None
 
 
 class InvoiceOut(BaseModel):
@@ -137,6 +140,10 @@ class InvoiceOut(BaseModel):
     currency: str
     customer_name: str
     customer_email: EmailStr
+    service_start: date | None = None
+    service_end: date | None = None
+    cancels_id: uuid.UUID | None = None
+    email_sent_at: datetime | None = None
     created_at: datetime
 
     class Config:

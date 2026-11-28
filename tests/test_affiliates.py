@@ -14,6 +14,7 @@ commission/balance directly rather than the confirm_payment response code.
 from sqlalchemy import create_engine, text
 
 from app.config import settings
+from conftest import complete_billing_profiles
 
 PAYMENT_METHOD_NOT_NEEDED = None  # confirm-payment doesn't require one
 
@@ -37,6 +38,7 @@ def _set_billing_details(client, admin_headers):
 
 
 def _confirm_payment(client, admin_headers, tenant_id, amount=None):
+    complete_billing_profiles()
     payload = {}
     if amount is not None:
         payload["amount"] = amount

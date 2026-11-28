@@ -60,6 +60,16 @@ class Tenant(Base):
     # After how many months buyer names and addresses are removed from finished orders.
     buyer_data_retention_months = Column(Integer, nullable=False, default=36, server_default="36")
 
+    # Recipient on the subscription invoices: full name and address.
+    billing_name = Column(String(255), nullable=True)
+    billing_street = Column(String(255), nullable=True)
+    billing_zip = Column(String(20), nullable=True)
+    billing_city = Column(String(100), nullable=True)
+    billing_country = Column(String(2), nullable=True)
+    billing_vat_id = Column(String(30), nullable=True)
+    # Set once the welcome email for the first paid subscription has gone out.
+    welcome_email_sent_at = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
 

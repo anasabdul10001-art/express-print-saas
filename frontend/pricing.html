@@ -152,6 +152,9 @@
                 const data = await response.json();
                 if (!response.ok) {
                     alert(data.detail || t("pricing.subscribeError"));
+                    if (response.status === 400 && String(data.detail).includes("Rechnungsadresse")) {
+                        window.location.href = "app/billing.html";
+                    }
                     return;
                 }
                 window.location.href = data.url;

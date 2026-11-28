@@ -17,6 +17,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import create_engine, text
 
 from app.config import settings
+from conftest import complete_billing_profiles
 from app.core.security import hash_api_key
 
 
@@ -38,6 +39,7 @@ def _set_billing_details(client, admin_headers):
 
 
 def _confirm_payment(client, admin_headers, tenant_id, amount):
+    complete_billing_profiles()
     return client.post(f"/admin/tenants/{tenant_id}/confirm-payment", headers=admin_headers, json={"amount": amount})
 
 

@@ -107,6 +107,32 @@ with engine.begin() as connection:
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255)"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255)"))
     connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(30)"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS billing_name VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS billing_street VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS billing_zip VARCHAR(20)"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS billing_city VARCHAR(100)"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS billing_country VARCHAR(2)"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS billing_vat_id VARCHAR(30)"))
+    connection.execute(text("ALTER TABLE tenants ADD COLUMN IF NOT EXISTS welcome_email_sent_at TIMESTAMPTZ"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_street VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_zip_city VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_country VARCHAR(2)"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_vat_id VARCHAR(30)"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS service_start DATE"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS service_end DATE"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS paid_on DATE"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_method VARCHAR(20)"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_invoice_id VARCHAR(255)"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cancels_id UUID REFERENCES invoices(id)"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS pdf BYTEA"))
+    connection.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS email_sent_at TIMESTAMPTZ"))
+    connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_invoices_stripe_invoice_id ON invoices (stripe_invoice_id)"))
+    connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_invoices_cancels_id ON invoices (cancels_id)"))
+    # Older databases delete invoices together with their account; they have to be kept.
+    if connection.execute(text("SELECT 1 FROM pg_constraint WHERE conname = 'invoices_tenant_id_fkey' AND confdeltype = 'c'")).first():
+        connection.execute(text("ALTER TABLE invoices DROP CONSTRAINT invoices_tenant_id_fkey, "
+                                "ADD CONSTRAINT invoices_tenant_id_fkey FOREIGN KEY (tenant_id) "
+                                "REFERENCES tenants(id) ON DELETE RESTRICT"))
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

@@ -99,3 +99,21 @@ def register(client):
         return {"Authorization": f"Bearer {token}"}, payload
 
     return _register
+
+
+def complete_billing_profiles():
+    """Gives every account a complete invoice address (needed for subscription invoices)."""
+    with engine.begin() as conn:
+        conn.execute(text(
+            "UPDATE tenants SET billing_name = company_name, billing_street = 'Kundenweg 2', "
+            "billing_zip = '04720', billing_city = 'Döbeln', billing_country = 'DE'"))
+
+
+def set_seller_details():
+    """The platform's own details, which every subscription invoice prints."""
+    with engine.begin() as conn:
+        if not conn.execute(text("SELECT 1 FROM site_settings")).first():
+            conn.execute(text("INSERT INTO site_settings (id, last_invoice_number) "
+                              "VALUES (gen_random_uuid(), 0)"))
+        conn.execute(text("UPDATE site_settings SET company_legal_name = 'NettoDesk Test', "
+                          "company_address = 'Teststraße 1, 10115 Berlin', company_tax_id = '123/456/7890'"))
