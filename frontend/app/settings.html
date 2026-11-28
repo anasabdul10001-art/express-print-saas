@@ -10,6 +10,7 @@
     <script src="../password-toggle.js" defer></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
+    <script src="days-left.js"></script>
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
@@ -172,7 +173,7 @@
             <h3 class="text-lg font-bold" data-i18n="settings.subscriptionTitle">Abonnement</h3>
             <div class="text-sm space-y-1">
                 <p><span class="text-slate-400" data-i18n="settings.subscriptionPlan">Plan:</span> <span id="subscription-plan-name">—</span></p>
-                <p id="subscription-trial-line" class="hidden"><span class="text-slate-400" data-i18n="settings.subscriptionTrialEnds">Testphase endet am:</span> <span id="subscription-trial-date"></span></p>
+                <p data-days-left class="hidden font-semibold text-brand-deep"></p>
                 <p id="subscription-status-line" class="hidden"><span class="text-slate-400" data-i18n="settings.subscriptionStatus">Status:</span> <span id="subscription-status-value"></span></p>
             </div>
             <div id="subscription-error" class="hidden bg-red-50 text-red-700 border border-red-200 p-2 rounded-lg text-sm"></div>
@@ -529,14 +530,6 @@
                 if (radio) radio.checked = true;
 
                 document.getElementById("subscription-plan-name").innerText = data.plan_name || t("settings.subscriptionNoPlan");
-
-                const trialLine = document.getElementById("subscription-trial-line");
-                if (data.trial_ends_at && data.subscription_status !== "active") {
-                    document.getElementById("subscription-trial-date").innerText = new Date(data.trial_ends_at).toLocaleDateString();
-                    trialLine.classList.remove("hidden");
-                } else {
-                    trialLine.classList.add("hidden");
-                }
 
                 const statusLine = document.getElementById("subscription-status-line");
                 if (data.subscription_status) {

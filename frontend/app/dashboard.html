@@ -9,6 +9,7 @@
     <script src="../assets/nettodesk.js"></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
+    <script src="days-left.js"></script>
     <script src="auto-sync.js"></script>
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
@@ -145,6 +146,11 @@
 
     <main class="max-w-4xl mx-auto p-6 space-y-6">
         <div id="banner" class="hidden p-3 rounded text-sm text-center"></div>
+
+        <div data-days-left class="hidden bg-brand-soft border border-brand rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+            <p data-days-left-text class="text-sm font-semibold text-ink"></p>
+            <a href="settings.html" class="text-sm font-bold text-brand-deep hover:underline" data-i18n="daysLeft.manage">Abonnement ansehen</a>
+        </div>
 
         <section id="alerts-box" class="hidden bg-white border border-slate-200 rounded-xl p-4">
             <h2 class="text-lg font-bold mb-3">Hinweise</h2>

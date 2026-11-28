@@ -21,6 +21,7 @@ no VAT for a small business (§ 19 UStG, the default), otherwise 19 %. The Strip
 price must be set up as the final amount the customer pays.
 """
 
+from datetime import datetime, timezone
 from decimal import Decimal
 
 import stripe
@@ -103,6 +104,23 @@ def create_portal_session(
     return PortalSessionOut(url=session.url)
 
 
+def _latest(timestamps) -> datetime | None:
+    """The latest of Stripe's Unix timestamps, or None if there is none."""
+    values = [value for value in timestamps if value]
+    return datetime.fromtimestamp(max(values), tz=timezone.utc) if values else None
+
+
+def _subscription_period_end(subscription: dict) -> datetime | None:
+    # older API versions report the period on the subscription, newer ones on each item
+    items = (subscription.get("items") or {}).get("data") or []
+    return _latest([subscription.get("current_period_end")] + [item.get("current_period_end") for item in items])
+
+
+def _invoice_period_end(stripe_invoice: dict) -> datetime | None:
+    lines = (stripe_invoice.get("lines") or {}).get("data") or []
+    return _latest([(line.get("period") or {}).get("end") for line in lines])
+
+
 def _handle_checkout_completed(db: Session, session: dict) -> None:
     tenant_id = session.get("client_reference_id") or (session.get("metadata") or {}).get("tenant_id")
     if not tenant_id:
@@ -123,6 +141,7 @@ def _handle_subscription_updated(db: Session, subscription: dict) -> None:
     if not tenant:
         return
     tenant.subscription_status = subscription.get("status")
+    tenant.current_period_end = _subscription_period_end(subscription) or tenant.current_period_end
     db.commit()
 
 
@@ -137,6 +156,12 @@ def _handle_invoice_paid(db: Session, stripe_invoice: dict) -> None:
     tenant = db.query(Tenant).filter(Tenant.stripe_customer_id == customer_id).first()
     if not tenant:
         return
+
+    # a paid invoice only ever moves the end forward (events can arrive out of order)
+    period_end = _invoice_period_end(stripe_invoice)
+    if period_end and (tenant.current_period_end is None or period_end > tenant.current_period_end):
+        tenant.current_period_end = period_end
+        db.commit()
 
     owner = (
         db.query(User)
