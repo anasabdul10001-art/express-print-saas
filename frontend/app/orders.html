@@ -217,12 +217,43 @@
             </form>
         </details>
 
+        <!-- Sales search: one product and/or a period -->
+        <div id="sales-filter" class="bg-white border border-slate-200 rounded-xl p-4 space-y-3 text-sm">
+            <div class="flex flex-wrap items-end gap-3">
+                <label class="block flex-1 min-w-[14rem]"><span class="block mb-1 font-semibold" data-i18n="orders.colProduct">Produkt</span>
+                    <select id="sales-product" onchange="salesFilterChanged()" class="w-full p-2 rounded-lg bg-white border border-slate-300"></select>
+                </label>
+                <label class="block"><span class="block mb-1 font-semibold" data-i18n="orders.period">Zeitraum</span>
+                    <select id="sales-period" onchange="salesFilterChanged()" class="p-2 rounded-lg bg-white border border-slate-300">
+                        <option value="all" data-i18n="orders.periodAll">Gesamter Zeitraum</option>
+                        <option value="today" data-i18n="orders.periodToday">Heute</option>
+                        <option value="7d" data-i18n="orders.periodWeek">Letzte 7 Tage</option>
+                        <option value="1m" data-i18n="dashboard.period.m1">Letzter Monat</option>
+                        <option value="3m" data-i18n="dashboard.period.m3">Letzte 3 Monate</option>
+                        <option value="6m" data-i18n="dashboard.period.m6">Letzte 6 Monate</option>
+                        <option value="12m" data-i18n="dashboard.period.y1">Letzte 12 Monate</option>
+                        <option value="custom" data-i18n="dashboard.period.custom">Eigener Zeitraum</option>
+                    </select>
+                </label>
+                <div id="sales-custom" class="hidden flex flex-wrap items-end gap-3">
+                    <label class="block"><span class="block mb-1 font-semibold" data-i18n="dashboard.chartFrom">Von</span>
+                        <input type="date" id="sales-from" onchange="salesFilterChanged()" class="p-2 rounded-lg border border-slate-300"></label>
+                    <label class="block"><span class="block mb-1 font-semibold" data-i18n="dashboard.chartTo">Bis</span>
+                        <input type="date" id="sales-to" onchange="salesFilterChanged()" class="p-2 rounded-lg border border-slate-300"></label>
+                </div>
+                <button type="button" id="sales-reset" onclick="resetSalesFilter()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-lg" data-i18n="orders.filterReset">Zurücksetzen</button>
+            </div>
+            <div id="sales-result" class="hidden rounded-lg bg-slate-50 border border-slate-200 p-3" aria-live="polite"></div>
+        </div>
+
         <!-- Print filter -->
         <div id="filter-bar" class="flex gap-2 text-sm font-semibold">
             <button type="button" data-filter="unshipped" onclick="setFilter('unshipped')" class="px-3 py-1.5 rounded-full border transition"></button>
             <button type="button" data-filter="shipped" onclick="setFilter('shipped')" class="px-3 py-1.5 rounded-full border transition"></button>
             <button type="button" data-filter="all" onclick="setFilter('all')" class="px-3 py-1.5 rounded-full border transition"></button>
         </div>
+
+        <p id="no-match" class="hidden bg-white border border-slate-200 p-6 rounded-xl text-center text-slate-500" data-i18n="orders.noMatch">Keine Bestellungen für diese Auswahl.</p>
 
         <!-- Orders list -->
         <div id="orders-list" data-numbered="list" class="space-y-4"></div>
@@ -583,10 +614,107 @@
 
         function setFilter(f) { currentFilter = f; renderOrders(allOrders); }
 
-        function renderFilterBar() {
-            const shipped = allOrders.filter(isShipped).length;
-            const unshipped = allOrders.filter(isUnshipped).length;
-            const counts = { all: allOrders.length, unshipped, shipped };
+        // Sales search. Days are Berlin calendar days, like the dashboard numbers.
+        const DELETED_PRODUCT = "deleted";
+        const berlinDay = value => new Date(value).toLocaleDateString("en-CA", { timeZone: "Europe/Berlin" });
+        const itemKey = item => item.product_id || DELETED_PRODUCT;
+        const escapeHtml = text => String(text).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+
+        // "n months back" starts the day after the same date n months ago (clamped to that month's end).
+        function periodRange() {
+            const period = document.getElementById("sales-period").value;
+            if (period === "all") return { from: "", to: "" };
+            if (period === "custom") return { from: document.getElementById("sales-from").value, to: document.getElementById("sales-to").value };
+            const today = berlinDay(Date.now());
+            const [y, m, d] = today.split("-").map(Number);
+            const iso = date => date.toISOString().slice(0, 10);
+            if (period === "today") return { from: today, to: today };
+            if (period === "7d") return { from: iso(new Date(Date.UTC(y, m - 1, d - 6))), to: today };
+            const months = parseInt(period, 10);
+            const lastDay = new Date(Date.UTC(y, m - months, 0)).getUTCDate();
+            return { from: iso(new Date(Date.UTC(y, m - 1 - months, Math.min(d, lastDay) + 1))), to: today };
+        }
+
+        function searchOrders() {
+            const product = document.getElementById("sales-product").value;
+            const { from, to } = periodRange();
+            return allOrders.filter(order => {
+                if (product && !order.items.some(i => itemKey(i) === product)) return false;
+                if (!from && !to) return true;
+                const day = berlinDay(order.ordered_at);
+                return (!from || day >= from) && (!to || day <= to);
+            });
+        }
+
+        // Every product that was ever sold, plus the active ones (so "0 sold" can be answered too).
+        function renderProductOptions() {
+            const select = document.getElementById("sales-product");
+            const chosen = select.value;
+            const names = new Map(allProducts.map(p => [p.id, p.title]));
+            allOrders.forEach(o => o.items.forEach(i => names.set(itemKey(i), i.product_title)));
+            const options = [...names].sort((a, b) => a[1].localeCompare(b[1], "de"));
+            select.innerHTML = `<option value="">${t("orders.allProducts")}</option>`
+                + options.map(([id, title]) => `<option value="${id}">${escapeHtml(title)}</option>`).join("");
+            select.value = names.has(chosen) ? chosen : "";
+        }
+
+        function renderSalesResult(found) {
+            const product = document.getElementById("sales-product").value;
+            const active = Boolean(product) || document.getElementById("sales-period").value !== "all";
+            const box = document.getElementById("sales-result");
+            box.classList.toggle("hidden", !active);
+            document.getElementById("sales-reset").classList.toggle("hidden", !active);
+            if (!active) return;
+
+            const { from, to } = periodRange();
+            if (from && to && from > to) { box.textContent = t("orders.badRange"); return; }
+
+            let pieces = 0, orders = 0, revenue = 0, refunded = 0, canceled = 0;
+            found.forEach(order => {
+                if (order.status === "canceled") { canceled++; return; }
+                const items = order.items.filter(i => !product || itemKey(i) === product);
+                const quantity = items.reduce((sum, i) => sum + i.quantity, 0);
+                orders++;
+                pieces += quantity;
+                revenue += items.reduce((sum, i) => sum + Number(i.unit_price || 0) * i.quantity, 0);
+                if (Number(order.refund_amount) > 0) refunded += quantity;
+            });
+
+            const day = iso => iso.split("-").reverse().join(".");
+            const range = from && to ? `${day(from)} – ${day(to)}`
+                : from ? `${t("dashboard.chartFrom")} ${day(from)}`
+                : to ? `${t("dashboard.chartTo")} ${day(to)}` : t("orders.periodAll");
+            const notes = [];
+            if (refunded) notes.push(`${t("orders.refundedPieces")}: ${refunded}`);
+            if (canceled) notes.push(`${t("orders.canceledExcluded")}: ${canceled}`);
+            box.innerHTML = `
+                <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+                    <span>${t("orders.soldPieces")}: <strong id="sales-pieces" class="text-2xl text-brand-deep">${pieces}</strong></span>
+                    <span>${t("orders.orderCount")}: <strong>${orders}</strong></span>
+                    <span>${t("orders.itemRevenue")}: <strong>${euro(revenue)}</strong></span>
+                </div>
+                <div class="mt-1 text-xs text-slate-500">${[range, ...notes].join(" · ")}</div>
+                <div class="text-xs text-slate-400">${t("orders.revenueHint")}</div>`;
+        }
+
+        // A new search shows all of its orders, not only the ones still waiting to be printed.
+        function salesFilterChanged() {
+            document.getElementById("sales-custom").classList.toggle("hidden", document.getElementById("sales-period").value !== "custom");
+            currentFilter = "all";
+            renderOrders(allOrders);
+        }
+
+        function resetSalesFilter() {
+            ["sales-product", "sales-from", "sales-to"].forEach(id => document.getElementById(id).value = "");
+            document.getElementById("sales-period").value = "all";
+            salesFilterChanged();
+            setFilter("unshipped");
+        }
+
+        function renderFilterBar(found) {
+            const shipped = found.filter(isShipped).length;
+            const unshipped = found.filter(isUnshipped).length;
+            const counts = { all: found.length, unshipped, shipped };
             const names = { all: t("orders.filterAll"), unshipped: "Nicht gedruckt", shipped: "Gedruckt / Versendet" };
             document.querySelectorAll("#filter-bar button").forEach(b => {
                 const f = b.dataset.filter;
@@ -695,14 +823,19 @@
 
         function renderOrders(orders) {
             allOrders = orders;
-            renderFilterBar();
+            renderProductOptions();
+            orders = searchOrders();
+            renderSalesResult(orders);
+            renderFilterBar(orders);
             if (currentFilter === "unshipped") orders = orders.filter(isUnshipped);
             if (currentFilter === "shipped") orders = orders.filter(isShipped);
             const list = document.getElementById("orders-list");
             const emptyState = document.getElementById("empty-state");
 
+            // "No orders yet" only when there really are none; otherwise the selection is just empty.
+            document.getElementById("no-match").classList.toggle("hidden", orders.length > 0 || allOrders.length === 0);
             if (orders.length === 0) {
-                emptyState.classList.remove("hidden");
+                emptyState.classList.toggle("hidden", allOrders.length > 0);
                 list.innerHTML = "";
                 return;
             }
@@ -809,7 +942,7 @@
                 const response = await fetch(`${API_URL}/orders`, { headers: authHeaders() });
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
-                await loadInvoices();
+                await Promise.all([loadInvoices(), loadProductsForSelect()]);
                 renderOrders(data);
             } catch (err) {
                 showBanner(t("orders.serverErrorReload"), true);

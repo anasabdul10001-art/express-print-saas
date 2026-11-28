@@ -10,6 +10,8 @@ class OrderCreate(BaseModel):
     items: list[OrderItemCreate] = Field(..., min_length=1)
 class OrderItemOut(BaseModel):
     id: uuid.UUID
+    # None once the product itself no longer exists; the orders page filters by it.
+    product_id: uuid.UUID | None = None
     product_title: str
     quantity: int
     unit_price: Decimal | None

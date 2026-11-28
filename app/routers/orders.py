@@ -45,6 +45,7 @@ def _serialize_order(order: Order) -> OrderOut:
         items_out.append(
             OrderItemOut(
                 id=item.id,
+                product_id=item.product_id,
                 product_title=product.title if product else "Produkt nicht mehr vorhanden",
                 quantity=item.quantity,
                 unit_price=item.unit_price,
