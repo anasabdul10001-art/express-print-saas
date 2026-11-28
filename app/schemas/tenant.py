@@ -36,6 +36,28 @@ class TenantUpdate(BaseModel):
     default_package_height_cm: int | None = Field(None, gt=0)
 
 
+class BillingProfile(BaseModel):
+    """Recipient on the subscription invoices. Only German addresses for now: other
+    countries need different tax wording, which has not been confirmed."""
+
+    billing_name: str = Field(..., max_length=255)
+    billing_street: str = Field(..., max_length=255)
+    billing_zip: str = Field(..., max_length=20)
+    billing_city: str = Field(..., max_length=100)
+    billing_country: str = Field("DE", max_length=2)
+    billing_vat_id: str | None = Field(None, max_length=30)
+
+
+class BillingProfileOut(BaseModel):
+    billing_name: str | None = None
+    billing_street: str | None = None
+    billing_zip: str | None = None
+    billing_city: str | None = None
+    billing_country: str | None = None
+    billing_vat_id: str | None = None
+    complete: bool = False
+
+
 class TenantOut(BaseModel):
     id: uuid.UUID
     company_name: str

@@ -16,6 +16,7 @@ import stripe
 from sqlalchemy import create_engine, text
 
 from app.config import settings
+from conftest import complete_billing_profiles, set_seller_details
 
 
 def _make_superadmin(headers, client):
@@ -97,6 +98,8 @@ def test_checkout_session_creates_customer_and_returns_url(client, register, mon
     monkeypatch.setattr(stripe.checkout.Session, "create", fake_session_create)
 
     headers, _ = register(email="checkoutuser@example.com")
+    set_seller_details()
+    complete_billing_profiles()
     response = client.post("/billing/checkout-session", headers=headers, json={"plan_id": plan["id"]})
     assert response.status_code == 200, response.text
     assert response.json()["url"] == "https://checkout.stripe.com/fake-session"
@@ -128,6 +131,8 @@ def test_checkout_session_reuses_existing_stripe_customer(client, register, monk
     monkeypatch.setattr(stripe.Customer, "create", lambda **kw: customer_create_calls.append(kw))
     monkeypatch.setattr(stripe.checkout.Session, "create", lambda **kw: types.SimpleNamespace(url="https://checkout.stripe.com/reused"))
 
+    set_seller_details()
+    complete_billing_profiles()
     response = client.post("/billing/checkout-session", headers=headers, json={"plan_id": plan["id"]})
     assert response.status_code == 200, response.text
     assert len(customer_create_calls) == 0  # never created a new customer
@@ -157,6 +162,8 @@ def test_checkout_session_allowed_even_when_trial_expired(client, register, monk
     monkeypatch.setattr(stripe.Customer, "create", lambda **kw: types.SimpleNamespace(id="cus_expired"))
     monkeypatch.setattr(stripe.checkout.Session, "create", lambda **kw: types.SimpleNamespace(url="https://checkout.stripe.com/expired-trial"))
 
+    set_seller_details()
+    complete_billing_profiles()
     response = client.post("/billing/checkout-session", headers=headers, json={"plan_id": plan["id"]})
     assert response.status_code == 200, response.text
 
@@ -265,6 +272,8 @@ def test_webhook_invoice_paid_creates_invoice_and_awards_commission(client, regi
         )
         invoices_before = conn.execute(text("SELECT COUNT(*) FROM invoices")).scalar()
 
+    complete_billing_profiles()
+
     # 34.51 gross ~= 29.00 net at 19% VAT, in cents as Stripe would send it.
     fake_event = {
         "type": "invoice.paid",
@@ -277,7 +286,7 @@ def test_webhook_invoice_paid_creates_invoice_and_awards_commission(client, regi
     monkeypatch.setattr(stripe.Webhook, "construct_event", lambda payload, sig_header, secret: fake_event)
 
     response = client.post("/billing/webhooks/stripe", content=b"{}", headers={"stripe-signature": "valid"})
-    assert response.status_code == 200
+    assert response.status_code == 500  # invoice saved, email not sent
 
     with engine.begin() as conn:
         invoices_after = conn.execute(text("SELECT COUNT(*) FROM invoices")).scalar()
@@ -320,6 +329,8 @@ def test_webhook_invoice_for_a_small_business_has_no_vat(client, register, monke
         )
         invoices_before = conn.execute(text("SELECT COUNT(*) FROM invoices")).scalar()
 
+    complete_billing_profiles()
+
     # 34.51 gross ~= 29.00 net at 19% VAT, in cents as Stripe would send it.
     fake_event = {
         "type": "invoice.paid",
@@ -332,7 +343,7 @@ def test_webhook_invoice_for_a_small_business_has_no_vat(client, register, monke
     monkeypatch.setattr(stripe.Webhook, "construct_event", lambda payload, sig_header, secret: fake_event)
 
     response = client.post("/billing/webhooks/stripe", content=b"{}", headers={"stripe-signature": "valid"})
-    assert response.status_code == 200
+    assert response.status_code == 500  # invoice saved, email not sent
 
     with engine.begin() as conn:
         invoices_after = conn.execute(text("SELECT COUNT(*) FROM invoices")).scalar()

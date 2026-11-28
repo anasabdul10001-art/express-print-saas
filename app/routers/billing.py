@@ -21,23 +21,35 @@ no VAT for a small business (§ 19 UStG, the default), otherwise 19 %. The Strip
 price must be set up as the final amount the customer pays.
 """
 
-from datetime import datetime, timezone
+import logging
+import re
+import uuid
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 import stripe
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.deps import get_current_user_ignoring_trial, get_db
+from app.models.invoice import Invoice
 from app.models.plan import Plan
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.routers.admin import _get_or_create_settings
+from app.schemas.admin import InvoiceOut
 from app.schemas.billing import CheckoutSessionOut, CheckoutSessionRequest, PortalSessionOut
-from app.services.billing_service import invoice_vat_rate, issue_invoice
+from app.schemas.tenant import BillingProfile, BillingProfileOut
+from app.services.billing_service import (
+    BILLING_COUNTRIES, BILLING_REQUIRED, billing_profile_complete, deliver_invoice, invoice_vat_rate,
+    issue_invoice, require_invoice_data, stored_pdf, subscription_description, welcome_once,
+)
+from app.services.sales_invoice_service import InvoiceError, pdf_text
 
 router = APIRouter(prefix="/billing", tags=["billing"])
+log = logging.getLogger("billing")
 
 
 def _require_stripe_configured() -> None:
@@ -61,6 +73,14 @@ def create_checkout_session(
         raise HTTPException(status_code=400, detail="Für diesen Plan ist noch kein Stripe-Preis hinterlegt.")
 
     tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).first()
+    # Without both sides' details no valid invoice could be issued after the payment.
+    try:
+        require_invoice_data(tenant, _get_or_create_settings(db))
+    except ValueError:
+        if not billing_profile_complete(tenant):
+            raise HTTPException(status_code=400, detail="Bitte zuerst unter Einstellungen die Rechnungsadresse "
+                                                        "ausfüllen (derzeit nur Anschriften in Deutschland).")
+        raise HTTPException(status_code=503, detail="Die Buchung ist gerade noch nicht möglich.")
 
     if not tenant.stripe_customer_id:
         customer = stripe.Customer.create(
@@ -121,6 +141,75 @@ def _invoice_period_end(stripe_invoice: dict) -> datetime | None:
     return _latest([(line.get("period") or {}).get("end") for line in lines])
 
 
+@router.get("/profile", response_model=BillingProfileOut)
+def get_billing_profile(
+    current_user: User = Depends(get_current_user_ignoring_trial),
+    db: Session = Depends(get_db),
+):
+    tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).first()
+    return _profile_out(tenant)
+
+
+@router.put("/profile", response_model=BillingProfileOut)
+def save_billing_profile(
+    payload: BillingProfile,
+    current_user: User = Depends(get_current_user_ignoring_trial),
+    db: Session = Depends(get_db),
+):
+    """Used on invoices issued from now on; issued invoices stay unchanged."""
+    values = {key: (value or "").strip() for key, value in payload.model_dump().items()}
+    values["billing_country"] = values["billing_country"].upper()
+    if not all(values[key] for key in BILLING_REQUIRED):
+        raise HTTPException(status_code=400, detail="Bitte Name, Straße, Postleitzahl, Ort und Land ausfüllen.")
+    if values["billing_country"] not in BILLING_COUNTRIES:
+        raise HTTPException(status_code=400, detail="Derzeit sind nur Rechnungsadressen in Deutschland möglich.")
+    if not re.fullmatch(r"\d{5}", values["billing_zip"]):
+        raise HTTPException(status_code=400, detail="Die Postleitzahl muss aus 5 Ziffern bestehen.")
+    try:  # refuse now what the invoice PDF could not print after the payment
+        for value in values.values():
+            pdf_text(value)
+    except InvoiceError as err:
+        raise HTTPException(status_code=400, detail=f"{err} Bitte in lateinischen Buchstaben schreiben.")
+
+    tenant = db.query(Tenant).filter(Tenant.id == current_user.tenant_id).first()
+    for key, value in values.items():
+        setattr(tenant, key, value or None)
+    db.commit()
+    return _profile_out(tenant)
+
+
+def _profile_out(tenant: Tenant) -> BillingProfileOut:
+    fields = {key: getattr(tenant, key) for key in BillingProfile.model_fields}
+    return BillingProfileOut(**fields, complete=billing_profile_complete(tenant))
+
+
+@router.get("/invoices", response_model=list[InvoiceOut])
+def list_my_invoices(
+    current_user: User = Depends(get_current_user_ignoring_trial),
+    db: Session = Depends(get_db),
+):
+    return (db.query(Invoice).filter(Invoice.tenant_id == current_user.tenant_id)
+            .order_by(Invoice.invoice_number.desc()).all())
+
+
+@router.get("/invoices/{invoice_id}/pdf")
+def download_my_invoice(
+    invoice_id: uuid.UUID,
+    current_user: User = Depends(get_current_user_ignoring_trial),
+    db: Session = Depends(get_db),
+):
+    invoice = db.query(Invoice).filter(
+        Invoice.id == invoice_id, Invoice.tenant_id == current_user.tenant_id).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
+    return Response(
+        content=stored_pdf(db, invoice, _get_or_create_settings(db)),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="Rechnung-{invoice.invoice_number}.pdf"',
+                 "Cache-Control": "no-store"},
+    )
+
+
 def _handle_checkout_completed(db: Session, session: dict) -> None:
     tenant_id = session.get("client_reference_id") or (session.get("metadata") or {}).get("tenant_id")
     if not tenant_id:
@@ -132,6 +221,10 @@ def _handle_checkout_completed(db: Session, session: dict) -> None:
     tenant.stripe_customer_id = session.get("customer") or tenant.stripe_customer_id
     tenant.stripe_subscription_id = session.get("subscription")
     tenant.subscription_status = "active"
+    plan_id = (session.get("metadata") or {}).get("plan_id")
+    plan = db.query(Plan).filter(Plan.id == plan_id).first() if plan_id else None
+    if plan:
+        tenant.plan_id = plan.id
     tenant.trial_ends_at = None  # a real subscription supersedes the trial clock
     db.commit()
 
@@ -145,15 +238,49 @@ def _handle_subscription_updated(db: Session, subscription: dict) -> None:
     db.commit()
 
 
+def _stripe_line(stripe_invoice: dict) -> dict:
+    lines = (stripe_invoice.get("lines") or {}).get("data") or []
+    return lines[0] if lines else {}
+
+
+def _service_period(stripe_invoice: dict) -> tuple[date, date] | None:
+    """The period paid for, from the subscription line. (The invoice's own
+    period_start/period_end describe the previous period, so they aren't used.)"""
+    period = _stripe_line(stripe_invoice).get("period") or {}
+    if not period.get("start") or not period.get("end"):
+        return None
+    berlin = ZoneInfo("Europe/Berlin")
+    start = datetime.fromtimestamp(period["start"], berlin).date()
+    # Stripe's end is the moment the next period begins.
+    end = datetime.fromtimestamp(period["end"], berlin).date() - timedelta(days=1)
+    return (start, end) if end >= start else None
+
+
+def _plan_for(db: Session, tenant: Tenant, stripe_invoice: dict) -> Plan | None:
+    """The plan actually charged; the account's plan if the price is unknown."""
+    line = _stripe_line(stripe_invoice)
+    price_id = (line.get("price") or {}).get("id") \
+        or ((line.get("pricing") or {}).get("price_details") or {}).get("price")
+    if price_id:
+        plan = db.query(Plan).filter(Plan.stripe_price_id_monthly == price_id).first()
+        if plan:
+            return plan
+    return db.query(Plan).filter(Plan.id == tenant.plan_id).first() if tenant.plan_id else None
+
+
 def _handle_invoice_paid(db: Session, stripe_invoice: dict) -> None:
     """
     Fires on every successful subscription charge (first and every
-    renewal) - each becomes a real §14-UStG invoice via the same path
+    renewal) - each becomes an invoice via the same path
     app/routers/admin.py::confirm_payment uses for a manual payment. See
     this module's docstring for the amount-handling assumption.
+
+    If the invoice or its email fails, the webhook answers 500 so that
+    Stripe delivers the event again; a payment already invoiced is never
+    invoiced twice, only an unsent email is sent.
     """
     customer_id = stripe_invoice.get("customer")
-    tenant = db.query(Tenant).filter(Tenant.stripe_customer_id == customer_id).first()
+    tenant = db.query(Tenant).filter(Tenant.stripe_customer_id == customer_id).first() if customer_id else None
     if not tenant:
         return
 
@@ -162,6 +289,10 @@ def _handle_invoice_paid(db: Session, stripe_invoice: dict) -> None:
     if period_end and (tenant.current_period_end is None or period_end > tenant.current_period_end):
         tenant.current_period_end = period_end
         db.commit()
+
+    amount_paid = stripe_invoice.get("amount_paid") or 0
+    if amount_paid <= 0:  # e.g. the start of a trial: nothing was charged
+        return
 
     owner = (
         db.query(User)
@@ -172,22 +303,28 @@ def _handle_invoice_paid(db: Session, stripe_invoice: dict) -> None:
     if not owner:
         return
 
-    gross_amount = Decimal(stripe_invoice.get("amount_paid", 0)) / 100
-    net_amount = (gross_amount / (1 + invoice_vat_rate() / 100)).quantize(Decimal("0.01"))
-    currency = (stripe_invoice.get("currency") or "eur").upper()
-
     settings_row = _get_or_create_settings(db)
-    plan = db.query(Plan).filter(Plan.id == tenant.plan_id).first() if tenant.plan_id else None
-    description = plan.name if plan else "Abonnement"
+    plan = _plan_for(db, tenant, stripe_invoice)
+    plan_name = plan.name if plan else None
+    stripe_id = stripe_invoice.get("id")
 
     try:
-        issue_invoice(db, tenant, owner, settings_row, net_amount, description, currency)
+        existing = db.query(Invoice).filter(Invoice.stripe_invoice_id == stripe_id).first() if stripe_id else None
+        if existing:
+            welcome_once(db, tenant, owner, plan_name, settings_row.company_legal_name)
+            if existing.email_sent_at is None:
+                deliver_invoice(db, existing, settings_row)
+            return
+
+        gross_amount = Decimal(amount_paid) / 100
+        net_amount = (gross_amount / (1 + invoice_vat_rate() / 100)).quantize(Decimal("0.01"))
+        currency = (stripe_invoice.get("currency") or "eur").upper()
+        issue_invoice(db, tenant, owner, settings_row, net_amount, subscription_description(plan_name), currency,
+                      service_period=_service_period(stripe_invoice), payment_method="stripe",
+                      stripe_invoice_id=stripe_id, plan_name=plan_name)
     except (ValueError, RuntimeError) as err:
-        # Never fail the webhook response over a downstream config/email
-        # gap - Stripe already charged the customer. Logged for follow-up
-        # rather than retried, since Stripe would just redeliver the same
-        # event and hit the same gap again.
-        print(f"[stripe webhook] invoice.paid handling failed for tenant {tenant.id}: {err}")
+        log.error("invoice.paid handling failed for tenant %s: %s", tenant.id, err)
+        raise HTTPException(status_code=500, detail="Rechnung noch nicht zugestellt - bitte erneut senden.")
 
 
 @router.post("/webhooks/stripe")

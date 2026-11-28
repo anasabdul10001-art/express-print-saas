@@ -42,9 +42,10 @@ from app.schemas.affiliate import (
 from app.schemas.site_page import SitePageOut, SitePageUpdate
 from app.routers.affiliate_portal import _issue_set_password_token
 from app.routers.plans import DEFAULT_SITE_PAGES, _get_or_create_page
-from app.services.billing_service import issue_invoice
-from app.services.email_service import send_affiliate_password_email, send_invoice_email
-from app.services.invoice_service import generate_invoice_pdf
+from app.services.billing_service import (
+    cancel_invoice, deliver_invoice, issue_invoice, stored_pdf, subscription_description,
+)
+from app.services.email_service import send_affiliate_password_email
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -343,12 +344,17 @@ def confirm_payment(
     if net_amount is None:
         raise HTTPException(status_code=400, detail="Kein Betrag verfügbar - bitte einen Betrag angeben.")
 
-    description = payload.description or (plan.name if plan else "Abonnement")
+    description = payload.description or subscription_description(plan.name if plan else None)
     currency = plan.currency if plan else "EUR"
     settings_row = _get_or_create_settings(db)
 
+    if bool(payload.service_start) != bool(payload.service_end):
+        raise HTTPException(status_code=400, detail="Bitte Beginn und Ende des Leistungszeitraums angeben.")
+    period = (payload.service_start, payload.service_end) if payload.service_start else None
+
     try:
-        invoice = issue_invoice(db, tenant, owner, settings_row, net_amount, description, currency)
+        invoice = issue_invoice(db, tenant, owner, settings_row, net_amount, description, currency,
+                                service_period=period, plan_name=plan.name if plan else None)
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
     except RuntimeError as err:
@@ -380,17 +386,14 @@ def download_invoice_pdf(
     db: Session = Depends(get_db),
 ):
     """
-    Regenerates the PDF on demand from the stored invoice + current seller
-    settings, rather than persisting the file anywhere - an invoice PDF
-    contains a customer's name, email and billing amounts, so it never gets
-    a public URL the way product images/logos/avatars do.
+    The PDF as it was issued. It contains a customer's address and billing
+    amounts, so it never gets a public URL the way product images/logos do.
     """
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:
         raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
 
-    settings_row = _get_or_create_settings(db)
-    pdf_bytes = generate_invoice_pdf(invoice, settings_row)
+    pdf_bytes = stored_pdf(db, invoice, _get_or_create_settings(db))
 
     return Response(
         content=pdf_bytes,
@@ -409,15 +412,35 @@ def resend_invoice(
     if not invoice:
         raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
 
-    settings_row = _get_or_create_settings(db)
-    pdf_bytes = generate_invoice_pdf(invoice, settings_row)
-
     try:
-        send_invoice_email(invoice.customer_email, invoice.invoice_number, pdf_bytes, settings_row.company_legal_name)
+        deliver_invoice(db, invoice, _get_or_create_settings(db))
     except RuntimeError as err:
         raise HTTPException(status_code=502, detail=f"E-Mail-Versand fehlgeschlagen: {err}")
 
     return {"message": "Rechnung erneut gesendet."}
+
+
+@router.post("/invoices/{invoice_id}/cancel", response_model=InvoiceOut)
+def cancel_subscription_invoice(
+    invoice_id: str,
+    current_user: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db),
+):
+    """Issues a cancellation invoice and emails it. No refund is triggered."""
+    invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
+
+    settings_row = _get_or_create_settings(db)
+    try:
+        storno = cancel_invoice(db, invoice, settings_row)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
+    try:
+        deliver_invoice(db, storno, settings_row)
+    except RuntimeError as err:
+        raise HTTPException(status_code=502, detail=str(err))
+    return storno
 
 
 def _with_referral_count(db: Session, affiliate: Affiliate) -> AffiliateOut:

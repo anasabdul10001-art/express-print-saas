@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <title>Rechnungen — NettoDesk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/nettodesk.js"></script>
+    <!-- No trial guard: this page has to work after the trial, otherwise nobody could subscribe. -->
+</head>
+<body class="bg-slate-50 text-slate-900">
+    <main class="max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+            <a href="dashboard.html"><img src="../assets/nettodesk-logo.svg" alt="NettoDesk" style="height:28px;width:auto" /></a>
+            <nav class="flex gap-4 text-sm font-semibold text-slate-600">
+                <a href="settings.html" class="hover:text-slate-900">Einstellungen</a>
+                <a href="../pricing.html" class="hover:text-slate-900">Pläne</a>
+            </nav>
+        </div>
+
+        <section class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
+            <h1 class="text-lg font-bold">Rechnungsadresse</h1>
+            <p class="text-sm text-slate-500">Steht auf jeder neuen Rechnung. Bereits ausgestellte Rechnungen ändern sich nicht. Vor der ersten Buchung ausfüllen. Derzeit sind nur Anschriften in Deutschland möglich.</p>
+            <form id="profile-form" class="space-y-3" novalidate>
+                <label class="block text-sm">Vollständiger Firmenname bzw. Name des Unternehmens
+                    <input name="billing_name" maxlength="255" autocomplete="organization" class="mt-1 w-full p-2 rounded bg-white border border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
+                </label>
+                <label class="block text-sm">Straße und Hausnummer
+                    <input name="billing_street" maxlength="255" autocomplete="street-address" class="mt-1 w-full p-2 rounded bg-white border border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
+                </label>
+                <div class="grid grid-cols-3 gap-3">
+                    <label class="block text-sm">PLZ
+                        <input name="billing_zip" maxlength="5" inputmode="numeric" autocomplete="postal-code" class="mt-1 w-full p-2 rounded bg-white border border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
+                    </label>
+                    <label class="block text-sm col-span-2">Ort
+                        <input name="billing_city" maxlength="100" autocomplete="address-level2" class="mt-1 w-full p-2 rounded bg-white border border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
+                    </label>
+                </div>
+                <label class="block text-sm">Land
+                    <select name="billing_country" class="mt-1 w-full p-2 rounded bg-white border border-slate-300"><option value="DE">Deutschland</option></select>
+                </label>
+                <label class="block text-sm">USt-IdNr. (freiwillig)
+                    <input name="billing_vat_id" maxlength="30" class="mt-1 w-full p-2 rounded bg-white border border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none">
+                </label>
+                <p class="text-xs text-slate-500">Rechnungen werden elektronisch als PDF bereitgestellt und per E-Mail gesendet. Mit der Buchung eines Plans bist du damit einverstanden.</p>
+                <div id="profile-message" role="status" class="hidden p-2 rounded text-sm"></div>
+                <button type="submit" class="bg-brand hover:bg-brand-hover text-ink font-bold py-2 px-4 rounded transition">Speichern</button>
+            </form>
+        </section>
+
+        <section id="rechnungen" class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-3">
+            <h2 class="text-lg font-bold">Meine Rechnungen</h2>
+            <p id="invoices-state" class="text-sm text-slate-500">Wird geladen …</p>
+            <ul id="invoices" class="divide-y divide-slate-100"></ul>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? location.origin : "https://express-print-saas.onrender.com";
+        const token = localStorage.getItem("access_token");
+        const toLogin = () => { localStorage.removeItem("access_token"); location.href = "../login.html"; };
+        if (!token) toLogin();
+
+        async function api(path, options = {}) {
+            const response = await fetch(API_URL + path, {
+                ...options,
+                headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+            });
+            if (response.status === 401) toLogin();
+            return response;
+        }
+
+        const form = document.getElementById("profile-form");
+        const message = document.getElementById("profile-message");
+        function say(text, isError) {
+            message.className = "p-2 rounded text-sm " + (isError ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-800");
+            message.textContent = text;
+        }
+
+        async function loadProfile() {
+            try {
+                const response = await api("/billing/profile");
+                if (!response.ok) throw new Error();
+                const data = await response.json();
+                for (const field of form.querySelectorAll("input, select")) {
+                    if (data[field.name]) field.value = data[field.name];
+                }
+            } catch (err) {
+                say("Die Rechnungsadresse konnte nicht geladen werden.", true);
+            }
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const body = Object.fromEntries(new FormData(form));
+            try {
+                const response = await api("/billing/profile", { method: "PUT", body: JSON.stringify(body) });
+                const data = await response.json();
+                if (!response.ok) { say(typeof data.detail === "string" ? data.detail : "Bitte die Eingaben prüfen.", true); return; }
+                say("Gespeichert.", false);
+            } catch (err) {
+                say("Speichern hat nicht geklappt. Bitte erneut versuchen.", true);
+            }
+        });
+
+        const germanDate = (iso) => iso ? iso.split("-").reverse().join(".") : "";
+
+        async function download(invoice) {
+            const response = await api(`/billing/invoices/${invoice.id}/pdf`);
+            if (!response.ok) { alert("Der Download hat nicht geklappt. Bitte später erneut versuchen."); return; }
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(await response.blob());
+            link.download = `Rechnung-${invoice.invoice_number}.pdf`;
+            document.body.appendChild(link); link.click(); link.remove();
+            URL.revokeObjectURL(link.href);
+        }
+
+        async function loadInvoices() {
+            const state = document.getElementById("invoices-state");
+            try {
+                const response = await api("/billing/invoices");
+                if (!response.ok) throw new Error();
+                const invoices = await response.json();
+                if (!invoices.length) { state.textContent = "Noch keine Rechnungen."; return; }
+                state.classList.add("hidden");
+                for (const invoice of invoices) {
+                    const row = document.createElement("li");
+                    row.className = "py-3 flex items-center justify-between gap-3";
+                    const info = document.createElement("div");
+                    const title = document.createElement("p");
+                    title.className = "text-sm font-semibold";
+                    title.textContent = `${invoice.cancels_id ? "Stornorechnung" : "Rechnung"} ${invoice.invoice_number}`;
+                    const details = document.createElement("p");
+                    details.className = "text-sm text-slate-500";
+                    details.textContent = `${germanDate(invoice.issue_date)} · ${Number(invoice.gross_amount).toFixed(2).replace(".", ",")} ${invoice.currency}`;
+                    info.append(title, details);
+                    const button = document.createElement("button");
+                    button.className = "bg-slate-100 hover:bg-slate-200 font-semibold text-sm py-2 px-3 rounded-lg flex-shrink-0";
+                    button.textContent = "PDF herunterladen";
+                    button.onclick = () => download(invoice);
+                    row.append(info, button);
+                    document.getElementById("invoices").appendChild(row);
+                }
+            } catch (err) {
+                state.textContent = "Die Rechnungen konnten nicht geladen werden.";
+            }
+        }
+
+        loadProfile();
+        loadInvoices();
+    </script>
+</body>
+</html>

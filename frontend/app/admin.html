@@ -1035,16 +1035,22 @@
             }
             emptyState.classList.add("hidden");
 
+            const safe = (value) => String(value).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+            const cancelled = new Set(invoices.map(inv => inv.cancels_id).filter(Boolean));
             list.innerHTML = invoices.map(inv => `
                 <div class="border border-slate-200 rounded-lg p-3 flex items-center justify-between gap-4">
                     <div>
                         <span class="font-semibold text-sm">${inv.invoice_number}</span>
                         <span class="text-slate-400 text-xs ml-2">${inv.issue_date}</span>
-                        <p class="text-slate-500 text-sm">${inv.customer_name} — ${inv.description} — ${euro(inv.gross_amount, inv.currency)}</p>
+                        <p class="text-slate-500 text-sm">${safe(inv.customer_name)} — ${safe(inv.description)} — ${euro(inv.gross_amount, inv.currency)}</p>
+                        ${inv.cancels_id ? `<p class="text-amber-700 text-xs font-semibold">${t("admin.invoiceIsStorno")}</p>` : ""}
+                        ${cancelled.has(inv.id) ? `<p class="text-amber-700 text-xs font-semibold">${t("admin.invoiceCancelled")}</p>` : ""}
+                        ${inv.email_sent_at ? "" : `<p class="text-red-600 text-xs">${t("admin.invoiceUnsent")}</p>`}
                     </div>
                     <div class="flex items-center gap-3 flex-shrink-0">
                         <button onclick='downloadInvoicePdf(${JSON.stringify(inv.id)})' class="text-blue-600 hover:text-blue-700 text-xs font-semibold">${t("admin.invoicePdf")}</button>
                         <button onclick="resendInvoice(${JSON.stringify(inv.id)})" class="text-slate-600 hover:text-slate-900 text-xs font-semibold">${t("admin.invoiceResend")}</button>
+                        ${inv.cancels_id || cancelled.has(inv.id) ? "" : `<button onclick='cancelInvoice(${JSON.stringify(inv.id)})' class="text-red-600 hover:text-red-700 text-xs font-semibold">${t("admin.invoiceCancel")}</button>`}
                     </div>
                 </div>
             `).join("");
@@ -1085,6 +1091,22 @@
                 renderInvoices(data);
             } catch (err) {
                 // Non-critical - the confirm-payment form above still works without this list.
+            }
+        }
+
+        async function cancelInvoice(invoiceId) {
+            if (!confirm(t("admin.invoiceCancelConfirm"))) return;
+            try {
+                const response = await fetch(`${API_URL}/admin/invoices/${invoiceId}/cancel`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                });
+                if (response.status === 401) { logout(); return; }
+                const data = await response.json();
+                showBanner(response.ok ? t("admin.invoiceCancelDone") : (data.detail || t("admin.saveFailed")), !response.ok);
+                loadInvoices();
+            } catch (err) {
+                showBanner(t("admin.serverError"), true);
             }
         }
 
