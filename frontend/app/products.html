@@ -11,6 +11,7 @@
     <script src="layout.js"></script>
     <script src="auto-sync.js"></script>
     <script src="listing-editor.js" defer></script>
+    <script src="send-to.js" defer></script>
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
@@ -1145,6 +1146,7 @@
 
         const ROW_ICONS = {
             pictures: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+            send: '<path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4z"/>',
             link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
             edit: '<path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><path d="m15 5 4 4"/>',
             restock: '<path d="M21 10V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l1-.6"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/><path d="M16 17h6"/><path d="M19 14v6"/>',
@@ -1199,6 +1201,7 @@
                         <div class="flex items-center gap-1">
                         ${!p.unlisted && p.active ? rowAction("pictures", "eBay-Angebot bearbeiten (Bilder, Varianten, Preise, Mengen)", `openListingEditor(${JSON.stringify(p.id)})`, "text-amber-700 hover:bg-amber-50") : ""}
                         ${p.unlisted && p.active ? rowAction("link", "Mit Angebot verknüpfen", `openLinkPanel(${JSON.stringify(p.id)})`, "text-sky-700 hover:bg-sky-50") : ""}
+                        ${p.active ? rowAction("send", "Anbieten (eBay, Shopify, Amazon)", `openSendTo(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})`, "text-emerald-700 hover:bg-emerald-50") : ""}
                         ${rowAction("edit", t("products.edit"), `openForm(${JSON.stringify(p)})`, "text-blue-600 hover:bg-blue-50")}
                         ${rowAction("restock", t("products.restock"), `restockProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})`, "text-blue-600 hover:bg-blue-50")}
                         ${rowAction("history", t("products.history"), `showHistory(${JSON.stringify(p.id)}, ${JSON.stringify(p.title)})`, "text-slate-500 hover:bg-slate-100")}

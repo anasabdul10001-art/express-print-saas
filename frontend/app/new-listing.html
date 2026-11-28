@@ -68,6 +68,20 @@ async function loadPolicies() {
     ["shipping", "return", "payment"].forEach(k => $(k + "_policy_id").innerHTML = p[k].map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join(""));
     if (["shipping", "return", "payment"].some(k => !p[k].length)) show("Für dieses Konto fehlen Rahmenbedingungen (Versand, Rückgabe, Zahlung) bei eBay.", "warning");
 }
+// Opened from a product's "Anbieten" button: fill in what NettoDesk already knows.
+async function prefill() {
+    const id = new URLSearchParams(location.search).get("product");
+    if (!id) return;
+    try {
+        const p = await call(`/products/${encodeURIComponent(id)}`);
+        $("title").value = p.title.slice(0, 80);
+        if (p.selling_price !== null) $("price").value = p.selling_price;
+        if (p.stock_quantity > 0) $("quantity").value = p.stock_quantity;
+        $("sku").value = p.sku.slice(0, 50);
+        if ((p.image_url || "").startsWith("https://")) $("picture_urls").value = p.image_url;
+    } catch (e) { show(e.message, "error"); }
+}
+prefill();
 async function init() {
     try {
         const accounts = (await call("/ebay/accounts")).filter(a => a.status === "CONNECTED");

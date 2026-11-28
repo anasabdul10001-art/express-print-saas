@@ -180,3 +180,26 @@ def push_listings(payload: PushIn, current_user: User = Depends(get_current_user
         "updated": 0 if payload.dry_run else sum(1 for c in items if not c["errors"]),
         "failed": sum(1 for c in items if c["errors"]), "items": items, "errors": errors,
     }
+
+
+class DraftIn(BaseModel):
+    product_id: uuid.UUID
+
+
+@router.post("/create-draft")
+def create_draft(payload: DraftIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Creates one NettoDesk product as a draft in the connected store."""
+    product = db.query(Product).filter(
+        Product.id == payload.product_id, Product.tenant_id == current_user.tenant_id, Product.active.is_(True)).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produkt nicht gefunden")
+    rows = _connected(current_user, db).all()
+    if not rows:
+        raise HTTPException(status_code=400, detail="Kein verbundener Shopify-Shop gefunden.")
+    if len(rows) > 1:
+        raise HTTPException(status_code=400, detail="Mehrere Shopify-Shops verbunden: das wird noch nicht unterstützt.")
+    try:
+        result = shopify_service.create_draft(rows[0], product)
+    except (ValueError, httpx.HTTPError) as exc:
+        raise HTTPException(status_code=502, detail=f"Shopify: {exc}")
+    return {**result, "shop": _name(rows[0])}
