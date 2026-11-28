@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models.ebay_account import EbayAccount
+from app.models.internetmarke import InternetmarkePurchase, remove_buyer_data
 from app.models.order import Order
 from app.models.print_job import PrintJob
 from app.models.stock_movement import StockMovement
@@ -136,6 +137,7 @@ def _wipe_order(order: Order, db: Session) -> None:
     db.query(PrintJob).filter(PrintJob.order_id == order.id).update(
         {PrintJob.label_pdf_data: None, PrintJob.error_message: None}, synchronize_session=False
     )
+    remove_buyer_data(db, InternetmarkePurchase.order_id == order.id)
 
 
 def delete_user_data(username: str | None, user_id: str | None, db: Session) -> None:

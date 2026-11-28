@@ -10,6 +10,7 @@
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
     <script src="auto-sync.js"></script>
+    <script src="internetmarke.js"></script>
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
     <script src="../i18n.js"></script>
@@ -879,6 +880,7 @@
                                         <input type="file" accept="application/pdf" class="hidden" onchange='uploadLabel(${JSON.stringify(order.id)}, this)'>
                                     </label>
                                 ` : ""}
+                                ${Internetmarke.button(order)}
                                 ${order.external_order_ref && order.status !== "shipped" && order.status !== "canceled" ? `
                                     <span class="ml-3 inline-flex items-center gap-1">
                                         <input id="trk-${order.id}" placeholder="${t("orders.trackingPlaceholder")}" class="p-1 text-xs rounded border border-slate-300 w-36">
@@ -942,13 +944,14 @@
                 const response = await fetch(`${API_URL}/orders`, { headers: authHeaders() });
                 if (response.status === 401) { logout(); return; }
                 const data = await response.json();
-                await Promise.all([loadInvoices(), loadProductsForSelect()]);
+                await Promise.all([loadInvoices(), loadProductsForSelect(), Internetmarke.loadOrdersData()]);
                 renderOrders(data);
             } catch (err) {
                 showBanner(t("orders.serverErrorReload"), true);
             }
         }
 
+        Internetmarke.watchOrders(document.getElementById("orders-list"), loadOrders);
         loadInvoiceProfile();
         loadOrders();
         document.addEventListener("langchange", loadOrders);

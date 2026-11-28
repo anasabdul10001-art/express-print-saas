@@ -24,6 +24,7 @@ from app.database import SessionLocal
 from app.models.affiliate_password_token import AffiliatePasswordToken
 from app.models.amazon_account import AmazonOAuthState
 from app.models.ebay_account import EbayOAuthState
+from app.models.internetmarke import InternetmarkePurchase, remove_buyer_data
 from app.models.order import Order
 from app.models.password_reset_token import PasswordResetToken
 from app.models.print_job import PrintJob
@@ -65,6 +66,7 @@ def _remove_buyer_data(db: Session, now: datetime) -> int:
             {getattr(Order, name): None for name in BUYER_FIELDS}, synchronize_session=False)
         db.query(PrintJob).filter(PrintJob.order_id.in_(ids)).update(
             {PrintJob.label_pdf_data: None, PrintJob.error_message: None}, synchronize_session=False)
+        remove_buyer_data(db, InternetmarkePurchase.order_id.in_(ids))
         removed += len(ids)
     return removed
 
@@ -76,6 +78,8 @@ def run(db: Session, now: datetime | None = None) -> dict:
         PrintJob.status.in_(("printed", "failed")), PrintJob.label_pdf_data.isnot(None),
         PrintJob.created_at < now - timedelta(days=PRINT_FILE_DAYS),
     ).update({PrintJob.label_pdf_data: None, PrintJob.error_message: None}, synchronize_session=False)
+    remove_buyer_data(db, InternetmarkePurchase.status.in_(("BOUGHT", "FAILED")),
+                      InternetmarkePurchase.created_at < now - timedelta(days=PRINT_FILE_DAYS))
     tokens = 0
     for model in (PasswordResetToken, AffiliatePasswordToken, EbayOAuthState, AmazonOAuthState,
                   ShopifyOAuthState):

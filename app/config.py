@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     # so only our own daily scheduler (not the public internet) can trigger
     # it - it fans out to many eBay API calls and writes to the database.
     cron_secret: str = ""
+    # --- Deutsche Post INTERNETMARKE API ---
+    # App-level key and secret from developer.dhl.com; each seller connects
+    # their own Portokasse (app/models/internetmarke.py).
+    internetmarke_client_id: str = ""
+    internetmarke_client_secret: str = ""
+
     # --- DHL Parcel DE Shipping API ---
     # App-level key from developer.dhl.com (one per NettoDesk, required on
     # every call regardless of which tenant's own DHL account is billed).

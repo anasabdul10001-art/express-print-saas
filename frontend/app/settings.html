@@ -10,6 +10,7 @@
     <script src="../password-toggle.js" defer></script>
     <script src="trial-guard.js"></script>
     <script src="layout.js"></script>
+    <script src="internetmarke.js"></script>
     <script src="days-left.js"></script>
     <script src="../site-logo.js"></script>
     <script src="../translations.js"></script>
@@ -336,6 +337,9 @@
                 <span data-i18n="settings.save">Speichern</span>
             </button>
         </div>
+
+        <!-- Deutsche Post letter stamps; stays hidden until the server has API credentials -->
+        <section id="internetmarke-box" class="hidden bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-3 text-sm"></section>
 
         <!-- DHL shipping account connection -->
         <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-4">
@@ -1086,6 +1090,7 @@
         loadTenant();
         loadAccount();
         loadDhlStatus();
+        Internetmarke.mountSettings(document.getElementById("internetmarke-box"));
 
         function privacyMessage(text, isError) {
             const box = document.getElementById("privacy-message");
