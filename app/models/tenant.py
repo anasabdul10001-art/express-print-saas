@@ -31,6 +31,9 @@ class Tenant(Base):
     # anywhere yet (same "not wired to real limits" spirit as Plan's own
     # order/printer/user limits).
     subscription_status = Column(String(30), nullable=True)
+    # End of the billing period that has been paid for, as reported by Stripe's
+    # webhooks. Null without a Stripe subscription.
+    current_period_end = Column(DateTime(timezone=True), nullable=True)
 
     # Controls how shipping labels get printed for this tenant's orders:
     #   INSTANT           - auto-print the moment an order arrives
